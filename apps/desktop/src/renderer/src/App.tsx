@@ -124,6 +124,7 @@ export function App() {
 
   function reset() {
     setStage("home");
+    setQuestion("");
     setDraft(undefined);
     setReading(undefined);
     setSelection([]);
