@@ -1,0 +1,18 @@
+{
+  "contentVersion": "content-caf5c1836b62",
+  "scoreTableVersion": "scores-aeecdb8af1fb",
+  "methodologyVersion": "methodology-2cdbf57d95f7",
+  "cards": 78,
+  "orientationScores": 156,
+  "sourceHashes": {
+    "scores": "aeecdb8af1fbdeda8fb0ae32bfbbde2de35ad46e3cc15c460610ea6625866f88",
+    "methodology": "2cdbf57d95f767eeb6d7a370d087aad53fde607fee0219b2c760bef82891912c",
+    "visuals": {
+      "大阿尔卡那.md": "39f83998ad5d465ef96bd16af84de9280acb4b6124abdb41326d140ae6d9ad65",
+      "权杖.md": "0806376f76dc640e5c21aa6e248fb0b12b4b1f051f81ee53c600c61283edb172",
+      "圣杯.md": "4c752ffd5ce642c3e1f2dfcf62f8fef02c595de6864ec46b731881d157d691a5",
+      "宝剑.md": "0a92f9ccc680552232c6d35d5659683ae996962e43c222ed1536400e3127ea61",
+      "星币.md": "4deaff6053026879f2401f67e49d24bdc915fa7a77c41544232fac741231e8c5"
+    }
+  }
+}

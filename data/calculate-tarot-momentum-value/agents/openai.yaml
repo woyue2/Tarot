@@ -1,0 +1,4 @@
+interface:
+  display_name: "塔罗牌动量价值计算"
+  short_description: "随机抽取五张韦特塔罗牌，计算动量、价值并对照解释牌义"
+  default_prompt: "Use $calculate-tarot-momentum-value to draw five Tarot cards and interpret their momentum and value for my question."

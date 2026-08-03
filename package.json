@@ -1,0 +1,23 @@
+{
+  "name": "tarot-local-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "generate:content": "node scripts/generate-card-data.mjs",
+    "dev": "pnpm generate:content && pnpm --filter @tarot/desktop dev",
+    "build": "pnpm generate:content && pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm generate:content && pnpm -r test",
+    "check": "pnpm generate:content && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "25.0.10",
+    "typescript": "6.0.2",
+    "vitest": "4.0.18"
+  }
+}

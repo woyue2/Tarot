@@ -1,0 +1,3196 @@
+{
+  "contentVersion": "content-caf5c1836b62",
+  "scoreTableVersion": "scores-aeecdb8af1fb",
+  "formulaVersion": "momentum-value-v0.1",
+  "cardBack": "cards/card-back.webp",
+  "cards": [
+    {
+      "id": "major-00",
+      "name": "愚人",
+      "nameEn": "The Fool",
+      "aliases": [
+        "愚者"
+      ],
+      "arcana": "major",
+      "rank": 0,
+      "image": "cards/major-00.webp",
+      "visual": {
+        "sourceHeading": "愚者 | 00_愚人.webp",
+        "direction": "面朝画面右上方，身体略微向左倾斜，但视线向右侧远方眺望。",
+        "posture": "年轻男子站在悬崖边缘，左腿微屈呈迈步向前状，右手持一根长长的木杖，杖上挑着一个红色行囊，左手拿一朵白玫瑰，双肩披着红色装饰条。",
+        "colors": "明亮的明黄色背景，深蓝紫色带黄色花纹的束腰外衣，鲜红色腰带与装饰，山脚下白色雪峰。",
+        "lighting": "阳光普照，天空澄澈，光线从右上方的太阳直射而下，充满希望与无拘无束的氛围。",
+        "symbols": [
+          {
+            "name": "白玫瑰",
+            "meaning": "纯洁、天真、无邪。"
+          }
+        ],
+        "story": "一位年轻旅人毫无顾忌地走向悬崖边缘，他衣衫华美却步伐轻快，小犬在脚边跳跃提醒。他并不看脚下，只顾仰望天空与远方，象征着灵魂不顾一切向着未知探索的初始阶段。",
+        "pitfalls": "悬崖脚下的**深谷**易被忽略，它不仅是危险，也是\"跳入未知\"的心理象征。红色行囊**不是**厚重的财富，而是较轻的回忆包袱。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 4,
+          "dynamic": 8,
+          "rank": -10,
+          "final": 4,
+          "basis": "new beginning; freedom; risk; potential"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": -10,
+          "final": -4,
+          "basis": "folly; carelessness; unstable choice"
+        }
+      }
+    },
+    {
+      "id": "major-01",
+      "name": "魔术师",
+      "nameEn": "The Magician",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 1,
+      "image": "cards/major-01.webp",
+      "visual": {
+        "sourceHeading": "魔术师 | 01_魔术师.webp",
+        "direction": "面朝正前方，目光直视观者，身体直立，右手高举。",
+        "posture": "身穿白色内衬与红色外袍的年轻男子，右手持一根双头权杖高举指向天空（或形成∞符号），左手食指向下指向地面，暗示\"如其在上，如其在下\"。",
+        "colors": "明亮的黄色背景，红白相间的外袍，桌上的金杯、银剑、钱币与权杖色彩多样。",
+        "lighting": "氛围明亮，光线聚焦于魔术师身上，背景无云，充满创造的明朗感。",
+        "symbols": [
+          {
+            "name": "∞符号（头顶）",
+            "meaning": "无限的潜力与精神力。"
+          }
+        ],
+        "story": "魔术师站在摆满四元素圣器的桌子后，他自信地向上天祈求灵感，同时将指引传导至物质世界，如同一位大师正在施展转化现实的魔法。",
+        "pitfalls": "头顶的**∞符号**并非数字8，而是无限符号，切勿误读。桌上四个物品的**排列位置**有严格对应，但解读时主要看物品类别本身。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 10,
+          "rank": -9.0476,
+          "final": 7,
+          "basis": "skill; will; initiative; manifestation"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -9.0476,
+          "final": -6,
+          "basis": "manipulation; weak will; misused ability"
+        }
+      }
+    },
+    {
+      "id": "major-02",
+      "name": "女祭司",
+      "nameEn": "The High Priestess",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 2,
+      "image": "cards/major-02.webp",
+      "visual": {
+        "sourceHeading": "女祭司 | 02_女祭司.webp",
+        "direction": "面朝正前方，端坐静默。",
+        "posture": "一位身披蓝白色长袍的女子端坐在黑白双柱之间，双手交叉放在膝盖上，双腿盖着白色垂布，手中卷轴半露。",
+        "colors": "冷色调为主，水蓝色与白色外袍，深蓝色背景帷幕，黑白分明的石柱。",
+        "lighting": "室内场景，光线柔和静穆，来自上方或内在的灵性光芒，整体氛围幽静深邃。",
+        "symbols": [
+          {
+            "name": "黑白双柱（B与J）",
+            "meaning": "黑色柱子（Boaz，象征阴性与被动）与白色柱子（Jachin，象征阳性与主动）代表二元的平衡。"
+          }
+        ],
+        "story": "女祭司静坐在圣殿之中，手持卷轴，背后是装点着石榴的帷幕。她作为潜意识与灵性知识的中介，静静等待那些能够透过表象看到内在真相的访问者。",
+        "pitfalls": "女祭司**不主动出击**，她背靠幕帘，代表事物被**隐藏**。黑白双柱并非善恶，而是哲学上的二元对立。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 4,
+          "dynamic": 0,
+          "rank": -8.0952,
+          "final": 3,
+          "basis": "intuition; mystery; inner knowledge"
+        },
+        "reversed": {
+          "semantic": -2,
+          "dynamic": -2,
+          "rank": -8.0952,
+          "final": -2,
+          "basis": "surface knowledge; blocked intuition; concealment"
+        }
+      }
+    },
+    {
+      "id": "major-03",
+      "name": "皇后",
+      "nameEn": "The Empress",
+      "aliases": [
+        "女皇"
+      ],
+      "arcana": "major",
+      "rank": 3,
+      "image": "cards/major-03.webp",
+      "visual": {
+        "sourceHeading": "女皇 | 03_女皇.webp",
+        "direction": "侧身偏向右方，面部微微向下注视。",
+        "posture": "一位丰满雍容的女子身穿饰有红石榴图案的白色长袍，头戴十二星冠，手执权杖端坐于铺着华丽织物的软座上，左手轻抚腹部。",
+        "colors": "柔和的明黄色背景，麦穗的金色，白色的衣袍与鲜红的靠枕形成明亮对比。",
+        "lighting": "阳光温暖和煦，晴朗无云，大地生机盎然。",
+        "symbols": [
+          {
+            "name": "十二星冠",
+            "meaning": "十二个月/黄道十二宫，与宇宙的周期关联。"
+          }
+        ],
+        "story": "女皇安坐于自然之中，被金黄麦穗与葱郁绿树环绕。她展现出母性的一面，既是丰饶大地的人格化，也是感官愉悦与舒适生活的守护者。",
+        "pitfalls": "女皇手中的**权杖**虽短，但顶端为十字球形，是世俗权力的明确象征。她腰间的**金星符号**易被忽略，但这代表感情、美丽与富足正是她的核心源头。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 6,
+          "rank": -7.1429,
+          "final": 7,
+          "basis": "fertility; abundance; growth; nurture"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": -7.1429,
+          "final": -4,
+          "basis": "dependence; blocked growth; neglect"
+        }
+      }
+    },
+    {
+      "id": "major-04",
+      "name": "皇帝",
+      "nameEn": "The Emperor",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 4,
+      "image": "cards/major-04.webp",
+      "visual": {
+        "sourceHeading": "皇帝 | 04_皇帝.webp",
+        "direction": "面朝正前方，目光坚定威严。",
+        "posture": "一位年长、蓄着浓密白胡须的男子端坐在石雕王座上，双腿微叉，右手握持顶端为十字的权杖，左手握住一个金色的球体，身穿铁甲与红袍。",
+        "colors": "强烈的橙红色调（天空与长袍），冷酷的灰白色岩石与铁甲，顶部金黄色的光芒。",
+        "lighting": "阳光刺透云层，光线硬朗，背景是坚硬的山脉。",
+        "symbols": [
+          {
+            "name": "公羊头王座",
+            "meaning": "王座扶手与椅背雕刻着公羊头（白羊座），象征攻击性与权威。"
+          }
+        ],
+        "story": "皇帝身披战甲端坐于荒野坚硬的石座上，他不依赖于柔软的座垫，而是依靠绝对权威与结构建立社会的法律与界线。",
+        "pitfalls": "王座上的**公羊头**是权威的象征，但容易误读为普通装饰。**硬装甲**在其它牌中可能代表封闭，但在这里代表对世俗秩序的坚定维护。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 6,
+          "rank": -6.1905,
+          "final": 6,
+          "basis": "stability; authority; protection; realization"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -4,
+          "rank": -6.1905,
+          "final": -5,
+          "basis": "domination; rigidity; obstruction; immaturity"
+        }
+      }
+    },
+    {
+      "id": "major-05",
+      "name": "教皇",
+      "nameEn": "The Hierophant",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 5,
+      "image": "cards/major-05.webp",
+      "visual": {
+        "sourceHeading": "教皇 | 05_教皇.webp",
+        "direction": "面朝正前方，身体端坐，目光向下方弟子注视。",
+        "posture": "身穿三层华丽祭服（红、白、蓝/金），头戴三层皇冠，一位神圣长者的右手食指与中指向上比作祝福姿态，左手握持三重十字权杖，脚下两侧各有一名低头的信徒。",
+        "colors": "灰色石柱底座，红色的祭袍，金银相间的皇冠，白底带十字图案的主教服。",
+        "lighting": "室内幽静，光线集中于教皇的权杖与头冠，神殿氛围庄严神圣。",
+        "symbols": [
+          {
+            "name": "三重冠",
+            "meaning": "掌管天、地、冥三界的权力。"
+          }
+        ],
+        "story": "教皇端坐于神殿巨柱之间，两位修士虔诚匍匐其脚下。作为精神导师，他在传授传统信仰与道德准则，引领人们走上灵性启蒙的康庄大道。",
+        "pitfalls": "**脚下的钥匙**（位于地毯上）容易被认作装饰图案，但它们是极其重要的象征。地上**两位信徒的背部花纹**（红百合与白玫瑰）并非单纯装饰，而是定义信徒身份的重要符号。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": 2,
+          "rank": -5.2381,
+          "final": 4,
+          "basis": "guidance; alliance; tradition; mercy"
+        },
+        "reversed": {
+          "semantic": -2,
+          "dynamic": -2,
+          "rank": -5.2381,
+          "final": -2,
+          "basis": "weakness; excessive conformity; hollow convention"
+        }
+      }
+    },
+    {
+      "id": "major-06",
+      "name": "恋人",
+      "nameEn": "The Lovers",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 6,
+      "image": "cards/major-06.webp",
+      "visual": {
+        "sourceHeading": "恋人 | 06_恋人.webp",
+        "direction": "男女双方彼此相对，目光交汇，上方天使俯视下界。",
+        "posture": "一名青年男子和一名青年女子赤身裸体站在地面上，男子望向女子（或上方天使），女子仰视天使。两人双臂自然张开，中间有一大山相隔。上方一位巨大的天使张开红色翅膀张开双臂笼罩二人。",
+        "colors": "暖黄色的天空，紫红色天使羽翼，远处的青色山峰与绿色草甸，自然的肤色。",
+        "lighting": "日光晴朗，明媚和谐。",
+        "symbols": [
+          {
+            "name": "智慧之树（女人身后）",
+            "meaning": "生命之树，树上有苹果，蛇缠绕其上（代表欲望与知识之诱惑）。"
+          }
+        ],
+        "story": "在天使的注视下，亚当与夏娃在伊甸园中相对而立。男人注视女人，女人仰望神灵。这一画面描绘了爱、结合、选择与诱惑，是人际关系与价值判断的经典隐喻。",
+        "pitfalls": "**伊甸园**中两棵树有**明确区分**（一棵结苹果，一棵有火焰），并非随意绘制的树木。两个人**没有牵手**，而是保持着互相注视的姿态。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 6,
+          "rank": -4.2857,
+          "final": 7,
+          "basis": "attraction; union; choice; trials overcome"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -4.2857,
+          "final": -6,
+          "basis": "disharmony; failure; frustrated union; poor choice"
+        }
+      }
+    },
+    {
+      "id": "major-07",
+      "name": "战车",
+      "nameEn": "The Chariot",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 7,
+      "image": "cards/major-07.webp",
+      "visual": {
+        "sourceHeading": "战车 | 07_战车.webp",
+        "direction": "车夫面朝正前方，双臂抬起，战车向观者方向驶来。",
+        "posture": "一位身穿铠甲、头戴星冠的勇士站在一只由两尊狮身人面像拉动的战车中，肩上有新月形肩甲，手中挥舞权杖。",
+        "colors": "深蓝色的星空背景与车夫盔甲，灰白色的车身与雕像，亮蓝色的车帘。",
+        "lighting": "星空阴郁，微光，但车身上方星星闪烁，给战车笼罩一层胜利的光辉。",
+        "symbols": [
+          {
+            "name": "黑白狮身人面像",
+            "meaning": "一黑一白，朝向相反，代表内在矛盾与对立力量，需驾驭拉向统一。"
+          }
+        ],
+        "story": "战车勇士傲然站立，手持权杖驾驭着方向相反的两只神兽，他全凭意志力控制着前方道路，身后是从起点（后方城堡）出发的印记，显示极速向前方未知世界推进的自信。",
+        "pitfalls": "背景中的**城堡**在车夫身后，**不是**目的地，而是出发点的象征，代表战争已从固有的生活领域中开拔。**两只狮身人面像**颜色极深，容易数混，但它们是一黑一白一对。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 10,
+          "rank": -3.3333,
+          "final": 8,
+          "basis": "will; control; forceful advance; triumph"
+        },
+        "reversed": {
+          "semantic": -8,
+          "dynamic": -8,
+          "rank": -3.3333,
+          "final": -8,
+          "basis": "loss of control; dispute; conflict; defeat"
+        }
+      }
+    },
+    {
+      "id": "major-08",
+      "name": "力量",
+      "nameEn": "Strength",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 8,
+      "image": "cards/major-08.webp",
+      "visual": {
+        "sourceHeading": "力量 | 08_力量.webp",
+        "direction": "女子面朝画面的左方，低头面对狮子，狮子侧身与女子对峙。",
+        "posture": "一位身穿白色长裙的女子，头戴花环，头上悬浮∞符号，双膝着地，双手正温柔但坚实地合拢一头金色狮子的下颚。",
+        "colors": "明黄色的天空，白色的长袍，金黄色的狮子，山野是翠绿色。",
+        "lighting": "阳光明亮充足，天空净无云翳。",
+        "symbols": [
+          {
+            "name": "头顶的∞符号",
+            "meaning": "无限精神力的加持，暗示力量来源于灵性而非蛮力。"
+          }
+        ],
+        "story": "一位文静的女子不以暴力相抗，而是用柔软的双手轻抚一头硕大雄狮的嘴部。她仿佛在与猛兽进行一场静谧的对话，驯服了自己的内在野性。",
+        "pitfalls": "画面中**没有缰绳或武器**，仅凭**徒手与柔情**。切勿将狮子的方向误解为攻击状，狮子是被安抚的状态。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 6,
+          "rank": -2.381,
+          "final": 7,
+          "basis": "power; courage; energy; magnanimity"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -2.381,
+          "final": -6,
+          "basis": "weakness; abuse of power; discord; disgrace"
+        }
+      }
+    },
+    {
+      "id": "major-09",
+      "name": "隐者",
+      "nameEn": "The Hermit",
+      "aliases": [
+        "隐士"
+      ],
+      "arcana": "major",
+      "rank": 9,
+      "image": "cards/major-09.webp",
+      "visual": {
+        "sourceHeading": "隐士 | 09_隐士.webp",
+        "direction": "面向右前方，正在孤独行走，目光向下。",
+        "posture": "一位身裹灰色披风、蓄着长白须发的老者，手持一根长木杖，右手举着一盏六角灯，正站在冰雪覆盖的山巅之上。",
+        "colors": "灰白色雪地与老者长袍，深蓝紫色的微暗夜空，明黄色的灯光是画面中唯一的暖色。",
+        "lighting": "深夜或黄昏，寒气逼人，唯独灯盏发出孤独而清醒的光芒。",
+        "symbols": [
+          {
+            "name": "六角提灯",
+            "meaning": "知识的光芒，独自一人却照亮前方。"
+          }
+        ],
+        "story": "隐士立于大雪覆盖的山顶，他提着孤灯照亮脚前的方寸之地。看似在默默寻觅，实质是为每一个渴望找到真理的旅人充当内心的灯塔。",
+        "pitfalls": "隐士的**外袍**上的颜色并非脏污，而是灰白色，与雪地融为一体。**提灯中的星星**容易被忽略，它指代那一丝内在的圣光。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 3,
+          "dynamic": -2,
+          "rank": -1.4286,
+          "final": 2,
+          "basis": "prudence; introspection; solitary guidance"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": -1.4286,
+          "final": -4,
+          "basis": "isolation; concealment; fear; excessive caution"
+        }
+      }
+    },
+    {
+      "id": "major-10",
+      "name": "命运之轮",
+      "nameEn": "Wheel of Fortune",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 10,
+      "image": "cards/major-10.webp",
+      "visual": {
+        "sourceHeading": "命运之轮 | 10_命运之轮.webp",
+        "direction": "画面中心为一个巨大的转轮，四个角落的生物朝向轮心。",
+        "posture": "命运之轮位于云层之上，轮身正在旋转，轮顶坐着一只狮身人面像，轮右有一个红色的生物向下滑，轮左有蛇向下蜿蜒，轮的四角为四只黄道生物的拉弓姿态。",
+        "colors": "明黄色的天空与云层，红黄色的转轮，四角生物呈金黄和浅紫色。",
+        "lighting": "天界晴朗，神圣的光芒笼罩轮子。",
+        "symbols": [
+          {
+            "name": "生命之轮",
+            "meaning": "写着T-A-R-O和四个希伯来字母，暗示宇宙的永恒循环。"
+          }
+        ],
+        "story": "巨大的轮盘在云海之上旋转，生物们围绕轮子呈动态分布。这展现出运气的潮起潮落，世事变化的不可抗拒，以及命运在转动时带来的机遇与失落。",
+        "pitfalls": "轮子上的**字母是T-A-R-O**而非\"WHEEL\"，并且圆圈**内部有复杂的符号**，注意不是简单的轮状图。四角的生物不是无序排列，它们都在**背书/读书**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 8,
+          "rank": -0.4762,
+          "final": 8,
+          "basis": "fortune; success; change; elevation"
+        },
+        "reversed": {
+          "semantic": 6,
+          "dynamic": 6,
+          "rank": -0.4762,
+          "final": 6,
+          "basis": "increase; abundance; excess; amplified change"
+        }
+      }
+    },
+    {
+      "id": "major-11",
+      "name": "正义",
+      "nameEn": "Justice",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 11,
+      "image": "cards/major-11.webp",
+      "visual": {
+        "sourceHeading": "正义 | 11_正义.webp",
+        "direction": "面朝前方，端坐如定，目光直视。",
+        "posture": "一位头戴王冠的女性端坐于双柱之间，身穿红色斗篷与绿色外衣，右手持一把剑尖朝上的剑，左手平端着一架天平。",
+        "colors": "强烈的红色外袍与绿色罩衣，背后的紫色幕布，灰白色的石柱与台座。",
+        "lighting": "室内光线集中，中性的色调，无明显明暗对比，强调公正无私的意境。",
+        "symbols": [
+          {
+            "name": "天平",
+            "meaning": "衡量得失、善恶、均衡，追求理性的公平。"
+          }
+        ],
+        "story": "正义女神身居圣殿，一手持剑一手持秤，此刻她是理性的化身，对万事万物进行衡量，既不偏左也不偏右，以一个不偏不倚的姿势维持宇宙的平衡。",
+        "pitfalls": "女神**没有蒙眼**（这与西方的正义女神雕像不同，蒙眼代表公正，此处的女神睁眼代表**客观的辨别**）。天平与剑必须同时存在，单看剑可能会误读为严苛的制裁。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 4,
+          "rank": 0.4762,
+          "final": 5,
+          "basis": "fairness; rules; contracts; deserved judgment"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": 0.4762,
+          "final": -5,
+          "basis": "bias; legal complication; excessive severity"
+        }
+      }
+    },
+    {
+      "id": "major-12",
+      "name": "倒吊人",
+      "nameEn": "The Hanged Man",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 12,
+      "image": "cards/major-12.webp",
+      "visual": {
+        "sourceHeading": "倒吊人 | 12_倒吊人.webp",
+        "direction": "身体倒立，人物头部朝下朝向画面底部，面部面向画面的左方。",
+        "posture": "一名穿蓝色外衣、红色袜子的年轻男子被脚踝绑在一根倒T字形的木架上。他的双手被缚在身后，双腿呈交叉状，头部周围有一圈淡淡的光晕。",
+        "colors": "明黄/灰蓝色背景，蓝衣红袜对比鲜明，木架为单纯的深褐。",
+        "lighting": "淡蓝色的天际，光芒从头部弥漫出来，象征牺牲带有神圣的光辉。",
+        "symbols": [
+          {
+            "name": "倒吊的树",
+            "meaning": "自身的生命被悬吊，意味着暂停、放弃旧的方式。"
+          }
+        ],
+        "story": "一位倒吊者以殉道的姿态接受悬吊，他并没有挣扎或痛苦，相反，他的面部展现出平静，似乎在这被迫静止的时刻中获得了神秘的启示。",
+        "pitfalls": "倒吊人**并非受刑**，他表情安详，而是**主动地选择**这一视角的停顿。他的腿交叉成数字\"4\"的姿态，**不要**误以为他是挣扎的姿势。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 3,
+          "dynamic": -4,
+          "rank": 1.4286,
+          "final": 2,
+          "basis": "sacrifice; insight; suspension; new perspective"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": 1.4286,
+          "final": -4,
+          "basis": "selfishness; stalling; refusal to release"
+        }
+      }
+    },
+    {
+      "id": "major-13",
+      "name": "死神",
+      "nameEn": "Death",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 13,
+      "image": "cards/major-13.webp",
+      "visual": {
+        "sourceHeading": "死神 | 13_死神.webp",
+        "direction": "骷髅骑士面朝右方，白色战马向右行进，人群从左侧向右前方的太阳处延伸。",
+        "posture": "骷髅身披黑色铠甲，骑着一匹白色战马，手举一面绘着神秘黑白玫瑰图案的大旗，缓缓走过人群。面前有跪下的教皇、倒地死去的人、抬头的小孩和哀恸的少女。",
+        "colors": "冷灰色的背景，白马的纯白，黑甲的黑，远方的金色光芒与深蓝河流。",
+        "lighting": "清晨或黎明，地平线处升起一轮金色太阳，撕裂了原本阴暗的天空。",
+        "symbols": [
+          {
+            "name": "白色战马",
+            "meaning": "死亡的凯旋，干净无暇，非黑马。"
+          }
+        ],
+        "story": "骷髅骑士在田野上横冲直撞，不论是皇帝还是平民，皆在死亡的步伐前臣服。然而，在远方，太阳照常升起，暗示死亡不过是生命的必经阶段，是向新生过渡的桥梁。",
+        "pitfalls": "白马上**披挂的旗帜**上并没有字母或名称，绘的是**一朵复杂的白色玫瑰**，请不要误以为是普通阵旗。天空中的**太阳**是从两座山峰间升起的，这意味着**重生**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 0,
+          "dynamic": -10,
+          "rank": 2.381,
+          "final": -1,
+          "basis": "ending; mortality; irreversible transformation"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -6,
+          "rank": 2.381,
+          "final": -6,
+          "basis": "inertia; lethargy; petrification; hope destroyed"
+        }
+      }
+    },
+    {
+      "id": "major-14",
+      "name": "节制",
+      "nameEn": "Temperance",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 14,
+      "image": "cards/major-14.webp",
+      "visual": {
+        "sourceHeading": "节制 | 14_节制.webp",
+        "direction": "天使的面朝左前方，身体倾向右侧，目光向下注视水杯。",
+        "posture": "一位长着红色巨大翅膀的金发天使身披白衣，站在水面与浅滩之间，双手各持一个金杯，正将液体从一个杯子倒入另一个杯子。",
+        "colors": "柔和的蓝色天空，闪亮的金杯，纯白的长袍，黄色的鸢尾花与青草。",
+        "lighting": "白昼，光线柔和清澈，背景中有一轮发光的小太阳。",
+        "symbols": [
+          {
+            "name": "倒水的动作",
+            "meaning": "两个金杯之间的水柱连绵不断，代表生命的调和与流动平衡。"
+          }
+        ],
+        "story": "一位天使在清浅的溪流中，将生命之水在两杯之间来回倾倒，水流永不停止。她正在将极端的能量混合成温和的中间态，达到完美的中庸境界。",
+        "pitfalls": "天使**长有翅膀**（红色），这是**大天使米迦勒**的属性，而非普通平衡者。背景中的**黄色小路**延伸到山上，代表灵性的进步。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 2,
+          "rank": 3.3333,
+          "final": 6,
+          "basis": "moderation; harmony; management; accommodation"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -4,
+          "rank": 3.3333,
+          "final": -4,
+          "basis": "disunion; competing interests; poor combination"
+        }
+      }
+    },
+    {
+      "id": "major-15",
+      "name": "恶魔",
+      "nameEn": "The Devil",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 15,
+      "image": "cards/major-15.webp",
+      "visual": {
+        "sourceHeading": "恶魔 | 15_恶魔.webp",
+        "direction": "恶魔面朝正前方，直视观者。",
+        "posture": "一个巨大的、长着公羊头与蝙蝠翅膀的恶魔坐在半截石台上，右手向上举（掌心朝外），左手握着一支火把向下指。它的身体呈土黄色（或橙黑色），脚下站着一男一女两名裸体的人，脖子上套着铁链。",
+        "colors": "深邃的纯黑色背景，恶魔的橙褐色身躯，灰黑色的石台，人物苍白的肤色。",
+        "lighting": "光线黑暗低沉，火把散发出不祥的橙红色光芒，阴影重重。",
+        "symbols": [
+          {
+            "name": "倒五角星",
+            "meaning": "恶魔头顶（或眉间）的倒五角星，代表物质欲望超越精神。"
+          }
+        ],
+        "story": "巨大的恶魔坐在深渊里，它身上绑着一对男女，两人被铁链缠绕在脖子上。然而链子其实很松，只要他们愿意就可以拿下。这影射了**自我束缚**、物质主义与沉沦于本能。",
+        "pitfalls": "锁在男女脖子上的**链子**看上去十分**宽松**，这并非纯粹的束缚，而是他们**甘愿受困**的象征。倒五角星是符号的核心，容易误读成某处装饰，但它是恶魔牌的核心象征。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -8,
+          "dynamic": 8,
+          "rank": 4.2857,
+          "final": -5,
+          "basis": "bondage; violence; compulsion; fatal force"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": 4.2857,
+          "final": -5,
+          "basis": "weakness; blindness; unresolved bondage"
+        }
+      }
+    },
+    {
+      "id": "major-16",
+      "name": "高塔",
+      "nameEn": "The Tower",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 16,
+      "image": "cards/major-16.webp",
+      "visual": {
+        "sourceHeading": "高塔 | 16_高塔.webp",
+        "direction": "高塔位于画面中央，所有人都向下坠落。",
+        "posture": "一座巨大的石塔正在被闪电击中并燃起烈火，塔顶的皇冠碎裂飞走。两个人（一男一女）头朝下坠落，背景是乌云密布或夜空。",
+        "colors": "深蓝色甚至近乎黑色的天空，明黄色的闪电与火焰，灰白色的石塔，人物有红色与蓝色衣料。",
+        "lighting": "狂风暴雨、电闪雷鸣，整个场景充满了毁灭性的冲击力。",
+        "symbols": [
+          {
+            "name": "闪电击塔",
+            "meaning": "天外横来之灾，突然的、不可抗拒的颠覆。"
+          }
+        ],
+        "story": "被雷击中的高塔直插云霄，代表稳固与自大的伪饰被外力瞬间摧毁。人物以失去平衡的姿态下落，真实世界在地震般的冲击下发生了动荡与反转。",
+        "pitfalls": "高塔的画面**并不是**在描绘建筑意外，而是暗示外界力量的**强制毁灭**与**新生**。火焰的颜色有红黄两种，代表不同层次的破坏，坠落的两人**不一定**是指恶魔牌的男女。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -10,
+          "dynamic": -10,
+          "rank": 5.2381,
+          "final": -9,
+          "basis": "calamity; ruin; unforeseen collapse"
+        },
+        "reversed": {
+          "semantic": -8,
+          "dynamic": -6,
+          "rank": 5.2381,
+          "final": -7,
+          "basis": "continued oppression; confinement; resisted collapse"
+        }
+      }
+    },
+    {
+      "id": "major-17",
+      "name": "星星",
+      "nameEn": "The Star",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 17,
+      "image": "cards/major-17.webp",
+      "visual": {
+        "sourceHeading": "星星 | 17_星星.webp",
+        "direction": "女子面向画面左方跪姿，小水面的倾倒动作面朝水池。",
+        "posture": "一位赤裸的女子跪在池水边，双膝着地，一只脚踩在陆地上，一只脚浸泡在水中。她左手拿着一个水罐向水面倾倒，右手拿着另一个水罐向草坡上倾泻。",
+        "colors": "深蓝透亮的夜空背景，明亮的金黄色大星星，大地与水池呈淡青色。",
+        "lighting": "夜晚，群星璀璨，星光柔和，宁静而充满希望。",
+        "symbols": [
+          {
+            "name": "巨大的金色星星",
+            "meaning": "占据画面的上方，周围有七颗小白星，象征希望与指引。"
+          }
+        ],
+        "story": "星星女神跪在夜色中的水畔，温柔地倒水，滋润着大地与心灵。天空中星光闪烁，宣告着在过往风雨之后，终于迎来了充满疗愈的平静与希望。",
+        "pitfalls": "星星在**高塔之后、月亮之前**，所以这不仅仅是普通的夜晚，而是**暴风雨后的宁静**。场景中的**女性**并没穿着衣服，与上几牌的保守截然相反，象征无伪的真实。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 4,
+          "rank": 6.1905,
+          "final": 7,
+          "basis": "hope; promise; renewal; expectation"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -2,
+          "rank": 6.1905,
+          "final": -4,
+          "basis": "disappointed hope; diminished expectation"
+        }
+      }
+    },
+    {
+      "id": "major-18",
+      "name": "月亮",
+      "nameEn": "The Moon",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 18,
+      "image": "cards/major-18.webp",
+      "visual": {
+        "sourceHeading": "月亮 | 18_月亮.webp",
+        "direction": "画面中间的小径从底部蜿蜒向前，人物朝向远处两座塔。",
+        "posture": "两只动物（一只犬一只狼）仰头对月吠叫，池水中爬出一只龙虾。一条曲折的小路穿过画面中心的平地，通向远处两座塔之间的山岭。",
+        "colors": "深沉的蓝紫色夜空，黄色的明月，灰蓝色的山峦与水潭。",
+        "lighting": "月夜，光线暗淡但月光充足，氛围神秘而令人不安。",
+        "symbols": [
+          {
+            "name": "人面月亮",
+            "meaning": "月面带有一张隐约的侧脸，代表潜意识与幻象中的主宰。"
+          }
+        ],
+        "story": "在迷惘的月光下，狼与野犬对着天象吠叫，龙虾从池中爬出，人们行走在充满幻象与不安的幽暗之路上。月亮将阴影拉长，那些深藏的不安与恐惧正在苏醒。",
+        "pitfalls": "月面上的**人面**是真实图案（右下角），并非阴影。龙虾**并非在水面之上**，而是从池水中向上爬升。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -6,
+          "dynamic": -2,
+          "rank": 7.1429,
+          "final": -5,
+          "basis": "deception; error; uncertainty; obscurity"
+        },
+        "reversed": {
+          "semantic": -2,
+          "dynamic": 0,
+          "rank": 7.1429,
+          "final": -1,
+          "basis": "minor deception; fluctuation; partial clarification"
+        }
+      }
+    },
+    {
+      "id": "major-19",
+      "name": "太阳",
+      "nameEn": "The Sun",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 19,
+      "image": "cards/major-19.webp",
+      "visual": {
+        "sourceHeading": "太阳 | 19_太阳.webp",
+        "direction": "赤身孩童骑在白马上，面朝画面左方，目光向上看着太阳。",
+        "posture": "一个戴着花冠的赤身小孩骑在一匹高大的白色骏马上，马匹后方扬起一面巨大的红色旗帜。背景是砖墙和向日葵。太阳位于正上方，五官清晰，光芒四射。",
+        "colors": "明亮饱满的金黄色，白马的雪白，旗帜的鲜红，向日葵的艳丽黄色。",
+        "lighting": "阳光极度明媚，光照强烈，无云的晴空。",
+        "symbols": [
+          {
+            "name": "太阳",
+            "meaning": "那张长着人脸的明亮太阳，是生命力与明晰意识的源头。"
+          }
+        ],
+        "story": "最灿烂的太阳之下，纯真的孩童骑白马、举红旗，毫无遮蔽地奔驰在花墙之下。这里没有掩饰，只有生命的欢庆、苏醒与全然敞开的快乐。",
+        "pitfalls": "太阳的**人脸**是以正面直视观者的，不是侧脸。**孩子身上裸体**，没有穿任何衣物，这是孩童状态最原初、最无伪的体现。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 10,
+          "dynamic": 8,
+          "rank": 8.0952,
+          "final": 10,
+          "basis": "happiness; clarity; vitality; success"
+        },
+        "reversed": {
+          "semantic": 6,
+          "dynamic": 2,
+          "rank": 8.0952,
+          "final": 6,
+          "basis": "the same favorable meaning in a lesser degree"
+        }
+      }
+    },
+    {
+      "id": "major-20",
+      "name": "审判",
+      "nameEn": "Judgement",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 20,
+      "image": "cards/major-20.webp",
+      "visual": {
+        "sourceHeading": "审判 | 20_审判.webp",
+        "direction": "天使位于画面正上方，吹号角朝向下方。下方人群仰头望天，面朝上方。",
+        "posture": "一位长着巨大翅膀的天使在云端吹响金色的号角。下界的水面上漂浮着数口棺材，里面的人（男女老少）正在站起来，双臂举起。",
+        "colors": "弥漫的云层，灰蓝色的雾蔼，天使的白袍与红色、紫色翅膀，暗紫/蓝色的水面。",
+        "lighting": "晨光破晓，天使所在之处光辉明亮，下方呈现苏醒的微光。",
+        "symbols": [
+          {
+            "name": "吹号天使",
+            "meaning": "宣告伟大的觉醒与最终时刻，灵魂响应召唤。"
+          }
+        ],
+        "story": "号角声在天际吹响，打破时空的寂静，长眠的逝者从水中的棺木中站起，沐浴在晨光里。这是觉醒的召唤，无论过去多么沉寂，此刻都有着重新苏醒和重获新生的机会。",
+        "pitfalls": "棺材内的人**并没有死亡**，他们是在**苏醒并站立**。天空中有**雨滴状的坠落物**，一般不作为重点，容易被忽略，但它们也象征着洗礼或分离的苦痛。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 8,
+          "rank": 9.0476,
+          "final": 8,
+          "basis": "renewal; result; awakening; determination"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": 9.0476,
+          "final": -3,
+          "basis": "weakness; delayed or inadequate decision"
+        }
+      }
+    },
+    {
+      "id": "major-21",
+      "name": "世界",
+      "nameEn": "The World",
+      "aliases": [],
+      "arcana": "major",
+      "rank": 21,
+      "image": "cards/major-21.webp",
+      "visual": {
+        "sourceHeading": "世界 | 21_世界.webp",
+        "direction": "女子位于画面中心，面朝正前方，但身体微侧。",
+        "posture": "一位裸体女子在椭圆形的桂冠花环中舞蹈，双手各持一根魔杖（或权杖）。四角分别有天使、鹰、牛和狮子。",
+        "colors": "高饱和度的明亮黄与蓝紫天空背景，桂冠的翠绿，布带的紫兰，人物肤色白皙。",
+        "lighting": "天清气朗，温暖的阳光，万物达成了完满的结局。",
+        "symbols": [
+          {
+            "name": "桂冠花环",
+            "meaning": "象征胜利、圆满与循环的终结。"
+          }
+        ],
+        "story": "一位女神身披紫色的丝带，在永恒的花环中从容起舞。四周被四大生灵守护，所有的循环在此刻终结，所有对立归于统一，抵达了灵魂所追求的最终圆满。",
+        "pitfalls": "花环并非圆形而是**椭圆**，与大地或宇宙的完满有关。**手持双权杖**这一细节容易被视作普通装饰，但它代表她在调动**所有四元素**达到了终极和谐。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 10,
+          "dynamic": 6,
+          "rank": 10,
+          "final": 9,
+          "basis": "completion; reward; integration; fulfilled cycle"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": 10,
+          "final": -3,
+          "basis": "inertia; fixity; stagnation; incomplete cycle"
+        }
+      }
+    },
+    {
+      "id": "wands-01",
+      "name": "权杖王牌",
+      "nameEn": "Ace of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 1,
+      "image": "cards/wands-01.webp",
+      "visual": {
+        "sourceHeading": "权杖王牌 | 权杖01_权杖王牌.webp",
+        "direction": "权杖呈竖直向上，顶端朝向天空。",
+        "posture": "一只强有力的手从画面左侧的白色云层中伸出，紧紧握住一根带有绿叶的权杖。权杖直立向上，杖身周围有细小的叶片飘落。",
+        "colors": "大面积的白/浅灰色云层，暖色调的棕黄色权杖与嫩绿色叶片，底部远处的青绿色山丘、河流与白色城堡。",
+        "lighting": "明朗的白昼，光线从云端倾泻而下，充满希望的勃发感。",
+        "symbols": [
+          {
+            "name": "握紧权杖的手",
+            "meaning": "代表创造力、激情、新计划的诞生、生命力的握持。"
+          }
+        ],
+        "story": "神之手自云端伸出，将一根生命力旺盛的权杖递送于世间。嫩绿的叶芽象征着行动与创造的火花已经诞生，清新的能量正喷薄而出，为开启新的旅程奠定基础。",
+        "pitfalls": "权杖**顶端有绿叶**，并有**叶子剥落**的动感，象征着**生机正在爆发/释放**，而不是停滞或枯萎。远处的城堡非常微小，容易被忽略，但这恰恰代表视野开阔的**远景目标**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 10,
+          "rank": -10,
+          "final": 7,
+          "basis": "creation; enterprise; power; beginning"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -6,
+          "rank": -10,
+          "final": -7,
+          "basis": "fall; decadence; ruin; clouded joy"
+        }
+      }
+    },
+    {
+      "id": "wands-02",
+      "name": "权杖二",
+      "nameEn": "Two of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 2,
+      "image": "cards/wands-02.webp",
+      "visual": {
+        "sourceHeading": "权杖二 | 权杖02_权杖二.webp",
+        "direction": "人物面朝画面右侧，眺望远方，背对左侧。",
+        "posture": "一位头戴红帽、身披红褐色大氅的男子站在城墙/高台上，右手握着一根插在墙上的权杖，左手托着一个地球仪。他的右侧（画面偏右）还直立着另一根权杖。",
+        "colors": "明亮的淡白色天空，水域与远方陆地的浅绿、浅紫色调，人物大氅的红褐色与明黄色内衬。",
+        "lighting": "阳光充足，能见度极高，一片开阔安详的景象。",
+        "symbols": [
+          {
+            "name": "地球仪",
+            "meaning": "象征远见、对世界的掌控欲、谋划广阔的蓝图。"
+          }
+        ],
+        "story": "领主站在自己城堡的高墙上，一手握着已得的权杖（现有的基础），一手托着地球（未来的计划），他望向窗外的辽阔海疆，正在为更宏大的目标做出规划与选择。",
+        "pitfalls": "他**不是**把权杖握在手里准备立刻动身，而是**靠插在墙上的权杖**，体现他正处于**思考与决断**的阶段。他左手拿的**是一颗地球**，而不是苹果或球体。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": 4,
+          "rank": -8.4615,
+          "final": 4,
+          "basis": "planning; influence; enterprise; future choice"
+        },
+        "reversed": {
+          "semantic": -3,
+          "dynamic": -2,
+          "rank": -8.4615,
+          "final": -3,
+          "basis": "surprise; fear; trouble; unstable prospect"
+        }
+      }
+    },
+    {
+      "id": "wands-03",
+      "name": "权杖三",
+      "nameEn": "Three of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 3,
+      "image": "cards/wands-03.webp",
+      "visual": {
+        "sourceHeading": "权杖三 | 权杖03_权杖三.webp",
+        "direction": "人物完全背对画面，面朝远处的海洋眺望。",
+        "posture": "一位身穿红色长袍、绿色外披，背对观众的男子站在悬崖边的高地上。他右手握着一根直立的权杖，身旁还斜插着一根权杖，右侧另有一根权杖插在地上。",
+        "colors": "明亮的黄色天空，画面远处的金黄色田野与蔚蓝大海，衣物的红绿对比鲜明。",
+        "lighting": "风和日丽，阳光普照，视野广阔，充满期待的宁静。",
+        "symbols": [
+          {
+            "name": "眺望大海的背影",
+            "meaning": "前瞻性，对外界动向的观察，等待远航船只的归来。"
+          }
+        ],
+        "story": "一位领主站在海角的高地上眺望远方，海面上正航行着几艘货船或商船。三根权杖在地面稳固竖立，表征他已做好出发的准备，正在等待机遇与成果返航。",
+        "pitfalls": "画面中没有正面人物，**只有背侧影像**，重点在于**观望与等待**。远处的**船只**非常细小，容易被漏看，但它们代表着已经**投入了行动**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 4,
+          "rank": -6.9231,
+          "final": 6,
+          "basis": "established strength; trade; cooperation; expansion"
+        },
+        "reversed": {
+          "semantic": 5,
+          "dynamic": 2,
+          "rank": -6.9231,
+          "final": 4,
+          "basis": "end of trouble; relief; adversity suspended"
+        }
+      }
+    },
+    {
+      "id": "wands-04",
+      "name": "权杖四",
+      "nameEn": "Four of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 4,
+      "image": "cards/wands-04.webp",
+      "visual": {
+        "sourceHeading": "权杖四 | 权杖04_权杖四.webp",
+        "direction": "人群与城堡面向观者，两支庆祝的队伍向画面中央靠拢。",
+        "posture": "画面中央前方，四根权杖直立，顶端绑着红色的丝带与巨大的花环（包含果实与葡萄串）。背景是一座白石城堡，两名女子（一人穿蓝衣、一人穿棕衣）举着花束，人群（或两名人物）在桥头迎接。",
+        "colors": "明艳的金黄色天空，白色的城堡，嫩绿色的草地，权杖上红黄绿交织的花环丝带。",
+        "lighting": "明媚的晴天，户外庆祝，光线温暖明亮。",
+        "symbols": [
+          {
+            "name": "四根权杖与花环",
+            "meaning": "完美的稳固结构、庇护与庆祝，代表欢庆的界限。"
+          }
+        ],
+        "story": "在一座白墙红瓦的城门前，四根权杖搭起了一个象征庇护与庆祝的拱门，花环与红丝带飘动其间。人们带着鲜花开心地走来，庆祝着安居乐业、新居落成或丰收的喜悦时刻。",
+        "pitfalls": "四根权杖上的**花环**画得非常细致（有葡萄与红花），代表着**物质与精神的共同丰收**，不是单纯的四根木棍。城堡是**在背景之中**，而不是四根权杖直接插在城堡顶。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 2,
+          "rank": -5.3846,
+          "final": 6,
+          "basis": "concord; prosperity; repose; celebration"
+        },
+        "reversed": {
+          "semantic": 7,
+          "dynamic": 1,
+          "rank": -5.3846,
+          "final": 5,
+          "basis": "prosperity largely retained; benefit delayed or private"
+        }
+      }
+    },
+    {
+      "id": "wands-05",
+      "name": "权杖五",
+      "nameEn": "Five of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 5,
+      "image": "cards/wands-05.webp",
+      "visual": {
+        "sourceHeading": "权杖五 | 权杖05_权杖五.webp",
+        "direction": "五个人物呈不规则分布，互相交叉挥舞权杖，面朝不同方向。",
+        "posture": "五个年轻男子在一片绿地上，手中各自挥舞着权杖向上击打。中间穿着红色上衣的男子与周围穿黄、蓝、绿衣服的男子形成互不相让的对抗或竞技姿态。",
+        "colors": "明亮的浅蓝色天空，翠绿色的草地，人物服饰以红、黄、蓝、绿等鲜艳色彩交织。",
+        "lighting": "晴朗的白天，光线充足，充满活力的户外场景。",
+        "symbols": [
+          {
+            "name": "互相挥舞的权杖",
+            "meaning": "象征竞争、冲突、不同意见的交锋，但也代表没有真正敌意的模拟战或努力。"
+          }
+        ],
+        "story": "五个勇士在绿地上挥舞着权杖互相比划击打，场面似乎混乱无序，但彼此并没有真正致伤对方。这更像是一种肌肉的消耗、热身的竞技，或者是不同观点在同一频率上的猛烈碰撞。",
+        "pitfalls": "虽然是\"打架\"，但**没有流血**，**没有真正的杀戮意图**，这是一场**象征性的竞争**或**观点上的争执**，而非生死攸关的战斗。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -2,
+          "dynamic": -6,
+          "rank": -3.8462,
+          "final": -3,
+          "basis": "competition; struggle; contested gain"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -6,
+          "rank": -3.8462,
+          "final": -6,
+          "basis": "litigation; dispute; trickery; contradiction"
+        }
+      }
+    },
+    {
+      "id": "wands-06",
+      "name": "权杖六",
+      "nameEn": "Six of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 6,
+      "image": "cards/wands-06.webp",
+      "visual": {
+        "sourceHeading": "权杖六 | 权杖06_权杖六.webp",
+        "direction": "骑士骑着白马向画面左侧行进，面朝左侧。",
+        "posture": "一位身穿绿色斗篷、头戴桂冠的骑士骑在白色战马上，右肩扛着一根绑有花环（由红丝带系着）的权杖。他身后跟随着手持权杖的人，高挂在空中。",
+        "colors": "蓝天下的绿地，骑士身披红绿色调的斗篷，白马尤为醒目，黄色与红色的丝带装饰。",
+        "lighting": "阳光明媚的白天，凯旋的队伍在晴朗的天气中行进。",
+        "symbols": [
+          {
+            "name": "头戴桂冠与马饰",
+            "meaning": "胜利的象征，获得他人的认可与荣耀。"
+          }
+        ],
+        "story": "骑士带着荣耀的桂冠和绑满花环的权杖骑马凯旋，身后跟随着手持权杖的队伍。他在人群中受到瞩目，这是一段充满骄傲与自我价值感的成功篇章。",
+        "pitfalls": "骑士头上的**桂冠**与权杖上绑的**花环**是相呼应的，凸显\"**双重胜利**\"的意象。他身后举着权杖的**不是敌人**，而是拥护他的**追随者**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 8,
+          "rank": -2.3077,
+          "final": 8,
+          "basis": "victory; good news; recognition; progress"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -3,
+          "rank": -2.3077,
+          "final": -5,
+          "basis": "apprehension; delay; treachery; fear"
+        }
+      }
+    },
+    {
+      "id": "wands-07",
+      "name": "权杖七",
+      "nameEn": "Seven of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 7,
+      "image": "cards/wands-07.webp",
+      "visual": {
+        "sourceHeading": "权杖七 | 权杖07_权杖七.webp",
+        "direction": "人物面朝左侧，呈防御姿态，目光向上注视着地面升起的权杖。",
+        "posture": "一位身穿绿色外衣和黄色裤子的年轻男子站在陡坡上，双手斜握着一根粗壮的权杖。他的下方，有六根权杖从地面向上斜刺而出，形成围堵或挑战的阵势。",
+        "colors": "浅紫色的天空，绿色的山丘与坡地，服饰与权杖的暖黄与棕绿色。",
+        "lighting": "白昼，光线平稳，但带有对峙的紧张感。",
+        "symbols": [
+          {
+            "name": "一人持杖对六人",
+            "meaning": "以少敌多，坚守阵地，抵御外部的压力与挑战。"
+          }
+        ],
+        "story": "身居高地的勇士以一己之力举起权杖，抵挡住下方接连刺来的六根杖。局面虽然众寡悬殊，但他占据地形之利，表现出坚定捍卫自己立场、抗拒外界压力的顽强精神。",
+        "pitfalls": "下方升起的**六根权杖**是**从下往上**刺来的，方向明确指向人物，这代表**外部的压力**。人物并不是在主动进攻，而是处于**坚守堡垒**的防御状态。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 6,
+          "rank": -0.7692,
+          "final": 6,
+          "basis": "valor; advantage; defense; perseverance"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -3,
+          "rank": -0.7692,
+          "final": -4,
+          "basis": "perplexity; embarrassment; anxiety; indecision"
+        }
+      }
+    },
+    {
+      "id": "wands-08",
+      "name": "权杖八",
+      "nameEn": "Eight of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 8,
+      "image": "cards/wands-08.webp",
+      "visual": {
+        "sourceHeading": "权杖八 | 权杖08_权杖八.webp",
+        "direction": "权杖从画面左上角向右下角倾斜飞驰。",
+        "posture": "八根权杖排成一排，在空中以极快的速度同步向前飞行（自左上向右下横穿画面）。它们没有人物把持，仅有底部的绿色山丘、河流与村庄作背景。",
+        "colors": "开阔的浅蓝色天空，权杖的青黄色与嫩绿叶芽，下方是绿野、河流与远处的白墙村庄。",
+        "lighting": "轻快的白天，空气清澈，有着流云般快速移动的动感。",
+        "symbols": [
+          {
+            "name": "飞行中的八根权杖",
+            "meaning": "行动、速度、没有阻滞、事情快速推进。"
+          }
+        ],
+        "story": "八根权杖犹如被射出弓弦的箭矢，同时划破天空向远方疾驰。画面没有人物，只有下方静谧的田园，暗示事物的发展已经进入快速通道，信息或行动即将以迅雷之势抵达终点。",
+        "pitfalls": "权杖是**无重力飘浮/飞行**的，代表**飞跃与即时通讯**，而不是插在地面或是静止的。下方的小村庄代表这种爆发式的行动将会**直达现实生活层面**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 10,
+          "rank": 0.7692,
+          "final": 8,
+          "basis": "activity; speed; movement; swift result"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -6,
+          "rank": 0.7692,
+          "final": -5,
+          "basis": "quarrel; jealousy; delay; scattered motion"
+        }
+      }
+    },
+    {
+      "id": "wands-09",
+      "name": "权杖九",
+      "nameEn": "Nine of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 9,
+      "image": "cards/wands-09.webp",
+      "visual": {
+        "sourceHeading": "权杖九 | 权杖09_权杖九.webp",
+        "direction": "人物面朝画面左侧，目光警觉地望向左侧后方。",
+        "posture": "一位头戴白色头巾、身穿橘红色短外衣与绿色靴子的男子，双手握住一根权杖直立在地上，神情紧张。他的身后紧密排列着八根权杖，形成一道栅栏/屏障。",
+        "colors": "清淡的浅蓝与白色天空，绿色的草地，人物与权杖呈现明亮的橘黄与棕褐色。",
+        "lighting": "光线明亮的白天，但氛围带着疲惫与警惕。",
+        "symbols": [
+          {
+            "name": "身后的八根权杖栅栏",
+            "meaning": "代表已经经历过的重重考验与挫折。"
+          }
+        ],
+        "story": "一个满脸伤痕、神情疲惫的战士将权杖重重地杵在地上，后背靠着由八根权杖组成的防线。尽管他看起来很劳累，但目光依然警惕地望向四周，准备抵御下一步可能出现的攻击。",
+        "pitfalls": "他身后的权杖是一个**围栏（屏障）**，代表他**防御的是过去的创伤**。他的头**转向后侧**，这意味着他并没有完全战胜内心的防御机制，依然保持高度戒备。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 3,
+          "dynamic": 2,
+          "rank": 2.3077,
+          "final": 3,
+          "basis": "strength in opposition; vigilance; persistence"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": 2.3077,
+          "final": -5,
+          "basis": "obstacle; adversity; calamity; depleted defense"
+        }
+      }
+    },
+    {
+      "id": "wands-10",
+      "name": "权杖十",
+      "nameEn": "Ten of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 10,
+      "image": "cards/wands-10.webp",
+      "visual": {
+        "sourceHeading": "权杖十 | 权杖10_权杖十.webp",
+        "direction": "人物弯着腰、低着头，面朝右侧艰难前行。",
+        "posture": "一位身穿黄橙色衣服的男子正艰难地弯腰前行，双手吃力地抱住十根沉重的权杖。他的背由于负重而严重弯折，眼睛和面部隐藏在权杖的阴影中。",
+        "colors": "明亮的浅色天空，黄色的土地，人物的衣服偏橙色与白色。",
+        "lighting": "白天，光线明亮，但沉重的负担让画面笼罩在压迫感中。",
+        "symbols": [
+          {
+            "name": "十根沉重的权杖",
+            "meaning": "极度沉重的压力、责任过载、无法推脱的任务。"
+          }
+        ],
+        "story": "一个人扛着十根比他身体还宽大的权杖，踉踉跄跄地走向远处的村落。他的背被压得弯了下去，几乎快要被压倒，但他依然在拼命前行。这代表了压力达到了极限的临界点。",
+        "pitfalls": "他的身影**完全被权杖遮挡**，说明**任务已经完全裹挟了他的生活**。远处的那个**村庄（目的地）**非常微小，提示他虽然辛苦，但距离目标已经**极其接近**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": 3.8462,
+          "final": -4,
+          "basis": "oppression; burden; success made heavy"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -5,
+          "rank": 3.8462,
+          "final": -5,
+          "basis": "difficulty; intrigue; contradiction; blocked completion"
+        }
+      }
+    },
+    {
+      "id": "wands-11",
+      "name": "权杖侍从",
+      "nameEn": "Page of Wands",
+      "aliases": [
+        "权杖侍者"
+      ],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 11,
+      "image": "cards/wands-11.webp",
+      "visual": {
+        "sourceHeading": "权杖侍从 | 权杖11_权杖侍从.webp",
+        "direction": "侍从面朝右侧，微微仰头看向权杖的顶端。",
+        "posture": "一个年轻的金发男孩，头戴插着一根红色羽毛的浅紫色帽子，身穿饰有黑色鳞片状（或火焰状）图案的短外衣与黄色披风。他双手握着权杖直立在地面上，好奇地注视着刚发芽的杖尖。",
+        "colors": "纯白/浅蓝的天空，黄赭色的荒漠/山丘地带，男孩穿着明黄、鲜红、紫色衣物。",
+        "lighting": "光线明亮干燥，沙漠地带开阔，充满跃跃欲试的朝气。",
+        "symbols": [
+          {
+            "name": "萌芽的权杖",
+            "meaning": "崭新消息的发现、灵感的火花、探索欲望。"
+          }
+        ],
+        "story": "年轻的权杖侍从站在一片荒漠中，双手握着一根刚刚长出嫩芽的权杖，正专注地凝视着枝头那一片蓬勃的生命。他充满了青春的好奇与探索的激情，象征着新消息、新想法的到来。",
+        "pitfalls": "他的衣服上的**图案**是黑色的、像火焰/鳞片一样的图腾，不是普通的豹纹，这代表着**权杖（火元素）**的特质。他的目光**朝上看着叶芽**，代表他目前处于**观察和发现**的状态。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": 6,
+          "rank": 5.3846,
+          "final": 5,
+          "basis": "favorable message; curiosity; early exploration"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": 5.3846,
+          "final": -4,
+          "basis": "bad news; indecision; instability"
+        }
+      }
+    },
+    {
+      "id": "wands-12",
+      "name": "权杖骑士",
+      "nameEn": "Knight of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 12,
+      "image": "cards/wands-12.webp",
+      "visual": {
+        "sourceHeading": "权杖骑士 | 权杖12_权杖骑士.webp",
+        "direction": "骑士与马匹向画面左侧疾驰，呈奔腾跳跃状。",
+        "posture": "一位身披铠甲、头戴头盔（配红色翎毛）的骑士，骑在一匹发黄的棕马上，马匹前蹄高高扬起。他一手握紧缰绳，一手高擎着长有绿叶的权杖。",
+        "colors": "明黄色的沙土地，浅蓝色天空，骑士明亮的黄色与蓝色铠甲，马匹的红棕色，以及鲜艳的红色羽毛。",
+        "lighting": "干燥、炎热，光线强烈，显现出沙漠荒野的热烈气候。",
+        "symbols": [
+          {
+            "name": "高扬的权杖",
+            "meaning": "热情如火的行动力，急于冲锋、开拓新境。"
+          }
+        ],
+        "story": "权杖骑士骑着一匹跃起的战马，快速冲过干燥的沙漠地带。他高举着权杖，红翎毛随风飘动，散发着强烈的自信与无法阻挡的行动欲，仿佛没有什么能阻止他的远征。",
+        "pitfalls": "权杖骑士骑的**不是白马**，而是**红褐色的马**，与宝剑/战车牌的白马作区分，代表他的能量更偏向**火与激情**。马匹呈现**腾空**状态，将人物性格中\"**冲动**\"的特质放大。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 2,
+          "dynamic": 10,
+          "rank": 6.9231,
+          "final": 3,
+          "basis": "departure; movement; adventure; rapid change"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -8,
+          "rank": 6.9231,
+          "final": -6,
+          "basis": "rupture; discord; interruption; reckless motion"
+        }
+      }
+    },
+    {
+      "id": "wands-13",
+      "name": "权杖王后",
+      "nameEn": "Queen of Wands",
+      "aliases": [
+        "权杖女王"
+      ],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 13,
+      "image": "cards/wands-13.webp",
+      "visual": {
+        "sourceHeading": "权杖王后 | 权杖13_权杖王后.webp",
+        "direction": "王后端坐在王座上，面朝正前方，目光笃定。",
+        "posture": "一位金发头戴王冠的女性，身穿明黄色的长裙与浅灰色披肩，端坐在宝座上。右手握着一根权杖（顶端有嫩芽），左手持一朵巨大的向日葵。脚边蹲着一只黑色猫。",
+        "colors": "金黄色的墙面背景，王后明黄色的裙袍，灰色的披肩，黄橙色的向日葵与座椅。",
+        "lighting": "室内场景，但光线温暖明亮，充满向阳的生命力。",
+        "symbols": [
+          {
+            "name": "向日葵",
+            "meaning": "代表阳光、生命力、自信、不屈不挠的精神。"
+          }
+        ],
+        "story": "权杖王后端坐于她的太阳宝座上，一手拿着向日葵，一手握着权杖。身边的黑猫安静地卧在脚边，透露出她独当一面的自信心和充沛的生命力。她既有耀眼的光芒，又深谙内在的直觉。",
+        "pitfalls": "她**左手拿的是向日葵**，而不是权杖，右手才是握权杖，这是协调**权力（行动力）与自我认同（向日葵）**的表现。黑猫蹲在她右脚侧，代表女性的**神秘直觉与独立**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 5,
+          "rank": 8.4615,
+          "final": 7,
+          "basis": "warmth; honor; attraction; practical success"
+        },
+        "reversed": {
+          "semantic": -2,
+          "dynamic": -2,
+          "rank": 8.4615,
+          "final": -1,
+          "basis": "jealousy; opposition; deceit; constrained goodwill"
+        }
+      }
+    },
+    {
+      "id": "wands-14",
+      "name": "权杖国王",
+      "nameEn": "King of Wands",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": 14,
+      "image": "cards/wands-14.webp",
+      "visual": {
+        "sourceHeading": "权杖国王 | 权杖14_权杖国王.webp",
+        "direction": "国王面朝画面左侧，目光注视前方。",
+        "posture": "一位头戴王冠的长须国王，身穿橙红色长袍和灰绿色披肩，端坐于宝座上。他右手轻轻搭在垂直竖立的权杖上，左手放在膝盖上。脚边有一只褐色蜥蜴（或变色龙）。",
+        "colors": "高饱和度的橙红色系（国王长袍、椅背图案），亮黄色的底面，灰绿色的披肩，以及背景中的金黄色调。",
+        "lighting": "室内/王座殿，光线集中且明亮，画面充满秩序与威严。",
+        "symbols": [
+          {
+            "name": "稳握的权杖",
+            "meaning": "象征成熟的领导力，对自己的地位与决断充满自信。"
+          }
+        ],
+        "story": "权杖国王端坐于王座上，身形宽厚，神态安详却不可侵犯。他手握权杖，就像掌握着全部的行动力与远见。在权威之下，又有变色龙般敏锐的适应力，是一位能够将愿景化为现实的王者。",
+        "pitfalls": "权杖国王的**权杖是竖直立于地面**的，但他只是**轻轻搭在上面**，表明他不需要用力握紧就已经拥有了绝对的掌控力。脚边的**蜥蜴**容易被误判为蜘蛛或普通爬虫，但它正是权杖国王**敏锐洞察**的专属符号。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 6,
+          "rank": 10,
+          "final": 7,
+          "basis": "leadership; honesty; enterprise; sound advice"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -3,
+          "rank": 10,
+          "final": -3,
+          "basis": "severity; intolerance; exacting control"
+        }
+      }
+    },
+    {
+      "id": "cups-01",
+      "name": "圣杯王牌",
+      "nameEn": "Ace of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 1,
+      "image": "cards/cups-01.webp",
+      "visual": {
+        "sourceHeading": "圣杯王牌 | 圣杯01_圣杯王牌.webp",
+        "direction": "圣杯竖直向上，神之手与圣杯位于画面正中央。",
+        "posture": "一只从右侧云层伸出的手，手掌向上托举着一个金色的圣杯。一只白鸽从上方垂直俯冲而下，嘴里衔着一枚带有十字的圆片（圣饼），正投入杯中。五股蓝色的水流从圣杯中倾泻而出，落入下方的水池。",
+        "colors": "明亮的白/浅灰色云层，金黄色的圣杯，纯白的鸽子，蓝色的水流与清澈的池塘，点缀着绿色的睡莲叶片与红白小莲花。",
+        "lighting": "明亮清澈，神圣的光芒仿佛从杯中散发出来，充满爱的恩典。",
+        "symbols": [
+          {
+            "name": "白鸽与圣饼",
+            "meaning": "代表圣灵、神圣的祝福、情感的净化与精神的富足。"
+          }
+        ],
+        "story": "一只托着金杯的手从云中出现，鸽子衔着圣餐饼投入杯中，大量的水如瀑布般流向池塘。它象征着爱、慈悲与情感能量的源头正在无限涌流，给世界带来滋润和恩赐。",
+        "pitfalls": "杯中的水是**向上溢出**的（流向四面八方），代表着**无限丰沛的情感**，而不是静止的水。白鸽**衔着的圣饼带有十字**，极容易看成普通硬币，这是**灵性（圣体）**的关键象征。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 6,
+          "rank": -10,
+          "final": 8,
+          "basis": "joy; contentment; love; emotional abundance"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -10,
+          "final": -6,
+          "basis": "false heart; instability; emotional disruption"
+        }
+      }
+    },
+    {
+      "id": "cups-02",
+      "name": "圣杯二",
+      "nameEn": "Two of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 2,
+      "image": "cards/cups-02.webp",
+      "visual": {
+        "sourceHeading": "圣杯二 | 圣杯02_圣杯二.webp",
+        "direction": "男女双方相对而站，面朝彼此，目光交汇。",
+        "posture": "一对青年男女相对而站，各自手持一个金色圣杯，两人正将圣杯平举并交换/碰杯。左侧女子身穿白蓝长袍、头戴桂冠；右侧男子身穿带有火焰/黑色斑点图案的短袍与花冠。两人头顶上方悬浮着一个巨大的带翼狮头（或墨丘利双蛇杖）。",
+        "colors": "柔和的浅蓝色天空，绿色的草地与远处的红色小屋，两人的服饰呈现浅蓝、紫白与黄褐色系。",
+        "lighting": "明朗温暖的白天，光感和煦，充满和谐与亲密的气息。",
+        "symbols": [
+          {
+            "name": "交换的圣杯",
+            "meaning": "情感的交流、互相理解、平等伴侣关系。"
+          }
+        ],
+        "story": "两个年轻人在旷野中相遇，目光温柔地交汇，将各自手中的圣杯真诚地递给对方。上方神圣的狮头双蛇杖正在祝福他们的结合，代表两颗心灵的平等沟通与完美契合。",
+        "pitfalls": "头顶上方的图案是**带翅膀的狮子头+双蛇杖（墨丘利杖）**，这是**调和/治愈**的象征，并不是爱情魔法阵或普通狮身人面像。两人手中的杯子是**彼此平举**的，而不是交杯酒式的相碰。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 5,
+          "rank": -8.4615,
+          "final": 8,
+          "basis": "love; partnership; affinity; mutual exchange"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -8.4615,
+          "final": -6,
+          "basis": "false love; misunderstanding; broken affinity"
+        }
+      }
+    },
+    {
+      "id": "cups-03",
+      "name": "圣杯三",
+      "nameEn": "Three of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 3,
+      "image": "cards/cups-03.webp",
+      "visual": {
+        "sourceHeading": "圣杯三 | 圣杯03_圣杯三.webp",
+        "direction": "三位少女围成一圈，面朝画面中心。",
+        "posture": "三名戴着花冠的年轻女性站在一起，各自高举着一个金色的圣杯，举杯相庆。她们的服饰分为白、红、黄三色，身姿翩翩起舞。地面上散落着南瓜、葡萄和藤蔓。",
+        "colors": "明亮的浅白/浅蓝天空，绿色的草地，长袍的大红、纯白与明黄，金色的圣杯。",
+        "lighting": "户外的晴朗白日，光线充盈，充满着愉悦、生机与庆祝的氛围。",
+        "symbols": [
+          {
+            "name": "高举的三个圣杯",
+            "meaning": "庆祝、成功、喜悦与情感上的分享。"
+          }
+        ],
+        "story": "三位少女在草地上高举金色圣杯，围成一圈欢快地起舞。地上南瓜与葡萄丰盛，仿佛刚刚完成了一项成功的合作或庆贺了一段深厚的友谊，尽情享受着集体带来的情感满足。",
+        "pitfalls": "地上的是**南瓜和葡萄**，代表**丰收与喜悦**。虽然牌面看起来像是在喝酒，但核心在于**三人之间的纽带**，而非酒精本身。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 6,
+          "rank": -6.9231,
+          "final": 7,
+          "basis": "celebration; abundance; conclusion; community"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": -6.9231,
+          "final": -4,
+          "basis": "excess; overindulgence; diluted celebration"
+        }
+      }
+    },
+    {
+      "id": "cups-04",
+      "name": "圣杯四",
+      "nameEn": "Four of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 4,
+      "image": "cards/cups-04.webp",
+      "visual": {
+        "sourceHeading": "圣杯四 | 圣杯04_圣杯四.webp",
+        "direction": "人物背靠大树，面朝画面左侧（低垂目光）。",
+        "posture": "一个年轻人穿着红色上衣和灰白色外衣，双腿交叉坐在树下的草地上，双手交叠抱于胸前，目光低垂。他的面前地面上摆着三个金色的圣杯，而左侧的云端伸出一只手，正递来第四个圣杯。",
+        "colors": "清澈的浅蓝色天空，大树的深棕色与绿叶，人物衣物的红白灰色调，以及明亮的金色圣杯。",
+        "lighting": "白天的户外，光线柔和，但氛围略显无聊或停滞。",
+        "symbols": [
+          {
+            "name": "手臂交叉的姿态",
+            "meaning": "拒绝接受、冷漠、自我封闭、对现状感到厌倦。"
+          }
+        ],
+        "story": "一个年轻人坐在树下，双手抱胸，面露倦怠之色，对面前的三只杯子毫无兴致。一只无形的手从云朵中探出，试图递给他第四个杯子，但他完全沉浸在自己的不满中，没有抬头去看。",
+        "pitfalls": "云里伸出的**手并不是在递恶意的东西**，而是在提供**一个额外的机会**。地上的三个杯不是空杯，而是他**已经拥有的**一切。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -3,
+          "dynamic": -3,
+          "rank": -5.3846,
+          "final": -3,
+          "basis": "weariness; dissatisfaction; emotional withdrawal"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 4,
+          "rank": -5.3846,
+          "final": 4,
+          "basis": "novelty; new relation; renewed interest"
+        }
+      }
+    },
+    {
+      "id": "cups-05",
+      "name": "圣杯五",
+      "nameEn": "Five of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 5,
+      "image": "cards/cups-05.webp",
+      "visual": {
+        "sourceHeading": "圣杯五 | 圣杯05_圣杯五.webp",
+        "direction": "人物面朝左侧低头，背对身后的河流与桥梁。",
+        "posture": "一个穿着深黑色长斗篷的人，低头站在黄土地上，似乎沉浸在极大的悲伤中。他的面前有三个倾倒的圣杯，杯中的红色液体正流淌到地上。而在他的身后，地面上仍然直立着两个满杯。",
+        "colors": "灰白/浅蓝色的天空，黄色的地面，深黑/藏青色的斗篷，金色的圣杯与红色的酒水。",
+        "lighting": "阴天或雨后，光线暗淡，充满失落与哀伤的氛围。",
+        "symbols": [
+          {
+            "name": "三个倾覆的圣杯",
+            "meaning": "失去、错过、情感上的创伤或破裂。"
+          }
+        ],
+        "story": "披着黑色斗篷的人站在河边，悲伤地望着倾倒在地的圣杯，红酒流进尘土。他完全沉浸在失去中，却没有回头去看背后那两个依然直立的圣杯，也不曾注意到身后的河流与沟通的桥梁。",
+        "pitfalls": "画面**不仅仅是三个倾覆的杯**，背后**还有两个立着的圣杯**，这是极其关键的提示：**并非全盘皆输**。背后的**河流与桥**代表还有转机，只是人物**尚未转身**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -3.8462,
+          "final": -6,
+          "basis": "loss; regret; incomplete inheritance; grief"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 3,
+          "rank": -3.8462,
+          "final": 3,
+          "basis": "return; alliance; news; renewed hope"
+        }
+      }
+    },
+    {
+      "id": "cups-06",
+      "name": "圣杯六",
+      "nameEn": "Six of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 6,
+      "image": "cards/cups-06.webp",
+      "visual": {
+        "sourceHeading": "圣杯六 | 圣杯06_圣杯六.webp",
+        "direction": "孩童站在画面中央，相互递花，面朝彼此。",
+        "posture": "在一片充满回忆的老旧庭院或村庄前，四个金色的圣杯插满着白色的花朵（或星星花）摆放在前方。一个身穿红兜帽和蓝裙的小女孩，正将高杯中的白花递给身边穿着黄衣的小男孩。背景是一个高台上放着另一个盛满花朵的圣杯。",
+        "colors": "柔和的浅蓝色天空，黄色的土地与庭院，孩童衣物色彩鲜明（红、蓝、黄）。远处的房屋有灰色的屋顶与白墙。",
+        "lighting": "充满回忆的柔光，白天，庭院里显得宁静而纯真。",
+        "symbols": [
+          {
+            "name": "四个地上的满杯花",
+            "meaning": "纯洁的情谊、无条件的付出与爱。"
+          }
+        ],
+        "story": "在一个宁静的旧日庭院里，两个孩子互相传递着花朵。周围摆满盛满白花的圣杯，时光仿佛在这一刻停驻。这是一种无私的、具有乡愁滤镜的纯真情感联系。",
+        "pitfalls": "杯子里装的是**白花**（有些版本认为是白百合，代表纯洁），不是水，也不是酒。这两个孩子**不一定**是兄弟姐妹或情侣，他们代表的是**毫无防备的纯真关系**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": 1,
+          "rank": -2.3077,
+          "final": 4,
+          "basis": "memory; gifts; childhood; familiar kindness"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 4,
+          "rank": -2.3077,
+          "final": 4,
+          "basis": "future renewal; new relations; what will come"
+        }
+      }
+    },
+    {
+      "id": "cups-07",
+      "name": "圣杯七",
+      "nameEn": "Seven of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 7,
+      "image": "cards/cups-07.webp",
+      "visual": {
+        "sourceHeading": "圣杯七 | 圣杯07_圣杯七.webp",
+        "direction": "黑色剪影背对画面，面向云层中的七个圣杯。",
+        "posture": "一个黑色的剪影人物站在画面左下角，背对观众，举起一只手似乎在惊叹或凝视。他的面前，七朵云层之上漂浮着七个金色的圣杯，每个杯子里都盛着不同寓意的幻象。",
+        "colors": "深紫色的天空背景，白色/浅灰的云层，金色的圣杯。杯中幻象色彩丰富：蓝色的人脸、红色披纱的人影、黄色的蛇、紫色的龙、绿色的花环等。",
+        "lighting": "充满迷幻色彩的夜晚或黄昏，光自云端那七个杯子中投射下来。",
+        "symbols": [
+          {
+            "name": "七只不同的杯子",
+            "meaning": "代表多重选择、诱惑、幻象（包括：人脸、披纱人像、蛇、城堡、珠宝、花环、龙）。"
+          }
+        ],
+        "story": "一个黑色的背影站在暗色的夜幕下，面对悬浮在云层中的七个圣杯。杯中的景象变幻莫测，代表诱人的幻想、欲望和选择。他伸出手想要抓住，却发现它们如云雾般难以捉摸。",
+        "pitfalls": "**杯子是漂浮在云上的**，代表这些愿望都在**构想阶段（未能落地）**。杯中的幻象，特别是那个**婴儿/人脸和红袍人**，极其容易被当作真人，但那只是杯子里的**影像/幻象**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -3,
+          "dynamic": 0,
+          "rank": -0.7692,
+          "final": -2,
+          "basis": "illusion; fantasy; many unreal options"
+        },
+        "reversed": {
+          "semantic": 5,
+          "dynamic": 5,
+          "rank": -0.7692,
+          "final": 5,
+          "basis": "will; determination; project; chosen direction"
+        }
+      }
+    },
+    {
+      "id": "cups-08",
+      "name": "圣杯八",
+      "nameEn": "Eight of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 8,
+      "image": "cards/cups-08.webp",
+      "visual": {
+        "sourceHeading": "圣杯八 | 圣杯08_圣杯八.webp",
+        "direction": "人物背对画面，正向着荒芜的群山走去，面朝右上方。",
+        "posture": "一名身穿红袍、拄着拐杖的旅人，正背对着地上的八个圣杯，向远处崎岖、荒芜的山岭攀爬。天上一轮映着人面的月亮。",
+        "colors": "深蓝/紫色的夜空，金黄色的残月，青绿与灰黑交错的险峻山脉，人物红袍的颜色十分醒目。",
+        "lighting": "深夜，月光洒在山野之上，氛围孤独而坚定。",
+        "symbols": [
+          {
+            "name": "撇下的八个圣杯",
+            "meaning": "主动放弃现有的情感、安稳或人际关系，寻求更高的精神意义。"
+          }
+        ],
+        "story": "在凄冷的月光下，一个旅人把八个堆叠完好的圣杯留在了河边，转身独自走向荒凉陡峭的群山。他放弃了现有的舒适与情感满足，踏上了一条寻找更高意义和内心觉知的孤独旅途。",
+        "pitfalls": "这**八个圣杯是完整的、直立摆放的**，并不是打翻的。人物是**主动转身离开**，而不是被逼走的。月亮**有人脸**，表明这是情绪的暗示与潜意识的驱动力。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -4,
+          "dynamic": -6,
+          "rank": 0.7692,
+          "final": -4,
+          "basis": "abandonment; decline; leaving what failed"
+        },
+        "reversed": {
+          "semantic": 7,
+          "dynamic": 6,
+          "rank": 0.7692,
+          "final": 7,
+          "basis": "joy; happiness; feasting; renewed engagement"
+        }
+      }
+    },
+    {
+      "id": "cups-09",
+      "name": "圣杯九",
+      "nameEn": "Nine of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 9,
+      "image": "cards/cups-09.webp",
+      "visual": {
+        "sourceHeading": "圣杯九 | 圣杯09_圣杯九.webp",
+        "direction": "人物面朝正前方，双手交叉于胸前，目光直视。",
+        "posture": "一位头戴红帽、帽檐插着红色羽毛、身穿白底蓝条纹长袍的男子，双腿交叉坐在矮凳上。他神情惬意、嘴角微扬，双手交握在胸前，一副极其满意和自得的样子。身后呈半圆形的台板上，摆放着九个金杯。",
+        "colors": "明亮的纯黄色背景，深蓝色的帷幕，金黄色的圣杯，人物白色衣袍与红色帽子形成鲜明对比。",
+        "lighting": "室内场景，光线温暖金黄，充满丰足与安乐的氛围。",
+        "symbols": [
+          {
+            "name": "九个金杯半圆排列",
+            "meaning": "情感的极大满足、物质与精神的丰收、愿望得以实现。"
+          }
+        ],
+        "story": "一位丰衣足食的男子安坐于金色帷幕前，身后九只金杯整齐地呈半圆环抱。他交叉双臂，面含满足的微笑，仿佛刚刚获得了极大的情感慰藉与物质丰收，正沉浸在自给自足的愉悦之中。",
+        "pitfalls": "桌上的九个圣杯是**整整齐齐的弧形排列**（不是堆叠），显得非常有**秩序感和富足感**。他交叉双手的姿态是代表**满足**，而非防御。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 3,
+          "rank": 2.3077,
+          "final": 8,
+          "basis": "material happiness; satisfaction; wish fulfilled"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 1,
+          "rank": 2.3077,
+          "final": 3,
+          "basis": "truth; loyalty; liberty; imperfect fulfillment"
+        }
+      }
+    },
+    {
+      "id": "cups-10",
+      "name": "圣杯十",
+      "nameEn": "Ten of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 10,
+      "image": "cards/cups-10.webp",
+      "visual": {
+        "sourceHeading": "圣杯十 | 圣杯10_圣杯十.webp",
+        "direction": "一家人面向天空，望向天空中的彩虹与金杯。",
+        "posture": "在绿水青山之间，一对夫妇（蓝衣女子和黄橙衣男子）相拥并高举双臂指向天空，旁边有两个孩子在欢快地牵着手跳舞。天空中，一道明亮的彩虹横跨半空，十个金色圣杯依次排列在彩虹之上。",
+        "colors": "明亮的蓝天，鲜艳的彩虹与金杯，绿色的山丘，远处的红顶白墙小屋。衣物的蓝、黄、紫色彩鲜明。",
+        "lighting": "雨后初晴，光线明亮灿烂，充满祥和的氛围。",
+        "symbols": [
+          {
+            "name": "彩虹中的十个圣杯",
+            "meaning": "超越物质的完美情感和谐、心灵的圆满、天堂般的幸福。"
+          }
+        ],
+        "story": "在一幅田园诗般的和谐画面中，一对夫妻拥抱在一起，向天空中排列着十只圣杯的彩虹表达感恩。孩子们在草地上欢快起舞，一切充满了极致的情感圆满和家庭安定，象征着幸福的极致状态。",
+        "pitfalls": "**十个圣杯排列在彩虹上**（而不是天空中的云朵），这代表了一种**跨越尘世、极其理想化的情感状态**。地上的**红顶白墙小房**非常重要，它代表这种幸福是**扎根于家中的**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 10,
+          "dynamic": 4,
+          "rank": 3.8462,
+          "final": 9,
+          "basis": "contentment; family happiness; lasting harmony"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -5,
+          "rank": 3.8462,
+          "final": -6,
+          "basis": "discord; false heart; disrupted home"
+        }
+      }
+    },
+    {
+      "id": "cups-11",
+      "name": "圣杯侍从",
+      "nameEn": "Page of Cups",
+      "aliases": [
+        "圣杯侍者"
+      ],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 11,
+      "image": "cards/cups-11.webp",
+      "visual": {
+        "sourceHeading": "圣杯侍从 | 圣杯11_圣杯侍从.webp",
+        "direction": "侍从面朝画面右侧（或正前方偏右），低头看向手中的圣杯。",
+        "posture": "一位年轻的金发侍从，头戴一顶有长流苏垂下、带羽毛的蓝色帽子，身穿饰有白色莲花（或百合）图案的蓝色短外衣，粉色内衬和黄色靴子。他左手叉腰，右手平稳地托起一个金色的圣杯，正注视着从杯中探出头来的一条鱼。",
+        "colors": "明亮的浅蓝色天空与波浪，侍从服装的蓝、粉、黄交织，金黄色的杯子与银灰色的鱼。",
+        "lighting": "晴朗的白天，水面波光粼粼，光线清晰透亮。",
+        "symbols": [
+          {
+            "name": "杯中探出的鱼头",
+            "meaning": "情感的萌芽、灵感的涌现、直觉的信号、来自潜意识的消息。"
+          }
+        ],
+        "story": "年轻的侍从静静地站在水边，双手稳稳托着一只圣杯，好奇地凝视着一条鱼儿从杯中跃出水面。他看起来温柔而敏感，正沉浸在自己内心深处的情感直觉和新奇发现之中。",
+        "pitfalls": "杯中探出的是**一条鱼**，不是蛇，代表**情感与灵感**。侍从的衣服上白色的图案是**莲花（或百合）**，与圣杯组的精神、情感净化的主题相呼应。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": 3,
+          "rank": 5.3846,
+          "final": 5,
+          "basis": "message; reflection; study; emotional openness"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": 5.3846,
+          "final": -3,
+          "basis": "seduction; deception; unhealthy attachment"
+        }
+      }
+    },
+    {
+      "id": "cups-12",
+      "name": "圣杯骑士",
+      "nameEn": "Knight of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 12,
+      "image": "cards/cups-12.webp",
+      "visual": {
+        "sourceHeading": "圣杯骑士 | 圣杯12_圣杯骑士.webp",
+        "direction": "骑士与白马向画面左侧缓缓而行，面朝左侧。",
+        "posture": "一位身披带有红色鱼鳞/火焰图案铠甲、头戴带翼头盔的骑士，骑在一匹稳健的白马上。与其它骑士不同，他极慢地向前踱步，单手平举着一个圣杯，目光温柔地注视着杯身。",
+        "colors": "浅白色/微蓝的天空，黄色的地面与远处的山丘，骑士铠甲的银蓝与红色图案，白马的躯干。",
+        "lighting": "白日，光线柔和缓慢，情感氛围浓厚。",
+        "symbols": [
+          {
+            "name": "平托的圣杯",
+            "meaning": "情感的传递者、浪漫的邀请、善意的使者。"
+          }
+        ],
+        "story": "圣杯骑士骑着白马缓缓走来，没有手执武器，也不急于奔袭。他单手温柔地托着圣杯，像一位手捧浪漫情书的诗人，带着爱与善意缓缓踏上献上情感之旅。",
+        "pitfalls": "他的脚步是**缓慢的**（马步平稳地走着），而不是其它骑士的飞奔。他**没有戴面罩/露出脸**，代表他传递情感的姿态是**真诚而公开**的。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 7,
+          "rank": 6.9231,
+          "final": 7,
+          "basis": "arrival; invitation; proposition; graceful pursuit"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -5,
+          "rank": 6.9231,
+          "final": -5,
+          "basis": "fraud; trickery; false proposal"
+        }
+      }
+    },
+    {
+      "id": "cups-13",
+      "name": "圣杯王后",
+      "nameEn": "Queen of Cups",
+      "aliases": [
+        "圣杯女王"
+      ],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 13,
+      "image": "cards/cups-13.webp",
+      "visual": {
+        "sourceHeading": "圣杯王后 | 圣杯13_圣杯王后.webp",
+        "direction": "王后端坐于王座上，面朝画面右前方，目光低垂。",
+        "posture": "一位金发头戴王冠的女性，身穿白色长袍与饰有波浪（或水波）图案的蓝色披风。她端坐在灰白色的华丽座椅上，双手郑重地端着一个极其精美、带有把手（呈双翼/半圆形）的圣杯。脚边的水面上有鹅卵石。",
+        "colors": "浅蓝色的天空与水面，白袍与蓝披风，金色皇冠与圣杯，座椅周围的灰色调。",
+        "lighting": "平静的水边，光线柔和恬静，充满深情与包容。",
+        "symbols": [
+          {
+            "name": "精雕细琢的圣杯",
+            "meaning": "珍视情感，将其视为神圣和富有创造力的源泉。"
+          }
+        ],
+        "story": "圣杯王后端坐于海边的宝座上，双手深情地捧着那只精致的圣杯，仿佛在倾听杯中的心灵私语。她与水的元素融为一体，散发着同理心、包容与充满慈爱的母性能量，是情感与直觉的主宰者。",
+        "pitfalls": "她手中拿的**圣杯带盖子和把手**，十分华丽，和别的圣杯牌完全不同。王后的**座椅底下刻有水神/小天使的浮雕**，强调其与水元素的深刻连接。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 3,
+          "rank": 8.4615,
+          "final": 7,
+          "basis": "devotion; intuition; wisdom; happiness"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -3,
+          "rank": 8.4615,
+          "final": -6,
+          "basis": "vice; corruption; dishonesty; scandal"
+        }
+      }
+    },
+    {
+      "id": "cups-14",
+      "name": "圣杯国王",
+      "nameEn": "King of Cups",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": 14,
+      "image": "cards/cups-14.webp",
+      "visual": {
+        "sourceHeading": "圣杯国王 | 圣杯14_圣杯国王.webp",
+        "direction": "国王面朝画面右侧（或正前方偏右），身体稳重端坐。",
+        "posture": "一位年长的国王头戴王冠，身穿浅蓝色长袍与明黄色披风，端坐于一个巨大的、浮在水面上的石座上。他的右手持着一个精致的圣杯，左手持一根金色短杖，神态从容、平静如镜。",
+        "colors": "淡蓝色的海洋与天空，国王衣袍的纯净蓝与黄，王座下方的蓝色波浪与灰色礁石。",
+        "lighting": "晴天，水面波澜不惊，光线平稳祥和。",
+        "symbols": [
+          {
+            "name": "手托圣杯",
+            "meaning": "成熟的情感掌控力，能够包容、疗愈和维持情感的稳定。"
+          }
+        ],
+        "story": "圣杯国王安稳地坐在水面上石座的王位上，他手握装满情感的圣杯和权杖。作为一个情感的驾驭者，他既不回避情绪，也不被情绪所淹没，而是如同这平静的海面一般，显露出深不可测的包容与掌控力。",
+        "pitfalls": "虽然完全浸入水（情绪）之中，但**王座是平稳的**，人物表情平淡如水，代表他已经完全掌握了**情绪的流动，而没有被水流冲走**。他手中的圣杯与权杖分别代表了**感性与理性**的平衡。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 5,
+          "rank": 10,
+          "final": 7,
+          "basis": "responsibility; diplomacy; business; emotional control"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -4,
+          "rank": 10,
+          "final": -6,
+          "basis": "double dealing; dishonesty; concealed vice"
+        }
+      }
+    },
+    {
+      "id": "swords-01",
+      "name": "宝剑王牌",
+      "nameEn": "Ace of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 1,
+      "image": "cards/swords-01.webp",
+      "visual": {
+        "sourceHeading": "宝剑王牌 | 宝剑01_宝剑王牌.webp",
+        "direction": "剑刃垂直向上，剑尖直指上方。",
+        "posture": "一只强有力的手从左侧的云层中伸出，紧紧握住一把剑的剑柄，宝剑直立插在画面中央，剑尖朝上。",
+        "colors": "大面积的纯白/浅灰色背景（云层），银灰色的剑刃与剑柄，底部的淡褐色、紫色山脉，金黄色的王冠及枝条。",
+        "lighting": "阴云密布但开始散开的清朗天空，光线明亮，照亮宝剑。",
+        "symbols": [
+          {
+            "name": "紧握的宝剑",
+            "meaning": "代表理智、真相、决断力、全新的思想与突破。"
+          }
+        ],
+        "story": "一只手穿越云雾，稳稳地握住了宝剑，将其矗立于山巅之上。顶部的王冠与枝条，预示着正义与真理一旦降临，将带来斩断迷惘的胜利。",
+        "pitfalls": "宝剑**顶端不是火焰**，而是王冠与枝条，代表**通过思想/真理获得的荣耀**，而非纯粹的破坏。手呈现**握紧**的状态，代表坚定的意志。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 10,
+          "rank": -10,
+          "final": 7,
+          "basis": "triumph; force; justice; decisive clarity"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -8,
+          "rank": -10,
+          "final": -7,
+          "basis": "excessive force; disaster; destructive conquest"
+        }
+      }
+    },
+    {
+      "id": "swords-02",
+      "name": "宝剑二",
+      "nameEn": "Two of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 2,
+      "image": "cards/swords-02.webp",
+      "visual": {
+        "sourceHeading": "宝剑二 | 宝剑02_宝剑二.webp",
+        "direction": "面朝正前方，身体端坐。",
+        "posture": "一位身穿白色长袍的人坐在低矮的石凳上，双手在胸前交叉，握着两把剑，剑尖朝上呈交叉状。人物的双眼被白布蒙住。",
+        "colors": "纯净的白色长袍与白布，深蓝色的天空与水面，远处黄色的陆地，银灰色的剑刃。",
+        "lighting": "宁静的夜晚，月光微弱，光线阴沉且冷冽。",
+        "symbols": [
+          {
+            "name": "蒙眼布",
+            "meaning": "代表拒绝观看现实、自我封闭、回避或陷入僵局。"
+          }
+        ],
+        "story": "蒙眼的妇女像守卫一样静坐着，两把剑在胸前交叉形成一道阻挡一切的屏障。她背对起伏的水面，试图将所有的冲突与情感隔绝在外，但这也意味着她完全放弃了观察周围局势。",
+        "pitfalls": "她**不是被动蒙眼**，而是**主动选择蒙上眼睛**，拒绝看清真相。交叉的双剑意味**僵局与对峙**，并不是威胁。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 1,
+          "dynamic": 0,
+          "rank": -8.4615,
+          "final": 0,
+          "basis": "balance; courage; guarded accord; stalemate"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -8.4615,
+          "final": -6,
+          "basis": "falsehood; disloyalty; broken balance"
+        }
+      }
+    },
+    {
+      "id": "swords-03",
+      "name": "宝剑三",
+      "nameEn": "Three of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 3,
+      "image": "cards/swords-03.webp",
+      "visual": {
+        "sourceHeading": "宝剑三 | 宝剑03_宝剑三.webp",
+        "direction": "剑从不同角度插入，共同指向中心的心脏。",
+        "posture": "一颗红心位于画面中央悬空，三把剑分别从左上、正中、右上三个方向垂直/斜向刺入心脏。背景是乌云密布、下着大雨的灰暗天空。",
+        "colors": "强烈的红色心脏，灰白/黑色的乌云与背景，银灰色的刀刃。",
+        "lighting": "倾盆大雨，灰暗压抑，光线集中在受伤的心脏上。",
+        "symbols": [
+          {
+            "name": "被三剑刺穿的心脏",
+            "meaning": "代表极度的悲伤、心痛、背叛或分离的痛苦。"
+          }
+        ],
+        "story": "三把无情的利剑穿透了鲜红的心，淋漓的暴雨从天而降。这是对悲伤最直观的刻画——不掩饰、不回避的心灵剧痛。",
+        "pitfalls": "注意这里是**三把剑**，必须与**圣杯三**的三个圣杯区分。这种穿透是**静态**的伤害，并非战斗中动态的过程。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -7,
+          "dynamic": -6,
+          "rank": -6.9231,
+          "final": -7,
+          "basis": "division; rupture; absence; sorrow"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -6.9231,
+          "final": -6,
+          "basis": "confusion; distraction; mental alienation"
+        }
+      }
+    },
+    {
+      "id": "swords-04",
+      "name": "宝剑四",
+      "nameEn": "Four of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 4,
+      "image": "cards/swords-04.webp",
+      "visual": {
+        "sourceHeading": "宝剑四 | 宝剑04_宝剑四.webp",
+        "direction": "人物平躺，面朝向上方（或偏右），呈静卧姿态。",
+        "posture": "一个全身穿着黄色铠甲的人平躺在棺椁或石床上，双手合十（如祈祷或安息状）。画面右侧墙壁上悬挂着三把垂直向下的剑，棺椁下方水平放置着第四把剑。",
+        "colors": "明亮的黄色调（床与人物），彩色的玻璃窗，灰色石墙，银白色的剑刃。",
+        "lighting": "室内光线平和，彩色玻璃窗透进柔和的光线。",
+        "symbols": [],
+        "story": "一位武士躺在教堂内的石床上彻底静止下来。宝剑被安稳地放置在床下和墙上，他正在经过痛苦的战斗后获得久违的休息，这是自我愈合与反思的必要时刻。",
+        "pitfalls": "床底的**第四把剑是水平放置**的，代表**安歇与休息**；请注意此牌**不代表死亡**，而是精神的**暂歇**，如同冬眠一般。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 2,
+          "dynamic": -4,
+          "rank": -5.3846,
+          "final": 1,
+          "basis": "repose; retreat; recovery; solitude"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 3,
+          "rank": -5.3846,
+          "final": 3,
+          "basis": "wise administration; renewed activity; economy"
+        }
+      }
+    },
+    {
+      "id": "swords-05",
+      "name": "宝剑五",
+      "nameEn": "Five of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 5,
+      "image": "cards/swords-05.webp",
+      "visual": {
+        "sourceHeading": "宝剑五 | 宝剑05_宝剑五.webp",
+        "direction": "画面中心的年轻男子面朝右侧，转头看向左侧离开的背影。",
+        "posture": "一位身穿红黄绿相间衣服的男子手持三把剑，将其中一把扛在肩上，另两把夹在手臂下。他的身边散落着两把剑。背景中有两个垂头丧气、背对画面走向远处的背影。",
+        "colors": "浅黄色的土地，远方淡蓝色的海洋，男子衣物的红、绿、黄对比鲜明。",
+        "lighting": "云层厚重的白天，光线略暗，透露出战后的荒凉与压抑。",
+        "symbols": [
+          {
+            "name": "持剑者的姿态",
+            "meaning": "回眸观看，带有嘲笑、轻蔑或胜利后的得意。"
+          }
+        ],
+        "story": "一个年轻人在冲突后夺走了对手的武器，他洋洋得意地回头看向失败者。而失败者们掩面离去，这场战斗没有赢家，留下的只有不愉快的记忆和挫败感。",
+        "pitfalls": "背景中的两个**背影没有面部**，代表他们**失去了尊严**。男子的**笑容**（或表情）是这牌的关键，它指向了**毫无意义的惨胜**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -8,
+          "dynamic": -7,
+          "rank": -3.8462,
+          "final": -8,
+          "basis": "degradation; defeat; destruction; loss"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -5,
+          "rank": -3.8462,
+          "final": -7,
+          "basis": "lingering loss; weakness; painful aftermath"
+        }
+      }
+    },
+    {
+      "id": "swords-06",
+      "name": "宝剑六",
+      "nameEn": "Six of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 6,
+      "image": "cards/swords-06.webp",
+      "visual": {
+        "sourceHeading": "宝剑六 | 宝剑06_宝剑六.webp",
+        "direction": "小船向右侧航行，船夫面朝前方（右），乘客面朝前方（或低头）。",
+        "posture": "一位船夫站在小木船尾端，用长篙撑船前进。船上坐着一位披着黄色斗篷的乘客（多为女子，部分版本有孩童），小船的右侧部分直立地插着六把剑。",
+        "colors": "纯净的灰白色天空，蓝灰色的水面与远景，橙黄色的船夫衣服与乘客斗篷。",
+        "lighting": "风平浪静，但天空和远处略显阴沉，阴天状态。",
+        "symbols": [
+          {
+            "name": "六把竖立的剑",
+            "meaning": "代表承受压力、心事重重，但被承载着共同度过难关。"
+          }
+        ],
+        "story": "一艘小舟在水面上平稳前行，船上的乘客带着重重的思绪（六把剑）离去。虽然过去依然沉重，但船正在将他们带离悲伤的水域，去往平静的新岸。",
+        "pitfalls": "水面上**有微波**，并非非常平静，代表**已过危险期但未完全平静**。所携带的剑是**直立插入船身**的，不是平放，代表带着过往的负担前行。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 3,
+          "dynamic": 4,
+          "rank": -2.3077,
+          "final": 3,
+          "basis": "journey; transition; route; gradual passage"
+        },
+        "reversed": {
+          "semantic": -3,
+          "dynamic": -2,
+          "rank": -2.3077,
+          "final": -3,
+          "basis": "unfavorable declaration; stalled transition"
+        }
+      }
+    },
+    {
+      "id": "swords-07",
+      "name": "宝剑七",
+      "nameEn": "Seven of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 7,
+      "image": "cards/swords-07.webp",
+      "visual": {
+        "sourceHeading": "宝剑七 | 宝剑07_宝剑七.webp",
+        "direction": "人物呈半侧身，向前走且回头向后看。",
+        "posture": "一个头戴红帽、身穿花纹上衣和蓝色裤子的人，正步伐迅捷地向前跑动（向右侧），手里抱着五把剑，回头向后张望。地面上还斜插着另外两把剑。",
+        "colors": "明黄色的大地与天空，人物鲜艳的橙红色与蓝色衣物。",
+        "lighting": "明朗的白天，光线充足，但人物透露出鬼祟的紧张感。",
+        "symbols": [
+          {
+            "name": "偷走的五把剑",
+            "meaning": "策略性地获取胜利，规避直接冲突。"
+          }
+        ],
+        "story": "一名男子趁着无人防备，偷走了对方的武器。他怀里抱着五把剑，地面上还插着两把，一边加速逃离一边紧张地回头张望，仿佛在策划一场聪明的脱险。",
+        "pitfalls": "这是与**欺骗/策略**相关的牌，**不是直接战斗**。地上的两把剑是**插在地上**（不是遗落），代表他**主动放弃**或**假装未带走**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -2,
+          "dynamic": 4,
+          "rank": -0.7692,
+          "final": -1,
+          "basis": "design; attempt; stealth; uncertain plan"
+        },
+        "reversed": {
+          "semantic": 4,
+          "dynamic": 2,
+          "rank": -0.7692,
+          "final": 3,
+          "basis": "good advice; instruction; plan reconsidered"
+        }
+      }
+    },
+    {
+      "id": "swords-08",
+      "name": "宝剑八",
+      "nameEn": "Eight of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 8,
+      "image": "cards/swords-08.webp",
+      "visual": {
+        "sourceHeading": "宝剑八 | 宝剑08_宝剑八.webp",
+        "direction": "人物面朝前方偏左，微微低着头。",
+        "posture": "一位身穿橘色长袍的女子被白布紧紧束缚住身体，双眼被蒙住，站在泥泞或浅水之中。她的周围被八把剑插在地上包围着，形成一个牢笼。",
+        "colors": "土黄色的泥泞地，浅蓝色的水域，鲜明醒目的橘红色长袍，白色布条。",
+        "lighting": "灰白色的阴天，荒野上空旷清冷，带有压抑感。",
+        "symbols": [
+          {
+            "name": "蒙眼布与束缚带",
+            "meaning": "自我限制，被恐惧压制，看不见出路。"
+          }
+        ],
+        "story": "女子被束缚在荒郊野外的浅水边，双眼被蒙，四周立起了一圈利剑。她感觉深陷绝境寸步难行，但事实上真正的枷锁是内心的恐惧与无助。",
+        "pitfalls": "八把剑**并没有触碰到她的身体**，她没有被刺伤，束缚她的只是**布条**。身后的**城堡**就在不远的陆地上，暗示**逃离并不难**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": 0.7692,
+          "final": -5,
+          "basis": "temporary restraint; crisis; constrained power"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -4,
+          "rank": 0.7692,
+          "final": -6,
+          "basis": "difficulty; opposition; accident; treachery"
+        }
+      }
+    },
+    {
+      "id": "swords-09",
+      "name": "宝剑九",
+      "nameEn": "Nine of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 9,
+      "image": "cards/swords-09.webp",
+      "visual": {
+        "sourceHeading": "宝剑九 | 宝剑09_宝剑九.webp",
+        "direction": "人物面朝左侧，双手掩面。",
+        "posture": "一位穿着白色睡袍的人坐在床上，双手紧紧捂住脸部，呈现极度痛苦、恐慌或焦虑的姿态。身后的墙上水平横列着九把剑。",
+        "colors": "深黑色的背景，白色的睡袍与床铺，暗红色的被褥，冰冷的银灰色宝剑。",
+        "lighting": "极度黑暗的夜间，光线仅聚焦于人物与床，周围陷入死寂。",
+        "symbols": [
+          {
+            "name": "掩面的手势",
+            "meaning": "噩梦、极度焦虑、失眠、精神折磨。"
+          }
+        ],
+        "story": "夜深人静之时，噩梦如悬剑般挂在心间。失眠者坐在床上双手掩面，无法逃离内心的恐惧和自我的煎熬，这种痛苦来自于精神而非肉体。",
+        "pitfalls": "墙上的宝剑是**水平横放**的，与其它牌面的竖剑有别，代表**压力的堆积**而非直接的攻击。人物是**清醒或惊醒**状态，并非睡着。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -9,
+          "dynamic": -6,
+          "rank": 2.3077,
+          "final": -8,
+          "basis": "despair; failure; fear; mental suffering"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -4,
+          "rank": 2.3077,
+          "final": -6,
+          "basis": "suspicion; shame; imprisonment; persistent fear"
+        }
+      }
+    },
+    {
+      "id": "swords-10",
+      "name": "宝剑十",
+      "nameEn": "Ten of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 10,
+      "image": "cards/swords-10.webp",
+      "visual": {
+        "sourceHeading": "宝剑十 | 宝剑10_宝剑十.webp",
+        "direction": "人物面朝下扑倒在地上。",
+        "posture": "一个人趴在地上（或土坡上），背部被十把剑深深刺穿。上方天空呈现黑暗与黎明交接的破晓时分。",
+        "colors": "深黑色的夜空，地平线处鲜亮的黄色曙光，人物黄、红色的衣服与灰白的背部。",
+        "lighting": "黑暗压顶，但远方升起金黄色的日出。",
+        "symbols": [
+          {
+            "name": "贯穿背部的十把剑",
+            "meaning": "彻底的失败、崩溃、极致的痛苦，已无挽回余地。"
+          }
+        ],
+        "story": "一个人被十把剑钉死在地，所有可能破局的努力都已经走到了尽头。然而地平线上露出一线金灿灿的晨光，这宣示了痛苦已到达极点，剩下的只有重生。",
+        "pitfalls": "这张牌的**核心视觉焦点**是**远处的太阳**（虽然可能很微弱），这代表**悲剧已经触底，无法更糟**。人物面部向下，没有挣扎，代表**彻底完结**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -10,
+          "dynamic": -10,
+          "rank": 3.8462,
+          "final": -9,
+          "basis": "pain; desolation; ending; total defeat"
+        },
+        "reversed": {
+          "semantic": 3,
+          "dynamic": 2,
+          "rank": 3.8462,
+          "final": 3,
+          "basis": "temporary advantage; recovery begins; limited success"
+        }
+      }
+    },
+    {
+      "id": "swords-11",
+      "name": "宝剑侍从",
+      "nameEn": "Page of Swords",
+      "aliases": [
+        "宝剑侍者"
+      ],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 11,
+      "image": "cards/swords-11.webp",
+      "visual": {
+        "sourceHeading": "宝剑侍者 | 宝剑11_宝剑侍者.webp",
+        "direction": "侍从面朝画面右侧，身体直立。",
+        "posture": "一名年轻的红发少年身穿浅褐色短袍和黄绿色裤子，双手高举一把宝剑，身体微微向后倾斜。脚下是一片起伏的绿色山丘，背景有风起云涌的迹象。",
+        "colors": "浅蓝与白色的天空，黄绿色的草地，少年的衣服色彩明快对比强烈。",
+        "lighting": "大风呼啸，云层翻滚，空气中充满紧张与警觉的气息。",
+        "symbols": [
+          {
+            "name": "高举的宝剑",
+            "meaning": "警惕、窥探、准备防御或发出警告。"
+          }
+        ],
+        "story": "年轻侍从站在高地上，双手紧握宝剑高高举起，警惕地望向远方。姿态虽略显笨拙，但时刻准备着应对突如其来的信息、挑战或流言。",
+        "pitfalls": "侍从的**剑尖直指上方的云层**，不是指向人。他是一位**观察者**与**传讯者**，目前处于**防御性的警惕状态**，并非具有威胁的进攻姿态。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 2,
+          "dynamic": 5,
+          "rank": 5.3846,
+          "final": 3,
+          "basis": "vigilance; observation; secret service; inquiry"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -4,
+          "rank": 5.3846,
+          "final": -4,
+          "basis": "unforeseen trouble; imposture; unhealthy scrutiny"
+        }
+      }
+    },
+    {
+      "id": "swords-12",
+      "name": "宝剑骑士",
+      "nameEn": "Knight of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 12,
+      "image": "cards/swords-12.webp",
+      "visual": {
+        "sourceHeading": "宝剑骑士 | 宝剑12_宝剑骑士.webp",
+        "direction": "骑士和白马正全速向画面右侧飞奔。",
+        "posture": "一位全副武装的骑士骑在白马上，高举右手握着宝剑，策马扬鞭，战马呈现腾空飞奔的疾驰姿态。风吹起披风和鬃毛。",
+        "colors": "苍白的天空，明黄与褐色的地面，冰冷的金属盔甲，战马身上的白色与花色。",
+        "lighting": "风起云涌，阴天，背景中有急速飞奔的云层，象征着气势与速度。",
+        "symbols": [
+          {
+            "name": "急速飞奔的白马",
+            "meaning": "极度的行动力、冲动、直取目标。"
+          }
+        ],
+        "story": "骑士驾驭着白马的疾风，以近乎失控的速度向前冲刺。在冲刺中持剑高呼，他将一切顾虑抛在脑后，以最直接和迅猛的方式冲入战场或局势中。",
+        "pitfalls": "马匹是**四蹄腾空**的飞奔姿态，代表**无法暂停**的速度。骑士脸上的盔甲**遮住了表情**，代表他行动时是冰冷无情的。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -2,
+          "dynamic": 10,
+          "rank": 6.9231,
+          "final": 0,
+          "basis": "bravery; force; conflict; destructive speed"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -7,
+          "rank": 6.9231,
+          "final": -6,
+          "basis": "imprudence; incapacity; reckless excess"
+        }
+      }
+    },
+    {
+      "id": "swords-13",
+      "name": "宝剑王后",
+      "nameEn": "Queen of Swords",
+      "aliases": [
+        "宝剑女王"
+      ],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 13,
+      "image": "cards/swords-13.webp",
+      "visual": {
+        "sourceHeading": "宝剑王后 | 宝剑13_宝剑王后.webp",
+        "direction": "王后面朝画面右侧，目光平和而坚定。",
+        "posture": "一位金发女子头戴王冠，身穿白色长袍与蓝色披风，端坐在雕刻着孩童图案的座椅上。她右手直握一把利剑，左手微微抬起或扶着椅把。",
+        "colors": "蓝色晴朗的天空，白色的云朵，白色长袍，蓝底红花图案的椅背与大氅。",
+        "lighting": "阳光明媚，云层洁白且平静，光线柔和清晰。",
+        "symbols": [
+          {
+            "name": "直立握剑",
+            "meaning": "清晰睿智的头脑，用理性与真相来裁决事物。"
+          }
+        ],
+        "story": "宝剑王后端坐于宝座上，一手持剑，一手向前伸展作邀请状。她具备极其敏锐的洞察力，能在复杂的事物中直击本质，以理智和纯粹的冷静切断那些无用的情感纠葛。",
+        "pitfalls": "她**没有蒙眼**，她的目光炯炯有神。她的右手握剑是**垂直向上**的，不是横握，代表她掌握了理性的主权，而不是在威胁他人。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -4,
+          "dynamic": 2,
+          "rank": 8.4615,
+          "final": -2,
+          "basis": "separation; privation; severe clear judgment"
+        },
+        "reversed": {
+          "semantic": -8,
+          "dynamic": -5,
+          "rank": 8.4615,
+          "final": -7,
+          "basis": "malice; bigotry; deceit; cruelty"
+        }
+      }
+    },
+    {
+      "id": "swords-14",
+      "name": "宝剑国王",
+      "nameEn": "King of Swords",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": 14,
+      "image": "cards/swords-14.webp",
+      "visual": {
+        "sourceHeading": "宝剑国王 | 宝剑14_宝剑国王.webp",
+        "direction": "面朝正前方，目光沉稳威严。",
+        "posture": "一位年长的国王头戴王冠，身披紫色/蓝色大氅，端坐于石座上。他右手将一把宝剑直握（或微斜）于胸前，左手安放在膝上。背景是空旷的蓝天与云层。",
+        "colors": "紫蓝色的云层与背景，白、浅蓝与金黄色交织的国王袍服，冷峻的银灰色宝剑。",
+        "lighting": "大风呼啸的云端之上，清冷肃穆，充满权威感。",
+        "symbols": [],
+        "story": "宝剑国王端坐于苍穹之中，他像一位刚正不阿的法官，手中掌握着真理与绝对理智的利剑。他不被情绪所干扰，代表着纯粹的权威与智识的巅峰力量。",
+        "pitfalls": "这里的**利剑是竖直握持**，与权杖国王的倾斜姿态不同，代表**审判与裁决**。他的表情严肃且毫无情感色彩，并非暴戾，而是**绝对的客观**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 6,
+          "rank": 10,
+          "final": 6,
+          "basis": "judgment; authority; law; intellectual command"
+        },
+        "reversed": {
+          "semantic": -8,
+          "dynamic": -6,
+          "rank": 10,
+          "final": -7,
+          "basis": "cruelty; perversity; abuse of authority"
+        }
+      }
+    },
+    {
+      "id": "pentacles-01",
+      "name": "星币王牌",
+      "nameEn": "Ace of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 1,
+      "image": "cards/pentacles-01.webp",
+      "visual": {
+        "sourceHeading": "星币王牌 | 星币01_星币王牌.webp",
+        "direction": "手掌向上摊开，硬币竖立朝向观者。",
+        "posture": "一只从左侧云层中伸出的手掌，稳稳地托举着一枚巨大的金色星币。星币正面刻有五角星符号。下方是一个典型的富饶花园，绿色的拱门、繁盛的草木与鲜花。",
+        "colors": "纯白/浅灰色的云层背景，耀眼的纯金色星币，下方花园的翠绿色与大地色。",
+        "lighting": "白日明亮，阳光投射在星币上，泛着金黄色的光芒，充满富足感。",
+        "symbols": [
+          {
+            "name": "巨大的星币",
+            "meaning": "代表物质丰饶、富足、金钱、物质世界的新机遇。"
+          }
+        ],
+        "story": "一只神圣的手从云端伸出，将一枚金光闪闪的星币稳妥地托到人间。下方是一座繁花似锦、充满绿意的庄园，象征着这份物质赠与有着坚实的基础，能够生根发芽，带来实际的财富与繁荣。",
+        "pitfalls": "这枚星币是**巨大的金黄色圆盘**，而不是硬币大小的金属片。下方的花园**有拱门**，象征着通往现实财富与健康的新入口。手掌是**向上摊开托举**的，代表着给予和展现。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 10,
+          "dynamic": 6,
+          "rank": -10,
+          "final": 8,
+          "basis": "wealth; contentment; material opportunity"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -4,
+          "rank": -10,
+          "final": -6,
+          "basis": "corruption; greed; harmful use of wealth"
+        }
+      }
+    },
+    {
+      "id": "pentacles-02",
+      "name": "星币二",
+      "nameEn": "Two of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 2,
+      "image": "cards/pentacles-02.webp",
+      "visual": {
+        "sourceHeading": "星币二 | 星币02_星币二.webp",
+        "direction": "人物面朝正前方，舞动的姿态。",
+        "posture": "一位头戴红色高筒帽、身穿黄色衣服、脚蹬红绿靴子的人物，正用双手托着两枚星币。一条绿色的丝带或无穷符号（∞）将两枚星币环绕成一个无限流动的回路。背景是波涛汹涌的海面，远处的船只起伏颠簸。",
+        "colors": "浅白/浅蓝的天空，蓝色的海浪，人物衣物的红、黄、绿三原色鲜明对比，纯黄色的星币。",
+        "lighting": "白天，海面风浪较大，光线明亮但略显不稳。",
+        "symbols": [
+          {
+            "name": "∞形的绿色丝带",
+            "meaning": "需要不断维持的平衡、流动的财务状况、万事万物循环往复。"
+          }
+        ],
+        "story": "一个江湖艺人在波涛汹涌的海边，用一根绿色的丝带把两枚星币交织成一个无限循环的符号，他在努力保持两枚币在空中的平衡，正如在动荡的现实生活中周旋于不同的财务或任务之间。",
+        "pitfalls": "那根环绕的**绿色带子形成了\"∞\"符号**，代表**动态的平衡**，而不仅仅是拿着两枚硬币。背景的海浪非常汹涌，暗示**外部环境很不稳定**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 3,
+          "dynamic": 5,
+          "rank": -8.4615,
+          "final": 3,
+          "basis": "adaptation; messages; recreation; managed fluctuation"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -4,
+          "rank": -8.4615,
+          "final": -4,
+          "basis": "instability; bad news; forced performance"
+        }
+      }
+    },
+    {
+      "id": "pentacles-03",
+      "name": "星币三",
+      "nameEn": "Three of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 3,
+      "image": "cards/pentacles-03.webp",
+      "visual": {
+        "sourceHeading": "星币三 | 星币03_星币三.webp",
+        "direction": "三位人物面向建筑中央的拱门处，彼此协作。",
+        "posture": "一座哥特式教堂或修道院的石拱门内，上方雕有三枚星币。下方站着三个人：左侧一位工匠（石匠）站在长凳上，举着工具或图纸正在修葺；中间一位修士/建筑师手拿图纸进行指导；右侧一位领主/赞助人穿着橙底带红点的服饰，正在验收或讨论。",
+        "colors": "灰白色/米色的石质建筑，浅蓝色天空，工匠的紫色上衣与黄色围裙，赞助人的橙黄长袍。",
+        "lighting": "白天的室外，光线均匀明亮，展现出于建筑作业中的专注与合作。",
+        "symbols": [
+          {
+            "name": "哥特式拱门与三枚雕刻的星币",
+            "meaning": "现实物质成就在艺术与精神领域的根基。"
+          }
+        ],
+        "story": "在教堂的建造现场，工匠正站在脚手架上专注施工，拿着图纸的修士正在旁指导和确认，而穿着体面的赞助人则亲临现场检查工程的进展。这生动地描绘了团队合作、专业分工和将宏大计划落实为实体建筑的现实过程。",
+        "pitfalls": "石拱门上方的**三枚星币是雕刻上去的**，并不是人物拿在手里的，代表**物质成就和工艺之美是建筑物的基调**。这幅画的重点在于**团队合作/不同角色的互补**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 6,
+          "rank": -6.9231,
+          "final": 6,
+          "basis": "skilled work; trade; recognition; craftsmanship"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -3,
+          "rank": -6.9231,
+          "final": -5,
+          "basis": "mediocrity; weakness; poor workmanship"
+        }
+      }
+    },
+    {
+      "id": "pentacles-04",
+      "name": "星币四",
+      "nameEn": "Four of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 4,
+      "image": "cards/pentacles-04.webp",
+      "visual": {
+        "sourceHeading": "星币四 | 星币04_星币四.webp",
+        "direction": "人物面朝正前方，身体直立。",
+        "posture": "一位身穿棕红色衣服、披着黑色披风的男子端坐在那里，双手紧紧地将一枚星币抱在胸前。他的头顶上顶着一枚星币，双脚各踩着一枚星币。背景是隐约的城市轮廓。",
+        "colors": "明亮的浅色天空，城市的灰褐与砖红色，人物衣物的棕黑与暗红，耀眼的金色星币。",
+        "lighting": "光天化日，但人物显得保守、厚重。",
+        "symbols": [
+          {
+            "name": "紧抱胸前的星币",
+            "meaning": "占有欲、缺乏安全感、极力保护现有财富。"
+          }
+        ],
+        "story": "一个富人坐在自己的世界里，怀里紧紧抱着一枚星币，另外三枚则被他压在头顶和脚下。他像一只乌龟一样缩在自己的堡垒中，宁可自我孤立也不愿将资源投入流通，体现出极大的保守和吝啬。",
+        "pitfalls": "他的**双手把星币紧紧压在胸前**，与\"魔术师\"牌中施放能量的手势正好相反。他**头顶和脚下**也有星币（共4枚），象征他对物质财富有着**绝对但僵化的掌控欲**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 5,
+          "dynamic": -2,
+          "rank": -5.3846,
+          "final": 3,
+          "basis": "security; possession; legacy; conservation"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -3,
+          "rank": -5.3846,
+          "final": -4,
+          "basis": "delay; opposition; suspense; blocked resources"
+        }
+      }
+    },
+    {
+      "id": "pentacles-05",
+      "name": "星币五",
+      "nameEn": "Five of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 5,
+      "image": "cards/pentacles-05.webp",
+      "visual": {
+        "sourceHeading": "星币五 | 星币05_星币五.webp",
+        "direction": "两个人物低头向右方（或前方）蹒跚前行。",
+        "posture": "在冰天雪地中，两个衣衫褴褛、步履维艰的人正在暴风雪中艰难跋涉。左边的人拄着双拐，右腿截断；右边的人披着破旧的棕色头巾，赤着脚。左侧的教堂墙上有一扇彩色玻璃窗，透出光芒。",
+        "colors": "大面积的纯白色雪地，人物衣物的破旧蓝色与橙色，教堂彩绘窗上透出的黄、蓝、红光。",
+        "lighting": "漫天飘雪的严寒冬季，光线惨淡，只有教堂窗内透出温暖的光辉。",
+        "symbols": [
+          {
+            "name": "彩绘玻璃窗上的五枚星币",
+            "meaning": "象征富足与庇护的大门明明就在眼前，但他们却没能看到或无法进入。"
+          }
+        ],
+        "story": "两个极度贫困的人在暴风雪中踉跄而行。他们恰好路过一座有温暖灯光和彩绘玻璃的教堂，窗户上画着星币，象征着庇护与物质救助其实近在咫尺。但他们蒙难在当下，依然在风雪中寻找出路。",
+        "pitfalls": "这五枚星币**刻在教堂的窗户上**，象征**救助就在他们身旁**，但他们**还没有意识到或还未伸手**。暴风雪中**有颜色**（蓝、橙、黄等），提示人物身上依然有微弱的人性光辉。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": -8,
+          "dynamic": -5,
+          "rank": -3.8462,
+          "final": -7,
+          "basis": "material trouble; destitution; exclusion"
+        },
+        "reversed": {
+          "semantic": -9,
+          "dynamic": -7,
+          "rank": -3.8462,
+          "final": -8,
+          "basis": "disorder; ruin; discord; profligacy"
+        }
+      }
+    },
+    {
+      "id": "pentacles-06",
+      "name": "星币六",
+      "nameEn": "Six of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 6,
+      "image": "cards/pentacles-06.webp",
+      "visual": {
+        "sourceHeading": "星币六 | 星币06_星币六.webp",
+        "direction": "商人面朝前方，低头看着地上的乞丐。",
+        "posture": "一位身穿红袍、头戴红巾、手举金色天平的商人，正站在高台上。他一手持天平，另一手将手中的金币递给身下的乞丐。他的脚下趴着两个衣衫破旧的人（一左一右），正在接受他的施舍。头顶上方排列着六枚星币。",
+        "colors": "浅色的天空，地面上铺着绿黄色调的垫子，商人的红袍与蓝白条纹内搭，星币纯金色。",
+        "lighting": "白日，光线明朗，带着秩序感的施舍。",
+        "symbols": [
+          {
+            "name": "金天平",
+            "meaning": "衡量与公正，代表按需分配、公平交易或慈善施舍。"
+          }
+        ],
+        "story": "一位富有的商人手持天平在高台上称量，精确地给下方的乞丐发放金币。他保持着援助者的体面和理智，维持着一种平衡的施与受的秩序。这种施舍并非随意，而是有衡量、有门槛的。",
+        "pitfalls": "商人手中的**天平**是这张牌的核心，代表**\"根据所需给予\"的公平法则**。地上的乞丐**不只是有两人**，而是两个人**跪趴**着，接受施舍，这幅画强调的是**施与受的阶层位置关系**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 7,
+          "dynamic": 4,
+          "rank": -2.3077,
+          "final": 6,
+          "basis": "gifts; prosperity; fair distribution; present support"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -2,
+          "rank": -2.3077,
+          "final": -4,
+          "basis": "desire; cupidity; envy; unequal exchange"
+        }
+      }
+    },
+    {
+      "id": "pentacles-07",
+      "name": "星币七",
+      "nameEn": "Seven of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 7,
+      "image": "cards/pentacles-07.webp",
+      "visual": {
+        "sourceHeading": "星币七 | 星币07_星币七.webp",
+        "direction": "农夫面朝左侧，身体微俯，目光注视着植物上的星币。",
+        "posture": "一位身穿橙色上衣和蓝裤子的农夫，双手托着一把锄头（或农具），身体斜靠在锄柄上。他正站在一片绿地上，打量着一株长势极其茂盛的藤蔓，藤蔓上结满了六枚金色的星币。脚下土地上还放着第七枚星币。",
+        "colors": "清淡的浅蓝色天空，远处起伏的紫色/棕色山岭，绿色的植物与橙色的农夫衣服。",
+        "lighting": "日间，光线柔和，气氛宁静，适合沉思。",
+        "symbols": [
+          {
+            "name": "藤蔓上的六枚星币与脚边的一枚",
+            "meaning": "漫长岁月辛勤劳动的果实。"
+          }
+        ],
+        "story": "一位农夫劳作之后，停下手中的锄头，双臂靠在上面休息，他望着那株硕果累累的藤蔓，仿佛在回顾和评估自己这段时间的辛勤耕耘。他所期待的收获正在慢慢变成现实，但也需要时间沉淀。",
+        "pitfalls": "藤蔓上结着6枚，**地上放着1枚**（共7枚），这枚地上的星币是他**刚刚放下的**，提示他刚刚完成了一个动作，现在正处在\"**暂停观察**\"的阶段。他的姿态是**休息**，而不是准备继续狂干。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 4,
+          "dynamic": 0,
+          "rank": -0.7692,
+          "final": 3,
+          "basis": "investment; assessment; patient cultivation"
+        },
+        "reversed": {
+          "semantic": -4,
+          "dynamic": -3,
+          "rank": -0.7692,
+          "final": -4,
+          "basis": "money anxiety; impatience; poor return"
+        }
+      }
+    },
+    {
+      "id": "pentacles-08",
+      "name": "星币八",
+      "nameEn": "Eight of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 8,
+      "image": "cards/pentacles-08.webp",
+      "visual": {
+        "sourceHeading": "星币八 | 星币08_星币八.webp",
+        "direction": "学徒面朝右侧，身体向前倾，专注桌面。",
+        "posture": "一位年轻的铁匠/金匠学徒坐在木凳上，左手拿锤子，右手拿凿子，正在专注地在一枚星币上雕刻。他的上方有一根木柱，木柱上已经整整齐齐地嵌好了六枚星币，脚下和面前的工作台上还有另外两枚。远处可见村镇。",
+        "colors": "浅蓝色的天空，背景的白墙红瓦小镇，木柱的棕色，人物蓝色的外衣、红色的裤子，金黄色的星币。",
+        "lighting": "日间晴好，光线落在桌面上，画面充满专注的工匠精神。",
+        "symbols": [
+          {
+            "name": "六枚挂好的星币",
+            "meaning": "代表着已经通过反复练习和苦功完成的积累。"
+          }
+        ],
+        "story": "一位年轻的学徒坐在工作台前，正全神贯注地用锤子和凿子雕刻手中的星币。在他身后的柱子上，已经整齐地悬挂着六枚做工精良的成果。他通过不断的重复劳动和手工艺的精进，一步步构建自己的专业身份。",
+        "pitfalls": "他**正在雕刻**的星币是脚下和桌面上的两枚之一，木柱上的六枚代表**已完成的工作**。他**不是在测度**或**玩**，而是一个极其专注的**学徒/手艺人在练功**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 6,
+          "rank": 0.7692,
+          "final": 6,
+          "basis": "employment; craft; skill; repeated work"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -4,
+          "rank": 0.7692,
+          "final": -5,
+          "basis": "voided ambition; vanity; cunning; intrigue"
+        }
+      }
+    },
+    {
+      "id": "pentacles-09",
+      "name": "星币九",
+      "nameEn": "Nine of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 9,
+      "image": "cards/pentacles-09.webp",
+      "visual": {
+        "sourceHeading": "星币九 | 星币09_星币九.webp",
+        "direction": "女子面朝正前方稍偏右，侧身站立。",
+        "posture": "一位头戴红帽、身穿橘红色拖地长袍、衣袍上绣着繁复的花纹（葡萄藤与花朵）的女子，站在一座繁盛的葡萄园中。她右臂上停着一只猎鹰，左手轻抚着金币堆。脚边埋伏着一只小蜗牛。周围和身边堆叠着九枚星币。",
+        "colors": "非常明亮的金黄色天空，背景中绿色的葡萄园与远山，女子的橘红长袍与红帽，耀眼的金黄色的星币。",
+        "lighting": "阳光极其明媚，充满富足与享受的氛围。",
+        "symbols": [
+          {
+            "name": "猎鹰与手套",
+            "meaning": "对感官欲望和本能的高度自律与控制力。"
+          }
+        ],
+        "story": "一位优雅的女子站在自己丰饶的葡萄园中，右臂上戴着皮手套，停着一只猎鹰。她的身后和身边堆满了九枚金币。她既享受着富足，又保持着高贵的自律，代表物质与精神双丰收的独立女性状态。",
+        "pitfalls": "她手上停着的**猎鹰**代表她对自己的**本能和欲望有很高的自律性**。地面上**那只小小的蜗牛**极其容易被忽略，但它代表**不要着急，享受当下的丰饶与安逸**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 2,
+          "rank": 2.3077,
+          "final": 8,
+          "basis": "prudence; safety; accomplishment; material comfort"
+        },
+        "reversed": {
+          "semantic": -7,
+          "dynamic": -4,
+          "rank": 2.3077,
+          "final": -6,
+          "basis": "deception; bad faith; compromised security"
+        }
+      }
+    },
+    {
+      "id": "pentacles-10",
+      "name": "星币十",
+      "nameEn": "Ten of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 10,
+      "image": "cards/pentacles-10.webp",
+      "visual": {
+        "sourceHeading": "星币十 | 星币10_星币十.webp",
+        "direction": "人物呈三层结构（老者、中年人、年轻人），面朝不同方向。",
+        "posture": "在一个古老城镇的石拱门和街道前，一大家子人聚在一起。前景是一位白发老者（穿着绘有葡萄藤和星币图案的华丽长袍）正蹲坐着抚摸着两条白狗。拱门下有夫妻与孩童，空中悬浮着十枚星币，排列呈组合状。",
+        "colors": "明亮的蓝天，背景中高耸的棕黄色塔楼与砖墙，人物服饰的紫、黄、蓝、棕交错，金黄色的星币。",
+        "lighting": "晴天白日，光线极好，展现出一个家族长期积累的兴旺画面。",
+        "symbols": [
+          {
+            "name": "十枚排列的星币",
+            "meaning": "家族财富、世代相传的基业、终极的物质丰饶。"
+          }
+        ],
+        "story": "在一个古老富庶的小镇街道上，一个家族的几代人聚集在石拱门下。老者抚摸着忠诚的家犬，儿女和孙辈相伴左右。十枚星币在天空中形成了一道稳固的庇护，这是关于家族财富、安全感和世代传承的最完美体现。",
+        "pitfalls": "十枚星币的排列不是随机的，而是**两层（或树状的组合）排列**，象征着**世代的沉积与丰盈**。两只白狗极其重要，它们代表**忠诚于家族**和**守护固有财产**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 10,
+          "dynamic": 3,
+          "rank": 3.8462,
+          "final": 9,
+          "basis": "gain; riches; family; durable resources"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -3,
+          "rank": 3.8462,
+          "final": -4,
+          "basis": "loss; risk; unstable inheritance; broken legacy"
+        }
+      }
+    },
+    {
+      "id": "pentacles-11",
+      "name": "星币侍从",
+      "nameEn": "Page of Pentacles",
+      "aliases": [
+        "星币侍者"
+      ],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 11,
+      "image": "cards/pentacles-11.webp",
+      "visual": {
+        "sourceHeading": "星币侍从 | 星币11_星币侍从.webp",
+        "direction": "侍从面朝右侧，目光高远，双手托举星币。",
+        "posture": "一位金发年轻人，头戴红色编织帽，披着红色披巾，身穿灰绿色短外衣。他站在绿色的草地上，双手小心翼翼地捧起一枚星币，专心地端详或展示它。背景是广袤的田野、紫色山丘与绿色树丛。",
+        "colors": "明亮的金黄色天空，绿色的田野与远山，人物衣物的灰绿与红黄搭配，星币的金色。",
+        "lighting": "阳光普照，晴朗无云，景象开阔。",
+        "symbols": [
+          {
+            "name": "专注托举的星币",
+            "meaning": "对现实世界的兴趣刚刚萌芽，视金钱和物质为一门需要学习的功课。"
+          }
+        ],
+        "story": "年轻的星币侍从站在一望无际的田野上，双手捧着那枚星币仔细端详。他就像初出茅庐的学徒，正感受到物质现实的力量和吸引，有着脚踏实地、认真学习生存技能的潜质。",
+        "pitfalls": "他捧着的星币是**双手端着**，姿态带有**展示和珍视**的意味。他不是在抛掷或杂耍。他脚下是**坚实的土地**，与其说是看星币，不如说是在**感受星币在现实中的分量**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 3,
+          "rank": 5.3846,
+          "final": 6,
+          "basis": "application; study; money news; practical beginning"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -3,
+          "rank": 5.3846,
+          "final": -4,
+          "basis": "prodigality; dissipation; bad financial news"
+        }
+      }
+    },
+    {
+      "id": "pentacles-12",
+      "name": "星币骑士",
+      "nameEn": "Knight of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 12,
+      "image": "cards/pentacles-12.webp",
+      "visual": {
+        "sourceHeading": "星币骑士 | 星币12_星币骑士.webp",
+        "direction": "骑士面朝右侧，微微低头，马匹稳步前进。",
+        "posture": "一位全副武装的骑士骑在一匹沉重的黑色战马上。他没有举剑或冲刺，而是单手平稳地托着一枚星币，静静地望向前方。背景是平整的彩色土地与山丘。",
+        "colors": "明亮的淡黄色天空，黑色战马与深色铠甲，骑士身上的红褐色披风与黄铜色星币。",
+        "lighting": "天气晴朗，平实无华，没有激烈的风或云，显得极其平稳。",
+        "symbols": [
+          {
+            "name": "稳托的星币",
+            "meaning": "对现实、财富和物质的认真负责态度。"
+          }
+        ],
+        "story": "星币骑士是唯一一位没有冲刺的骑士。他骑着疲惫却稳重的黑马，以近乎步行的速度前进，手里稳妥地托着星币。这是一种极其务实、缓慢但坚定地朝着目标迈进的态度。",
+        "pitfalls": "这匹黑马是**完全没有腾空或奔跑**的姿态，马步非常平稳，是**唯一不奔跑的骑士**。这意味着星币骑士代表的是**极度稳定、务实、近乎缓慢的推进力**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 6,
+          "dynamic": 4,
+          "rank": 6.9231,
+          "final": 6,
+          "basis": "utility; service; responsibility; steady work"
+        },
+        "reversed": {
+          "semantic": -5,
+          "dynamic": -5,
+          "rank": 6.9231,
+          "final": -4,
+          "basis": "inertia; idleness; carelessness; stagnation"
+        }
+      }
+    },
+    {
+      "id": "pentacles-13",
+      "name": "星币王后",
+      "nameEn": "Queen of Pentacles",
+      "aliases": [
+        "星币女王"
+      ],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 13,
+      "image": "cards/pentacles-13.webp",
+      "visual": {
+        "sourceHeading": "星币王后 | 星币13_星币王后.webp",
+        "direction": "王后端坐于王座上，面朝前方偏左，目光低垂。",
+        "posture": "一位头戴皇冠、身穿红袍与绿色长袍、头戴皇冠的女性，端坐在一个雕刻极其繁复的灰白色王座上。她双手轻轻地捧着一枚星币放在膝盖上。脚边蹲着一只棕色的兔子。头顶有玫瑰与藤蔓的垂蔓。",
+        "colors": "明亮的浅黄色天空，前景有紫红色的花朵与绿地，王后衣着红绿相间，星币金黄。",
+        "lighting": "阳光明媚的户外花园，光线柔和明亮，充满自然的滋养感。",
+        "symbols": [
+          {
+            "name": "手捧星币",
+            "meaning": "对现实的掌控、对生活品质的悉心照料和富足。"
+          }
+        ],
+        "story": "星币王后端坐在一个充满了雕刻和自然气息的宝座上，双手端着金币，神态安详恬静。小兔子在她脚边觅食，四周花草环绕。她象征着物质与自然的交融、繁荣和富足，且这种富足带着温和的母性。",
+        "pitfalls": "宝座边**蹲着的那只棕色兔子**是极其关键的符号，代表**生育力与持续性富足**。她手中的金币是**放在膝盖上**，而不是高举或把玩，说明她已经完全拥有并掌控了它。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 8,
+          "dynamic": 3,
+          "rank": 8.4615,
+          "final": 7,
+          "basis": "opulence; generosity; security; practical nurture"
+        },
+        "reversed": {
+          "semantic": -6,
+          "dynamic": -3,
+          "rank": 8.4615,
+          "final": -5,
+          "basis": "fear; suspicion; mistrust; harmful materialism"
+        }
+      }
+    },
+    {
+      "id": "pentacles-14",
+      "name": "星币国王",
+      "nameEn": "King of Pentacles",
+      "aliases": [],
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": 14,
+      "image": "cards/pentacles-14.webp",
+      "visual": {
+        "sourceHeading": "星币国王 | 星币14_星币国王.webp",
+        "direction": "国王面朝右侧，身体端坐于王座。",
+        "posture": "一位满头白发、留着白须、头戴王冠的国王，身穿布满葡萄藤蔓和葡萄图案的深色长袍（以紫色和绿色为主）。他右手握着一根金色的权杖（顶端有圆球），左手将一枚星币平稳地放在膝盖上。王座上雕有四个牛头（或公羊头）。背景是城堡与田野。",
+        "colors": "明亮的纯黄色天空，国王深紫/深绿色的长袍，金黄色的权杖与星币，灰白色的牛头王座。",
+        "lighting": "灿烂的晴朗白日，展现出绝对丰盛、无可动摇的现实根基。",
+        "symbols": [
+          {
+            "name": "葡萄藤图案的长袍",
+            "meaning": "代表土地的丰收、实业的成熟。"
+          }
+        ],
+        "story": "星币国王坐着由四只牛头装饰的王座上，身穿象征丰收和富饶的葡萄藤长袍。他一手执着权杖，一手稳稳拿着星币。他就像一位睿智的实业家和地主，以强大的现实掌控力经营着丰饶的领地，获得无可撼动的世俗成功与安全感。",
+        "pitfalls": "他长袍上的图案是**葡萄藤**，而不是权杖牌那种火焰状图案，这进一步强调了**土元素和农业产物**的根基。王座上四个**牛头雕饰**表明了他属于**土象星座**和**稳重的掌控者**。"
+      },
+      "scores": {
+        "upright": {
+          "semantic": 9,
+          "dynamic": 6,
+          "rank": 10,
+          "final": 9,
+          "basis": "business skill; success; security; material command"
+        },
+        "reversed": {
+          "semantic": -8,
+          "dynamic": -5,
+          "rank": 10,
+          "final": -7,
+          "basis": "corruption; vice; weakness; material abuse"
+        }
+      }
+    }
+  ]
+}

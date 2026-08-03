@@ -1,0 +1,11 @@
+node_modules/
+.pnpm-store/
+dist/
+out/
+release/
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.vite/
+coverage/
