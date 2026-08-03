@@ -3,8 +3,11 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@astryxdesign/core': true
+  electron: true
   esbuild: true
 
 onlyBuiltDependencies:
+  - '@astryxdesign/core'
   - electron
   - esbuild

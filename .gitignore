@@ -4,6 +4,7 @@ dist/
 out/
 release/
 *.log
+.electron-smoke.*
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

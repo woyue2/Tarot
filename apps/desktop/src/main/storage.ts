@@ -1,0 +1,92 @@
+import { DatabaseSync } from "node:sqlite";
+import type { ReadingRepository, StoredReading } from "@tarot/runtime";
+
+type ReadingRow = Record<string, unknown>;
+
+export class SqliteReadingRepository implements ReadingRepository {
+  private readonly database: DatabaseSync;
+
+  constructor(path: string) {
+    this.database = new DatabaseSync(path);
+    this.database.exec(`
+      PRAGMA journal_mode = WAL;
+      PRAGMA foreign_keys = ON;
+      CREATE TABLE IF NOT EXISTS readings (
+        id TEXT PRIMARY KEY,
+        question TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        status TEXT NOT NULL,
+        shuffle_seed TEXT NOT NULL,
+        deck_json TEXT NOT NULL,
+        selected_indexes_json TEXT NOT NULL,
+        revealed_json TEXT,
+        calculation_json TEXT,
+        interpretation_input_json TEXT,
+        interpretation_json TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS readings_updated_at ON readings(updated_at DESC);
+    `);
+  }
+
+  save(reading: StoredReading): void {
+    this.database.prepare(`
+      INSERT INTO readings (
+        id, question, mode, status, shuffle_seed, deck_json, selected_indexes_json,
+        revealed_json, calculation_json, interpretation_input_json, interpretation_json,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        question = excluded.question,
+        mode = excluded.mode,
+        status = excluded.status,
+        shuffle_seed = excluded.shuffle_seed,
+        deck_json = excluded.deck_json,
+        selected_indexes_json = excluded.selected_indexes_json,
+        revealed_json = excluded.revealed_json,
+        calculation_json = excluded.calculation_json,
+        interpretation_input_json = excluded.interpretation_input_json,
+        interpretation_json = excluded.interpretation_json,
+        updated_at = excluded.updated_at
+    `).run(
+      reading.id, reading.question, reading.mode, reading.status, reading.shuffleSeed,
+      JSON.stringify(reading.deck), JSON.stringify(reading.selectedIndexes),
+      reading.revealed ? JSON.stringify(reading.revealed) : null,
+      reading.calculation ? JSON.stringify(reading.calculation) : null,
+      reading.interpretationInput ? JSON.stringify(reading.interpretationInput) : null,
+      reading.interpretation ? JSON.stringify(reading.interpretation) : null,
+      reading.createdAt, reading.updatedAt,
+    );
+  }
+
+  find(id: string): StoredReading | undefined {
+    const row = this.database.prepare("SELECT * FROM readings WHERE id = ?").get(id) as ReadingRow | undefined;
+    return row ? this.deserialize(row) : undefined;
+  }
+
+  list(limit = 30): StoredReading[] {
+    const safeLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+    return (this.database.prepare("SELECT * FROM readings ORDER BY updated_at DESC LIMIT ?").all(safeLimit) as ReadingRow[])
+      .map((row) => this.deserialize(row));
+  }
+
+  private deserialize(row: ReadingRow): StoredReading {
+    const parse = <T>(key: string): T | undefined => typeof row[key] === "string" ? JSON.parse(row[key] as string) as T : undefined;
+    return {
+      id: String(row.id),
+      question: String(row.question),
+      mode: row.mode === "random" ? "random" : "manual",
+      status: String(row.status),
+      shuffleSeed: String(row.shuffle_seed),
+      deck: parse<unknown[]>("deck_json") ?? [],
+      selectedIndexes: parse<number[]>("selected_indexes_json") ?? [],
+      revealed: parse("revealed_json"),
+      calculation: parse("calculation_json"),
+      interpretationInput: parse("interpretation_input_json"),
+      interpretation: parse("interpretation_json"),
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    };
+  }
+}
