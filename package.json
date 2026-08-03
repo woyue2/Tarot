@@ -5,15 +5,15 @@
   "type": "module",
   "packageManager": "pnpm@11.9.0",
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "scripts": {
     "generate:content": "node scripts/generate-card-data.mjs",
-    "dev": "pnpm generate:content && pnpm --filter @tarot/desktop dev",
-    "build": "pnpm generate:content && pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm generate:content && pnpm -r test",
-    "check": "pnpm generate:content && pnpm typecheck && pnpm test && pnpm build"
+    "dev": "node scripts/generate-card-data.mjs && node scripts/run-pnpm.mjs --filter @tarot/desktop dev",
+    "build": "node scripts/generate-card-data.mjs && node scripts/run-pnpm.mjs -r build",
+    "typecheck": "node scripts/run-pnpm.mjs -r typecheck",
+    "test": "node scripts/generate-card-data.mjs && node scripts/run-pnpm.mjs -r test",
+    "check": "node scripts/generate-card-data.mjs && node scripts/run-pnpm.mjs -r typecheck && node scripts/run-pnpm.mjs -r test && node scripts/run-pnpm.mjs -r build"
   },
   "devDependencies": {
     "@types/node": "25.0.10",
