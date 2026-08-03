@@ -1,9 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
-import type { ReadingRepository, StoredReading } from "@tarot/runtime";
+import type { FolderRepository, ReadingFolder, ReadingRepository, StoredReading } from "@tarot/runtime";
 
 type ReadingRow = Record<string, unknown>;
 
-export class SqliteReadingRepository implements ReadingRepository {
+export class SqliteReadingRepository implements ReadingRepository, FolderRepository {
   private readonly database: DatabaseSync;
 
   constructor(path: string) {
@@ -11,8 +11,15 @@ export class SqliteReadingRepository implements ReadingRepository {
     this.database.exec(`
       PRAGMA journal_mode = WAL;
       PRAGMA foreign_keys = ON;
+      CREATE TABLE IF NOT EXISTS reading_folders (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS readings (
         id TEXT PRIMARY KEY,
+        folder_id TEXT REFERENCES reading_folders(id) ON DELETE SET NULL,
         question TEXT NOT NULL,
         mode TEXT NOT NULL,
         status TEXT NOT NULL,
@@ -28,16 +35,22 @@ export class SqliteReadingRepository implements ReadingRepository {
       );
       CREATE INDEX IF NOT EXISTS readings_updated_at ON readings(updated_at DESC);
     `);
+    const columns = this.database.prepare("PRAGMA table_info(readings)").all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === "folder_id")) {
+      this.database.exec("ALTER TABLE readings ADD COLUMN folder_id TEXT REFERENCES reading_folders(id) ON DELETE SET NULL");
+    }
+    this.database.exec("CREATE INDEX IF NOT EXISTS readings_folder_id ON readings(folder_id, updated_at DESC)");
   }
 
   save(reading: StoredReading): void {
     this.database.prepare(`
       INSERT INTO readings (
-        id, question, mode, status, shuffle_seed, deck_json, selected_indexes_json,
+        id, folder_id, question, mode, status, shuffle_seed, deck_json, selected_indexes_json,
         revealed_json, calculation_json, interpretation_input_json, interpretation_json,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
+        folder_id = excluded.folder_id,
         question = excluded.question,
         mode = excluded.mode,
         status = excluded.status,
@@ -50,7 +63,7 @@ export class SqliteReadingRepository implements ReadingRepository {
         interpretation_json = excluded.interpretation_json,
         updated_at = excluded.updated_at
     `).run(
-      reading.id, reading.question, reading.mode, reading.status, reading.shuffleSeed,
+      reading.id, reading.folderId ?? null, reading.question, reading.mode, reading.status, reading.shuffleSeed,
       JSON.stringify(reading.deck), JSON.stringify(reading.selectedIndexes),
       reading.revealed ? JSON.stringify(reading.revealed) : null,
       reading.calculation ? JSON.stringify(reading.calculation) : null,
@@ -65,16 +78,44 @@ export class SqliteReadingRepository implements ReadingRepository {
     return row ? this.deserialize(row) : undefined;
   }
 
-  list(limit = 30): StoredReading[] {
-    const safeLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+  list(limit = 100): StoredReading[] {
+    const safeLimit = Math.max(1, Math.min(500, Math.trunc(limit)));
     return (this.database.prepare("SELECT * FROM readings ORDER BY updated_at DESC LIMIT ?").all(safeLimit) as ReadingRow[])
       .map((row) => this.deserialize(row));
+  }
+
+  listFolders(): ReadingFolder[] {
+    return (this.database.prepare("SELECT * FROM reading_folders ORDER BY updated_at DESC").all() as ReadingRow[])
+      .map((row) => this.deserializeFolder(row));
+  }
+
+  findFolder(id: string): ReadingFolder | undefined {
+    const row = this.database.prepare("SELECT * FROM reading_folders WHERE id = ?").get(id) as ReadingRow | undefined;
+    return row ? this.deserializeFolder(row) : undefined;
+  }
+
+  saveFolder(folder: ReadingFolder): void {
+    this.database.prepare(`
+      INSERT INTO reading_folders (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at
+    `).run(folder.id, folder.name, folder.createdAt, folder.updatedAt);
+  }
+
+  renameFolder(id: string, name: string): ReadingFolder | undefined {
+    const now = new Date().toISOString();
+    const result = this.database.prepare("UPDATE reading_folders SET name = ?, updated_at = ? WHERE id = ?").run(name, now, id);
+    return result.changes > 0 ? this.findFolder(id) : undefined;
+  }
+
+  close(): void {
+    this.database.close();
   }
 
   private deserialize(row: ReadingRow): StoredReading {
     const parse = <T>(key: string): T | undefined => typeof row[key] === "string" ? JSON.parse(row[key] as string) as T : undefined;
     return {
       id: String(row.id),
+      folderId: typeof row.folder_id === "string" ? row.folder_id : undefined,
       question: String(row.question),
       mode: row.mode === "random" ? "random" : "manual",
       status: String(row.status),
@@ -88,5 +129,9 @@ export class SqliteReadingRepository implements ReadingRepository {
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
     };
+  }
+
+  private deserializeFolder(row: ReadingRow): ReadingFolder {
+    return { id: String(row.id), name: String(row.name), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
   }
 }

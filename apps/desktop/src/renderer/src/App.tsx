@@ -19,6 +19,8 @@ export function App() {
   const [selection, setSelection] = useState<number[]>([]);
   const [reading, setReading] = useState<ReadingView>();
   const [history, setHistory] = useState<ReadingView[]>([]);
+  const [folders, setFolders] = useState<ReadingFolder[]>([]);
+  const [activeFolderId, setActiveFolderId] = useState<string>();
   const [settings, setSettings] = useState<TarotSettings>({ model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1", hasApiKey: false });
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -28,6 +30,7 @@ export function App() {
   useEffect(() => {
     void window.tarot.bootstrap().then((data) => {
       setHistory(data.history);
+      setFolders(data.folders);
       setSettings(data.settings);
     }).catch(showError);
   }, []);
@@ -41,7 +44,7 @@ export function App() {
     setError("");
     setBusy(true);
     try {
-      const created = await window.tarot.createReading({ question, mode });
+      const created = await window.tarot.createReading({ question, mode, ...(activeFolderId ? { folderId: activeFolderId } : {}) });
       if (mode === "random") {
         const confirmed = await window.tarot.confirmReading({ id: created.id });
         setReading(confirmed);
@@ -124,6 +127,7 @@ export function App() {
 
   function reset() {
     setStage("home");
+    setActiveFolderId(undefined);
     setQuestion("");
     setDraft(undefined);
     setReading(undefined);
@@ -134,11 +138,41 @@ export function App() {
   function openHistory(item: ReadingView) {
     if (!item.revealed) return;
     setReading(item);
+    setActiveFolderId(item.folderId);
     setQuestion(item.question);
     setStage("result");
     setError("");
   }
 
+  function startInFolder(folderId: string) {
+    setActiveFolderId(folderId);
+    setStage("home");
+    setQuestion("");
+    setDraft(undefined);
+    setReading(undefined);
+    setSelection([]);
+    setError("");
+  }
+
+  async function createFolder(name: string) {
+    try {
+      const folder = await window.tarot.createFolder(name);
+      setFolders((current) => [folder, ...current]);
+      startInFolder(folder.id);
+    } catch (reason) {
+      showError(reason);
+    }
+  }
+
+  async function renameFolder(id: string, name: string) {
+    try {
+      const renamed = await window.tarot.renameFolder({ id, name });
+      setFolders((current) => current.map((folder) => folder.id === id ? renamed : folder));
+    } catch (reason) {
+      showError(reason);
+    }
+  }
+  const activeFolder = folders.find((folder) => folder.id === activeFolderId);
   const progressLabel = useMemo(
     () => selection.length === 5 ? "五张已选好，可以确认" : `已选择 ${selection.length} / 5`,
     [selection.length],
@@ -148,8 +182,13 @@ export function App() {
     <Sidebar
       stage={stage}
       history={history}
+      folders={folders}
+      activeFolderId={activeFolderId}
       settings={settings}
       onNewReading={reset}
+      onNewReadingInFolder={startInFolder}
+      onCreateFolder={createFolder}
+      onRenameFolder={renameFolder}
       onOpenHistory={openHistory}
       onOpenSettings={() => { setStage("settings"); setSavedNotice(""); }}
     />
@@ -167,6 +206,7 @@ export function App() {
           {stage === "home" && <motion.section className="home" key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="hero-orbit" aria-hidden="true"><span>✦</span></div>
             <p className="eyebrow">A QUIET SPACE FOR REFLECTION</p>
+            {activeFolder && <div className="active-folder-chip"><span>▱</span><b>{activeFolder.name}</b><small>新问题</small></div>}
             <h1>让五张牌，照见此刻的路径</h1>
             <p className="lead">写下你想探索的问题。牌由本地程序抽取并锁定，AI 只负责解释，不替你做决定。</p>
             <div className="question-panel astryx-surface">
@@ -223,14 +263,45 @@ export function App() {
   </div>;
 }
 
-function Sidebar({ stage, history, settings, onNewReading, onOpenHistory, onOpenSettings }: {
+function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onOpenHistory, onOpenSettings }: {
   stage: Stage;
   history: ReadingView[];
+  folders: ReadingFolder[];
+  activeFolderId?: string | undefined;
   settings: TarotSettings;
   onNewReading(): void;
+  onNewReadingInFolder(folderId: string): void;
+  onCreateFolder(name: string): Promise<void>;
+  onRenameFolder(id: string, name: string): Promise<void>;
   onOpenHistory(item: ReadingView): void;
   onOpenSettings(): void;
 }) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [folderName, setFolderName] = useState("");
+  const [renamingId, setRenamingId] = useState<string>();
+  const [renameValue, setRenameValue] = useState("");
+
+  async function submitFolder() {
+    if (!folderName.trim()) return;
+    await onCreateFolder(folderName.trim());
+    setFolderName("");
+    setCreatingFolder(false);
+  }
+
+  async function submitRename(id: string) {
+    if (!renameValue.trim()) {
+      setRenamingId(undefined);
+      return;
+    }
+    await onRenameFolder(id, renameValue.trim());
+    setRenamingId(undefined);
+    setRenameValue("");
+  }
+
+  const visibleHistory = history.filter((item) => item.revealed);
+  const renderConversation = (item: ReadingView) => <button className="folder-conversation" key={item.id} onClick={() => onOpenHistory(item)}><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>;
+
   return <aside className="sidebar">
     <div className="sidebar-brand"><span className="brand-mark">✦</span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
     <button className="new-reading-button" onClick={onNewReading}><span>＋</span><b>新解读</b><kbd>Ctrl N</kbd></button>
@@ -238,9 +309,27 @@ function Sidebar({ stage, history, settings, onNewReading, onOpenHistory, onOpen
       <button data-active={stage !== "settings"} onClick={onNewReading}><span>✧</span><b>探索</b></button>
       <button data-active={stage === "settings"} onClick={onOpenSettings}><span>⌘</span><b>模型连接</b><i className={settings.hasApiKey ? "ready" : ""} /></button>
     </nav>
-    <section className="sidebar-history">
-      <div className="sidebar-section-title"><span>最近记录</span><small>{history.filter((item) => item.revealed).length}</small></div>
-      <div className="sidebar-history-list">{history.filter((item) => item.revealed).slice(0, 20).map((item) => <button key={item.id} data-active={stage === "result"} onClick={() => onOpenHistory(item)}><span className="history-glyph">{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>)}</div>
+    <section className="sidebar-history folder-tree">
+      <div className="sidebar-section-title"><span>最近记录</span><button className="add-folder-button" onClick={() => setCreatingFolder(true)} title="新建 Folder" aria-label="新建 Folder">＋</button></div>
+      {creatingFolder && <div className="folder-create-row"><span>▱</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitFolder(); if (event.key === "Escape") setCreatingFolder(false); }} onBlur={() => { if (!folderName.trim()) setCreatingFolder(false); }} placeholder="Folder 名称" /><button onMouseDown={(event) => event.preventDefault()} onClick={() => void submitFolder()}>确认</button></div>}
+      <div className="folder-list">
+        {folders.map((folder) => {
+          const items = visibleHistory.filter((item) => item.folderId === folder.id);
+          const isCollapsed = collapsed[folder.id] === true;
+          const isRenaming = renamingId === folder.id;
+          return <div className="folder-group" key={folder.id} data-active={activeFolderId === folder.id}>
+            <div className="folder-row">
+              <button className="folder-toggle" onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: !isCollapsed }))} aria-label={isCollapsed ? "展开" : "折叠"}>{isCollapsed ? "›" : "⌄"}</button>
+              <span className="folder-icon">▱</span>
+              {isRenaming ? <input className="folder-rename-input" autoFocus value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRename(folder.id); if (event.key === "Escape") setRenamingId(undefined); }} onBlur={() => void submitRename(folder.id)} /> : <button className="folder-name" onDoubleClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: false }))}>{folder.name}<small>{items.length}</small></button>}
+              <button className="folder-rename" onClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} title="重命名 Folder" aria-label={`重命名 ${folder.name}`}>···</button>
+              <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此 Folder 下新建解读" aria-label={`在 ${folder.name} 下新建解读`}>✎</button>
+            </div>
+            {!isCollapsed && <div className="folder-children">{items.length > 0 ? items.map(renderConversation) : <button className="folder-empty" onClick={() => onNewReadingInFolder(folder.id)}>＋ 添加第一个问题</button>}</div>}
+          </div>;
+        })}
+        {visibleHistory.some((item) => !item.folderId) && <div className="folder-group ungrouped"><div className="folder-row"><button className="folder-toggle" onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))}>{collapsed.ungrouped ? "›" : "⌄"}</button><span className="folder-icon">▱</span><button className="folder-name">未分组<small>{visibleHistory.filter((item) => !item.folderId).length}</small></button></div>{!collapsed.ungrouped && <div className="folder-children">{visibleHistory.filter((item) => !item.folderId).map(renderConversation)}</div>}</div>}
+      </div>
     </section>
     <footer className="sidebar-footer">
       <button onClick={onOpenSettings}><span className="model-status" data-ready={settings.hasApiKey} /><div><b>{settings.hasApiKey ? settings.model : "尚未连接模型"}</b><small>{settings.hasApiKey ? "API 已配置" : "设置 API 地址与 Token"}</small></div><span>›</span></button>
@@ -248,7 +337,6 @@ function Sidebar({ stage, history, settings, onNewReading, onOpenHistory, onOpen
     </footer>
   </aside>;
 }
-
 function ModelSettings({ settings, apiKey, busy, savedNotice, onApiKeyChange, onSettingsChange, onSave, onClear }: {
   settings: TarotSettings;
   apiKey: string;

@@ -32,25 +32,41 @@ function createWindow(): void {
 }
 
 function publicReading(reading: StoredReading) {
-  return { id: reading.id, question: reading.question, mode: reading.mode, status: reading.status, selectedIndexes: reading.selectedIndexes, revealed: reading.revealed, calculation: reading.calculation, interpretation: reading.interpretation, createdAt: reading.createdAt, updatedAt: reading.updatedAt };
+  return { id: reading.id, folderId: reading.folderId, question: reading.question, mode: reading.mode, status: reading.status, selectedIndexes: reading.selectedIndexes, revealed: reading.revealed, calculation: reading.calculation, interpretation: reading.interpretation, createdAt: reading.createdAt, updatedAt: reading.updatedAt };
 }
 
 function registerIpc(): void {
-  ipcMain.handle("tarot:bootstrap", () => ({ history: repository.list().map(publicReading), settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) } }));
+  ipcMain.handle("tarot:bootstrap", () => ({ folders: repository.listFolders(), history: repository.list().map(publicReading), settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) } }));
+  ipcMain.handle("tarot:create-folder", (_event, rawName: string) => {
+    const name = rawName?.trim();
+    if (!name || name.length > 60) throw new Error("Folder 名称需为 1–60 个字符");
+    const now = new Date().toISOString();
+    const folder = { id: randomUUID(), name, createdAt: now, updatedAt: now };
+    repository.saveFolder(folder);
+    return folder;
+  });
+  ipcMain.handle("tarot:rename-folder", (_event, input: { id: string; name: string }) => {
+    const name = input.name?.trim();
+    if (!name || name.length > 60) throw new Error("Folder 名称需为 1–60 个字符");
+    const folder = repository.renameFolder(input.id, name);
+    if (!folder) throw new Error("没有找到这个 Folder");
+    return folder;
+  });
   ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; model?: string; baseUrl?: string }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());
     if (input.clearApiKey) credentials.delete("apiKey");
     settings = preferences.set({ model: input.model?.trim() || settings.model, baseUrl: input.baseUrl?.trim() || settings.baseUrl });
     return { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) };
   });
-  ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random" }) => {
+  ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; folderId?: string }) => {
     const question = input.question?.trim();
     if (!question) throw new Error("请先写下想探索的问题");
+    if (input.folderId && !repository.findFolder(input.folderId)) throw new Error("没有找到所选 Folder");
     const seed = randomBytes(24).toString("hex");
     const now = new Date().toISOString();
-    const reading: StoredReading = { id: randomUUID(), question, mode: input.mode === "random" ? "random" : "manual", status: "selecting", shuffleSeed: seed, deck: shuffleDeck(cards, createSeededRandom(seed)), selectedIndexes: [], createdAt: now, updatedAt: now };
+    const reading: StoredReading = { id: randomUUID(), ...(input.folderId ? { folderId: input.folderId } : {}), question, mode: input.mode === "random" ? "random" : "manual", status: "selecting", shuffleSeed: seed, deck: shuffleDeck(cards, createSeededRandom(seed)), selectedIndexes: [], createdAt: now, updatedAt: now };
     repository.save(reading);
-    return { id: reading.id, question, mode: reading.mode, deckSize: reading.deck.length };
+    return { id: reading.id, folderId: reading.folderId, question, mode: reading.mode, deckSize: reading.deck.length };
   });
   ipcMain.handle("tarot:confirm-reading", (_event, input: { id: string; selectedIndexes?: number[] }) => {
     const reading = repository.find(input.id);
@@ -58,14 +74,7 @@ function registerIpc(): void {
     const indexes = reading.mode === "random" ? randomSelection() : (input.selectedIndexes ?? []);
     if (indexes.length !== 5 || new Set(indexes).size !== 5 || indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= 78)) throw new Error("请选择恰好五张不同的牌");
     const selected = indexes.map((index) => reading.deck[index]) as DeckEntry[];
-    const interpretationInput = buildInterpretationInput({
-      readingId: reading.id,
-      question: reading.question,
-      mode: reading.mode,
-      selected,
-      cards,
-      metadata: { contentVersion: cardsData.contentVersion, scoreTableVersion: cardsData.scoreTableVersion, methodologyVersion: manifest.methodologyVersion, methodologyStyle: methodology.principles.join("；") },
-    });
+    const interpretationInput = buildInterpretationInput({ readingId: reading.id, question: reading.question, mode: reading.mode, selected, cards, metadata: { contentVersion: cardsData.contentVersion, scoreTableVersion: cardsData.scoreTableVersion, methodologyVersion: manifest.methodologyVersion, methodologyStyle: methodology.principles.join("；") } });
     const catalog = new Map(cards.map((card) => [card.id, card]));
     const revealed = selected.map((entry, index) => ({ ...entry, position: index + 1, positionName: interpretationInput.cards[index]!.positionName, card: catalog.get(entry.cardId) }));
     const updated: StoredReading = { ...reading, selectedIndexes: indexes, status: "pending_interpretation", revealed, calculation: interpretationInput.calculation, interpretationInput, updatedAt: new Date().toISOString() };

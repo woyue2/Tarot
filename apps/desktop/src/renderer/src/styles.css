@@ -31,6 +31,7 @@ button { color: inherit; }
 .sidebar button { -webkit-app-region: no-drag; }
 .sidebar-brand { height: 50px; padding: 0 16px; display: flex; align-items: center; gap: 10px; }
 .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; background: linear-gradient(145deg, #6aa5e8, #3d7fc9); box-shadow: 0 5px 15px rgba(62, 127, 201, .22); }
+.brand-mark svg { width: 24px; height: 24px; }
 .sidebar-brand div { display: grid; line-height: 1.1; }
 .sidebar-brand b { font-size: 15px; letter-spacing: .08em; }
 .sidebar-brand small { margin-top: 5px; color: var(--muted-foreground); font-size: 8px; letter-spacing: .16em; }
@@ -81,7 +82,7 @@ button { color: inherit; }
 .content-scroll { min-height: 0; flex: 1; overflow-y: auto; padding: 52px 32px 80px; }
 .home, .selection-view, .result-view, .settings-page { width: min(980px, 100%); margin: 0 auto; text-align: center; }
 .hero-orbit { width: 54px; height: 54px; margin: 0 auto 20px; display: grid; place-items: center; border: 1px solid #cbdcf1; border-radius: 50%; color: var(--accent); background: var(--accent-wash); box-shadow: 0 10px 30px rgba(79, 143, 220, .12); }
-.hero-orbit span { font-size: 20px; }
+.hero-orbit svg { width: 33px; height: 33px; }
 .eyebrow { margin: 0 0 16px; color: var(--accent-deep); font-size: 10px; font-weight: 650; letter-spacing: .22em; }
 h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2 "STSong", "SimSun", serif; letter-spacing: .02em; text-wrap: balance; }
 .lead { max-width: 650px; margin: 20px auto 32px; color: var(--foreground-secondary); font-size: 14px; line-height: 1.8; }
@@ -211,3 +212,40 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Folder tree: one person or topic can own multiple tarot conversations. */
+.add-folder-button { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 6px; color: var(--foreground-secondary); background: transparent; cursor: pointer; font-size: 16px; }
+.add-folder-button:hover { color: var(--foreground); background: var(--surface-hover); }
+.folder-create-row { margin: 0 8px 6px; padding: 5px 6px; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 5px; border: 1px solid var(--accent); border-radius: 8px; background: var(--background); box-shadow: 0 0 0 3px rgba(79, 143, 220, .1); -webkit-app-region: no-drag; }
+.folder-create-row > span { color: var(--accent); }
+.folder-create-row input, .folder-rename-input { min-width: 0; height: 25px; padding: 0 5px; border: 0; outline: 0; color: var(--foreground); background: transparent; font-size: 12px; }
+.folder-create-row button { border: 0; color: var(--accent-deep); background: transparent; cursor: pointer; font-size: 10px; }
+.folder-list { min-height: 0; padding: 0 6px 12px; overflow-y: auto; }
+.folder-group { margin-bottom: 3px; }
+.folder-group[data-active="true"] > .folder-row { background: var(--surface-selected); }
+.folder-row { min-width: 0; height: 36px; padding: 0 5px; display: flex; align-items: center; gap: 3px; border-radius: 8px; color: var(--foreground-secondary); }
+.folder-row:hover { color: var(--foreground); background: var(--surface-hover); }
+.folder-toggle, .folder-name, .folder-compose, .folder-rename { border: 0; background: transparent; cursor: pointer; }
+.folder-toggle { width: 18px; height: 26px; padding: 0; color: var(--muted-foreground); font-size: 17px; }
+.folder-icon { width: 19px; color: var(--foreground-secondary); font-size: 17px; line-height: 1; transform: rotate(180deg); }
+.folder-name { min-width: 0; height: 30px; flex: 1; padding: 0 4px; display: flex; align-items: center; gap: 6px; overflow: hidden; color: inherit; text-align: left; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.folder-name small { margin-left: auto; color: var(--muted-foreground); font-size: 9px; font-weight: 500; }
+.folder-compose, .folder-rename { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 7px; color: var(--muted-foreground); opacity: 0; }
+.folder-row:hover .folder-compose, .folder-row:hover .folder-rename, .folder-group[data-active="true"] .folder-compose { opacity: 1; }
+.folder-compose { border: 1px solid transparent; font-size: 15px; }
+.folder-compose:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-wash); }
+.folder-rename { font-size: 12px; letter-spacing: 1px; }
+.folder-rename:hover { color: var(--foreground); background: var(--background); }
+.folder-rename-input { min-width: 0; flex: 1; border: 1px solid var(--accent); border-radius: 5px; background: var(--background); }
+.folder-children { position: relative; margin: 1px 0 5px 26px; padding-left: 8px; border-left: 1px solid var(--border); }
+.folder-conversation { width: 100%; min-height: 42px; padding: 6px 7px; display: flex; align-items: flex-start; gap: 7px; border: 0; border-radius: 7px; color: var(--foreground-secondary); background: transparent; cursor: pointer; text-align: left; }
+.folder-conversation:hover { color: var(--foreground); background: var(--surface-hover); }
+.folder-conversation > span { width: 13px; padding-top: 2px; color: var(--accent); font-size: 9px; text-align: center; }
+.folder-conversation > div { min-width: 0; flex: 1; }
+.folder-conversation b { display: block; overflow: hidden; font-size: 11px; font-weight: 500; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.folder-conversation small { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 8px; }
+.folder-empty { width: 100%; height: 32px; padding: 0 8px; border: 0; border-radius: 6px; color: var(--muted-foreground); background: transparent; cursor: pointer; text-align: left; font-size: 10px; }
+.folder-empty:hover { color: var(--accent-deep); background: var(--accent-wash); }
+.ungrouped { opacity: .86; }
+.active-folder-chip { width: max-content; max-width: 100%; margin: -8px auto 16px; padding: 5px 9px; display: flex; align-items: center; gap: 6px; border: 1px solid #cfe0f4; border-radius: 999px; color: var(--accent-deep); background: var(--accent-wash); font-size: 10px; }
+.active-folder-chip small { padding-left: 6px; border-left: 1px solid #cfe0f4; color: var(--muted-foreground); font-size: 9px; }

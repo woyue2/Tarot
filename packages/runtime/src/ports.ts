@@ -2,6 +2,7 @@ import type { TarotInterpretation, TarotInterpretationInput } from "@tarot/core"
 
 export interface StoredReading {
   id: string;
+  folderId?: string | undefined;
   question: string;
   mode: "manual" | "random";
   status: string;
@@ -20,6 +21,20 @@ export interface ReadingRepository {
   save(reading: StoredReading): void;
   find(id: string): StoredReading | undefined;
   list(limit?: number): StoredReading[];
+}
+
+export interface ReadingFolder {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FolderRepository {
+  listFolders(): ReadingFolder[];
+  findFolder(id: string): ReadingFolder | undefined;
+  saveFolder(folder: ReadingFolder): void;
+  renameFolder(id: string, name: string): ReadingFolder | undefined;
 }
 
 export interface CredentialStore {
