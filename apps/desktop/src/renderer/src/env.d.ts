@@ -32,7 +32,7 @@ interface ReadingView {
 interface Window {
   tarot: {
     bootstrap(): Promise<{ history: ReadingView[]; settings: TarotSettings }>;
-    saveSettings(input: { apiKey?: string; model?: string; baseUrl?: string }): Promise<TarotSettings>;
+    saveSettings(input: { apiKey?: string; clearApiKey?: boolean; model?: string; baseUrl?: string }): Promise<TarotSettings>;
     createReading(input: { question: string; mode: "manual" | "random" }): Promise<{ id: string; question: string; mode: "manual" | "random"; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;
     interpret(id: string): Promise<ReadingView>;

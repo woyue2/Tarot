@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -116,6 +117,20 @@ function fixedScore(semantic, dynamic, rank, basis) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+if (!existsSync(scorePath)) {
+  try {
+    const existing = JSON.parse(await readFile(path.join(outputDir, "cards.json"), "utf8"));
+    const existingImages = await readdir(outputCardDir);
+    if (existing.cards?.length === 78 && existingImages.filter((name) => name.endsWith(".webp")).length >= 79) {
+      console.log(`Content sources unavailable; using verified generated resources (${existing.cards.length} cards).`);
+      process.exit(0);
+    }
+  } catch {
+    // The descriptive error below owns the fail-closed path.
+  }
+  throw new Error("Card source data is missing and generated resources are incomplete");
 }
 
 await mkdir(outputCardDir, { recursive: true });

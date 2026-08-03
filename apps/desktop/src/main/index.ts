@@ -8,11 +8,13 @@ import manifest from "../../../../resources/content-manifest.json";
 import methodology from "../../../../resources/methodology.json";
 import { ElectronCredentialStore } from "./credentials";
 import { OpenAICompatibleProvider } from "./model";
+import { ModelPreferencesStore } from "./preferences";
 import { SqliteReadingRepository } from "./storage";
 
 const cards = cardsData.cards as TarotCard[];
 let repository: SqliteReadingRepository;
 let credentials: ElectronCredentialStore;
+let preferences: ModelPreferencesStore;
 let settings = { model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" };
 
 function createWindow(): void {
@@ -35,11 +37,10 @@ function publicReading(reading: StoredReading) {
 
 function registerIpc(): void {
   ipcMain.handle("tarot:bootstrap", () => ({ history: repository.list().map(publicReading), settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) } }));
-  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; model?: string; baseUrl?: string }) => {
+  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; model?: string; baseUrl?: string }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());
-    if (input.apiKey === "") credentials.delete("apiKey");
-    if (input.model?.trim()) settings.model = input.model.trim();
-    if (input.baseUrl?.trim()) settings.baseUrl = input.baseUrl.trim();
+    if (input.clearApiKey) credentials.delete("apiKey");
+    settings = preferences.set({ model: input.model?.trim() || settings.model, baseUrl: input.baseUrl?.trim() || settings.baseUrl });
     return { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) };
   });
   ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random" }) => {
@@ -93,6 +94,8 @@ function registerIpc(): void {
 app.whenReady().then(() => {
   repository = new SqliteReadingRepository(join(app.getPath("userData"), "tarot.sqlite"));
   credentials = new ElectronCredentialStore(join(app.getPath("userData"), "credentials.json"));
+  preferences = new ModelPreferencesStore(join(app.getPath("userData"), "settings.json"));
+  settings = preferences.get();
   registerIpc();
   createWindow();
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
