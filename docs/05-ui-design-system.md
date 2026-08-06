@@ -1,5 +1,7 @@
 # Astryx UI 与视觉规范
 
+> 本文是完整第一版的目标视觉规范。当前实现已经具备基础主题、Astryx 组件和 Framer Motion，但 3D、粒子、魔法罗盘、组件展示页及完整视觉验收仍是后续工作；详见 [当前实现状态](00-implementation-status.md)。
+
 ## 1. 设计方向
 
 项目使用 Astryx 作为唯一基础设计系统，并参考 Maka 的桌面工作区风格建立自己的 `Tarot Theme`。

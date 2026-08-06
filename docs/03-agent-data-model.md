@@ -1,5 +1,7 @@
 # Tarot Agent、数据与计算模型
 
+> 本文描述完整第一版的目标 Runtime 和数据模型。当前实现已经完成五张牌输入契约、确定性计算和结构化结果校验，但尚未实现完整工具事件流、`agent_runs` 和目标 SQLite 表；详见 [当前实现状态](00-implementation-status.md)。
+
 ## 1. Agent 定位
 
 这是一个边界明确的专用 Agent，而不是通用自主 Agent。
@@ -272,12 +274,14 @@ AI 输出只拥有解释性字段：
 interface TarotCard {
   id: string;
   name: string;
+  nameEn: string;
   aliases: string[];
   arcana: "major" | "minor";
   suit?: "wands" | "cups" | "swords" | "pentacles";
   rank: number;
   image: string;
   visual: {
+    sourceHeading: string;
     direction: string;
     posture: string;
     colors: string;
@@ -285,6 +289,10 @@ interface TarotCard {
     symbols: Array<{ name: string; meaning: string }>;
     story: string;
     pitfalls: string;
+  };
+  scores: {
+    upright: FixedScore;
+    reversed: FixedScore;
   };
 }
 ```
@@ -380,6 +388,8 @@ selecting/selected → reshuffle → selecting
 
 ## 9. SQLite 表
 
+本节是完整第一版的目标 schema，不是当前数据库快照。当前实现只有 `reading_folders` 与 `readings`，并把牌序、揭牌、计算、模型输入和最终结果保存为 JSON 列。迁移到以下规范前必须增加 schema 版本、迁移前备份和旧数据兼容测试。
+
 ### `sessions`
 
 ```text
@@ -469,7 +479,7 @@ rank_score, final_score, basis, version, updated_at
 
 原因是现有动量公式展开后主要表示第五张相对前四张整体水平的变化，不能完整证明中间趋势。
 
-当前 `card-scores.csv` 已包含 78 张牌、156 个正逆位评分，并通过 `validate-data`。第一版直接使用完整固定表，不在解读现场临时评分。
+当前 `card-scores.csv` 已包含 78 张牌、156 个正逆位评分，并由 `pnpm generate:content` 的生成校验检查。第一版直接使用完整固定表，不在解读现场临时评分。
 
 评分表仍属于人为设计的符号模型，不代表统计概率。修改 `S/D/basis` 时必须：
 

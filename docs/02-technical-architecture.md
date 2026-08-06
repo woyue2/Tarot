@@ -1,5 +1,7 @@
 # Windows 本地技术架构
 
+> 本文描述完整第一版的目标架构。当前可运行实现采用较小的垂直切片，尚未完成流式 Runtime、事件日志、迁移/备份和正式打包；当前边界见 [实现状态](00-implementation-status.md)。文中的接口、表和建议目录除非明确标为“当前”，均应理解为目标契约。
+
 ## 1. 架构结论
 
 项目使用单机桌面架构：
@@ -54,7 +56,7 @@ flowchart LR
 
 ### 3.2 Preload
 
-只暴露明确允许的接口：
+目标版本只暴露明确允许的接口：
 
 ```ts
 interface TarotDesktopApi {
@@ -85,6 +87,8 @@ interface TarotDesktopApi {
 
 Renderer 不能访问 Node.js、数据库文件或明文 API Key。
 
+当前实现尚未迁移到上述分组接口，实际使用 `bootstrap`、`createFolder`、`renameFolder`、`saveSettings`、`createReading`、`confirmReading`、`interpret` 和 `history`。迁移时需要保持兼容或一次性同步更新 Renderer；不要把目标接口当作当前可调用 API。
+
 ### 3.3 React Renderer
 
 负责：
@@ -102,7 +106,7 @@ Renderer 不承担可信计算。最终牌序、方向和公式结果必须由�
 
 ## 4. 本地数据位置
 
-生产数据放在 Electron `userData`：
+生产数据放在 Electron `app.getPath("userData")` 返回的目录。当前开发版不承诺固定的 `%APPDATA%` 子目录名称；正式打包时再通过应用元数据固定为 `TarotAgent`。目标布局为：
 
 ```text
 %APPDATA%\TarotAgent\
@@ -117,12 +121,12 @@ Renderer 不承担可信计算。最终牌序、方向和公式结果必须由�
 ```text
 resources/
 ├── cards.json
-├── methodology.txt
-├── model.md
+├── methodology.json
+├── content-manifest.json
 └── cards/*.webp
 ```
 
-运行时只通过 `AssetResolver` 获取资源 URL，业务代码不拼接开发或生产路径。开发环境从 Vite 资源目录读取；打包环境从 Electron `process.resourcesPath` 下的只读资源读取。构建阶段将原始中文图片名复制为稳定的 ASCII `card_id.webp`，`cards.json` 只引用稳定 ID 路径。
+目标版本运行时只通过 `AssetResolver` 获取资源 URL，业务代码不拼接开发或生产路径。开发环境从 Vite 资源目录读取；打包环境从 Electron `process.resourcesPath` 下的只读资源读取。构建阶段将原始中文图片名复制为稳定的 ASCII `card_id.webp`，`cards.json` 只引用稳定 ID 路径。当前实现已经生成上述资源，但尚未抽象独立 `AssetResolver`。
 
 ## 5. API Key 与安全
 
@@ -141,15 +145,14 @@ resources/
 第一版提供一个连接配置：
 
 ```ts
-interface ModelConnection {
+interface PublicModelConnection {
   provider: "openai" | "openai-compatible";
   baseUrl?: string;
   model: string;
-  encryptedApiKey?: string;
 }
 ```
 
-`openai-compatible` 为未来的本地模型或兼容网关预留，但第一版只要求 OpenAI 路径通过验收。
+API Key 不属于公开连接对象，也不进入普通 settings；它由主进程通过独立的 `CredentialStore` 和 Electron `safeStorage` 保存。`openai-compatible` 为未来的本地模型或兼容网关预留，但第一版只要求 OpenAI 路径通过验收。当前设置只保存 `baseUrl` 与 `model`，尚未持久化 `provider` 字段。
 
 模型请求必须：
 
@@ -193,7 +196,9 @@ interface ModelConnection {
 - 上下文压缩与复杂恢复协议；
 - 自我迭代。
 
-## 8. 建议目录
+## 8. 目标目录
+
+下列结构是完成第一版时的目标组织方式，不是当前目录快照。当前代码为了保持早期 MVP 简单，部分文件仍平铺在 `main/`、`renderer/src/`、`packages/core/src/` 和 `packages/runtime/src/`。
 
 ```text
 apps/
@@ -300,7 +305,7 @@ safeStorage
 - 核心依赖使用经过验证的明确版本，不在生产构建中使用未锁定的 `latest`；
 - Astryx 使用公开的 `@astryxdesign/core` 和项目自有 Tarot Theme，不依赖 Maka 私有 UI 包；
 - Electron 主版本升级单独处理，升级后运行 IPC、安全、SQLite、资源路径和真实窗口测试；
-- 开发版、安装版和便携版默认使用同一 `%APPDATA%\TarotAgent\` 数据目录，除非用户明确启用真正的便携数据模式；
+- 正式安装版和便携版完成后，默认使用同一 `%APPDATA%\TarotAgent\` 数据目录，除非用户明确启用真正的便携数据模式；当前开发版仍以 Electron 实际返回的 `userData` 为准；
 - 项目仅供个人使用时，Windows 代码签名不是 MVP 阻塞项，但发布说明必须提示可能出现 SmartScreen 警告；
 - 若未来对外分发，再把正式代码签名纳入发布门槛。
 
