@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>星径 · 图标方案</title>
+    <style>
+      :root {
+        color: #27282b;
+        background: #f3f4f6;
+        font-family: "Segoe UI Variable", "Microsoft YaHei UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { min-width: 320px; margin: 0; }
+      main { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
+      .eyebrow { margin: 0 0 13px; color: #2f70bd; font-size: 11px; font-weight: 700; letter-spacing: .18em; }
+      h1 { margin: 0; font: 400 clamp(34px, 5vw, 52px)/1.15 "STSong", "SimSun", serif; letter-spacing: .04em; }
+      .intro { max-width: 610px; margin: 18px 0 45px; color: #62666d; font-size: 14px; line-height: 1.8; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .card { overflow: hidden; border: 1px solid rgba(39, 40, 43, .1); border-radius: 18px; background: #fff; box-shadow: 0 12px 36px rgba(20, 24, 30, .045); }
+      .preview { min-height: 290px; display: grid; place-items: center; position: relative; background: radial-gradient(circle at 50% 42%, #f6faff, #eaf3ff 68%, #e4edf7); }
+      .preview::after { content: ""; position: absolute; inset: 24px; border: 1px solid rgba(79, 143, 220, .13); border-radius: 13px; pointer-events: none; }
+      .mark { width: 150px; height: 150px; position: relative; z-index: 1; filter: drop-shadow(0 12px 15px rgba(47, 112, 189, .15)); }
+      .info { padding: 20px 22px 22px; }
+      .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 15px; }
+      h2 { margin: 0; font-size: 16px; }
+      .tag { color: #2f70bd; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+      .info p { min-height: 42px; margin: 8px 0 17px; color: #62666d; font-size: 12px; line-height: 1.7; }
+      .uses { display: flex; gap: 8px; flex-wrap: wrap; }
+      .uses span { padding: 4px 8px; border-radius: 999px; color: #62666d; background: #f3f4f6; font-size: 10px; }
+      .sidebar-sample { margin-top: 42px; padding: 18px; display: flex; align-items: center; gap: 11px; border: 1px solid rgba(39, 40, 43, .1); border-radius: 13px; background: #fff; box-shadow: 0 6px 22px rgba(20, 24, 30, .035); }
+      .sidebar-sample svg { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; box-shadow: 0 5px 15px rgba(62, 127, 201, .22); }
+      .sidebar-sample b { display: block; font-size: 15px; letter-spacing: .08em; }
+      .sidebar-sample small { display: block; margin-top: 4px; color: #92969d; font-size: 8px; letter-spacing: .16em; }
+      @media (max-width: 680px) { main { width: min(100% - 28px, 520px); padding: 42px 0; } .grid { grid-template-columns: 1fr; } .preview { min-height: 240px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">XINGJING · LOCAL TAROT</p>
+      <h1>「星径」SVG 图标方向</h1>
+      <p class="intro">四个方案均以现有雾蓝色 <code>#4f8fdc</code> 为主色，并保留了适合 30px 侧栏标识的清晰轮廓。选定后可直接导出为项目的正式图标资源。</p>
+
+      <section class="grid">
+        <article class="card">
+          <div class="preview">
+            <svg class="mark" viewBox="0 0 160 160" role="img" aria-label="方案一：星轨罗盘">
+              <defs><linearGradient id="a" x1="25" y1="18" x2="136" y2="145" gradientUnits="userSpaceOnUse"><stop stop-color="#73aceb"/><stop offset="1" stop-color="#357bc7"/></linearGradient></defs>
+              <rect x="17" y="17" width="126" height="126" rx="38" fill="url(#a)"/>
+              <circle cx="80" cy="80" r="43" fill="none" stroke="white" stroke-opacity=".7" stroke-width="2"/>
+              <path d="M80 37v13M80 110v13M37 80h13M110 80h13" stroke="white" stroke-opacity=".58" stroke-width="2" stroke-linecap="round"/>
+              <path d="m99 56-8 23 13 13-24-7-21 11 8-24-13-13 25 7z" fill="white"/>
+              <circle cx="80" cy="80" r="4" fill="#4f8fdc"/>
+            </svg>
+          </div>
+          <div class="info"><div class="title-row"><h2>一 · 星轨罗盘</h2><span class="tag">推荐</span></div><p>以罗盘表达“路径”，中心星芒指向内在答案；平衡、精致，识别度最高。</p><div class="uses"><span>应用图标</span><span>侧栏品牌</span><span>启动页</span></div></div>
+        </article>
+
+        <article class="card">
+          <div class="preview">
+            <svg class="mark" viewBox="0 0 160 160" role="img" aria-label="方案二：月相牌">
+              <defs><linearGradient id="b" x1="28" y1="20" x2="132" y2="140" gradientUnits="userSpaceOnUse"><stop stop-color="#73aceb"/><stop offset="1" stop-color="#357bc7"/></linearGradient></defs>
+              <rect x="17" y="17" width="126" height="126" rx="38" fill="url(#b)"/>
+              <rect x="49" y="35" width="62" height="90" rx="8" fill="none" stroke="white" stroke-width="3"/>
+              <path d="M82 51a18 18 0 1 0 15 28 20 20 0 1 1-15-28Z" fill="white"/>
+              <path d="m80 91 3.4 8.6L92 103l-8.6 3.4L80 115l-3.4-8.6L68 103l8.6-3.4Z" fill="white"/>
+              <circle cx="62" cy="47" r="2" fill="white"/><circle cx="98" cy="113" r="2" fill="white"/>
+            </svg>
+          </div>
+          <div class="info"><div class="title-row"><h2>二 · 月相牌</h2><span class="tag">TAROT</span></div><p>直接使用塔罗牌框与月相符号。主题最明确，带一点安静而神秘的仪式感。</p><div class="uses"><span>塔罗主题</span><span>小尺寸清晰</span><span>更具叙事性</span></div></div>
+        </article>
+
+        <article class="card">
+          <div class="preview">
+            <svg class="mark" viewBox="0 0 160 160" role="img" aria-label="方案三：星辰路径">
+              <defs><linearGradient id="c" x1="24" y1="17" x2="134" y2="144" gradientUnits="userSpaceOnUse"><stop stop-color="#73aceb"/><stop offset="1" stop-color="#357bc7"/></linearGradient></defs>
+              <rect x="17" y="17" width="126" height="126" rx="38" fill="url(#c)"/>
+              <path d="M46 109c10-1 14-20 26-28 10-7 20 0 28-10 8-10 4-24 17-31" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="46" cy="109" r="5" fill="white"/><circle cx="100" cy="71" r="5" fill="white"/>
+              <path d="m117 35 3.2 8.8 8.8 3.2-8.8 3.2-3.2 8.8-3.2-8.8-8.8-3.2 8.8-3.2Z" fill="white"/>
+              <circle cx="59" cy="48" r="2.5" fill="white" fill-opacity=".8"/><circle cx="79" cy="58" r="2" fill="white" fill-opacity=".7"/>
+            </svg>
+          </div>
+          <div class="info"><div class="title-row"><h2>三 · 星辰路径</h2><span class="tag">轻盈</span></div><p>从一个点蜿蜒走向星光，把「星径」的名称转化为温柔、具有动势的画面。</p><div class="uses"><span>品牌叙事</span><span>欢迎页</span><span>柔和亲切</span></div></div>
+        </article>
+
+        <article class="card">
+          <div class="preview">
+            <svg class="mark" viewBox="0 0 160 160" role="img" aria-label="方案四：星门">
+              <defs><linearGradient id="d" x1="22" y1="21" x2="137" y2="142" gradientUnits="userSpaceOnUse"><stop stop-color="#73aceb"/><stop offset="1" stop-color="#357bc7"/></linearGradient></defs>
+              <rect x="17" y="17" width="126" height="126" rx="38" fill="url(#d)"/>
+              <path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"/>
+              <path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" fill="none" stroke="white" stroke-opacity=".52" stroke-width="3" stroke-linecap="round"/>
+              <path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="white"/>
+              <path d="M42 113h76" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="info"><div class="title-row"><h2>四 · 星门</h2><span class="tag">克制</span></div><p>将牌阵入口抽象为一座星门。构图稳定、较具产品感，避开常见的神秘学图腾。</p><div class="uses"><span>极简现代</span><span>品牌延展</span><span>专业感</span></div></div>
+        </article>
+      </section>
+
+      <div class="sidebar-sample">
+        <svg viewBox="0 0 160 160" aria-hidden="true"><defs><linearGradient id="sample" x1="25" y1="18" x2="136" y2="145" gradientUnits="userSpaceOnUse"><stop stop-color="#73aceb"/><stop offset="1" stop-color="#357bc7"/></linearGradient></defs><rect x="17" y="17" width="126" height="126" rx="38" fill="url(#sample)"/><circle cx="80" cy="80" r="43" fill="none" stroke="white" stroke-opacity=".7" stroke-width="2"/><path d="m99 56-8 23 13 13-24-7-21 11 8-24-13-13 25 7z" fill="white"/><circle cx="80" cy="80" r="4" fill="#4f8fdc"/></svg>
+        <div><b>星径</b><small>LOCAL TAROT</small></div>
+      </div>
+    </main>
+  </body>
+</html>
