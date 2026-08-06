@@ -7,15 +7,16 @@ import cardsData from "../../../../resources/cards.json";
 import manifest from "../../../../resources/content-manifest.json";
 import methodology from "../../../../resources/methodology.json";
 import { ElectronCredentialStore } from "./credentials";
-import { OpenAICompatibleProvider } from "./model";
+import { createModelProvider, fetchProviderModels, type ProviderType } from "./model";
 import { ModelPreferencesStore } from "./preferences";
 import { SqliteReadingRepository } from "./storage";
+import { PROVIDER_PRESETS, classifyModelError } from "./provider-registry";
 
 const cards = cardsData.cards as TarotCard[];
 let repository: SqliteReadingRepository;
 let credentials: ElectronCredentialStore;
 let preferences: ModelPreferencesStore;
-let settings = { model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" };
+let settings = { providerType: "openai" as ProviderType, model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" };
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -25,6 +26,7 @@ function createWindow(): void {
     minHeight: 640,
     backgroundColor: "#08070d",
     titleBarStyle: "hiddenInset",
+    icon: join(__dirname, "../../build/icon.png"),
     webPreferences: { preload: join(__dirname, "../preload/index.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(process.env.ELECTRON_RENDERER_URL);
@@ -36,7 +38,35 @@ function publicReading(reading: StoredReading) {
 }
 
 function registerIpc(): void {
-  ipcMain.handle("tarot:bootstrap", () => ({ folders: repository.listFolders(), history: repository.list().map(publicReading), settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) } }));
+  ipcMain.handle("tarot:bootstrap", () => ({
+    folders: repository.listFolders(),
+    history: repository.list().map(publicReading),
+    settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) },
+    presetProviders: Object.entries(PROVIDER_PRESETS).map(([type, preset]) => ({
+      type,
+      label: preset.label,
+      description: preset.description,
+      category: preset.category,
+      baseUrl: preset.baseUrl,
+      defaultModel: preset.defaultModel,
+      recommendedModels: preset.recommendedModels,
+      signupUrl: preset.signupUrl,
+    })),
+  }));
+
+  ipcMain.handle("tarot:list-preset-providers", () =>
+    Object.entries(PROVIDER_PRESETS).map(([type, preset]) => ({
+      type,
+      label: preset.label,
+      description: preset.description,
+      category: preset.category,
+      baseUrl: preset.baseUrl,
+      defaultModel: preset.defaultModel,
+      recommendedModels: preset.recommendedModels,
+      signupUrl: preset.signupUrl,
+    })),
+  );
+
   ipcMain.handle("tarot:create-folder", (_event, rawName: string) => {
     const name = rawName?.trim();
     if (!name || name.length > 60) throw new Error("Folder 名称需为 1–60 个字符");
@@ -52,10 +82,22 @@ function registerIpc(): void {
     if (!folder) throw new Error("没有找到这个 Folder");
     return folder;
   });
-  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; model?: string; baseUrl?: string }) => {
+  ipcMain.handle("tarot:move-reading", (_event, input: { id: string; folderId: string | null }) => {
+    const reading = repository.find(input.id);
+    if (!reading) throw new Error("没有找到这次解读");
+    if (input.folderId && !repository.findFolder(input.folderId)) throw new Error("没有找到目标分组");
+    const updated: StoredReading = { ...reading, folderId: input.folderId ?? undefined };
+    repository.save(updated);
+    return publicReading(updated);
+  });
+  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());
     if (input.clearApiKey) credentials.delete("apiKey");
-    settings = preferences.set({ model: input.model?.trim() || settings.model, baseUrl: input.baseUrl?.trim() || settings.baseUrl });
+    settings = preferences.set({
+      providerType: (input.providerType as ProviderType) || settings.providerType,
+      model: input.model?.trim() || settings.model,
+      baseUrl: input.baseUrl?.trim() || settings.baseUrl,
+    });
     return { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) };
   });
   ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; folderId?: string }) => {
@@ -81,20 +123,77 @@ function registerIpc(): void {
     repository.save(updated);
     return publicReading(updated);
   });
-  ipcMain.handle("tarot:interpret", async (_event, id: string) => {
+  ipcMain.handle("tarot:interpret", async (event, id: string) => {
     const reading = repository.find(id);
     if (!reading?.interpretationInput) throw new Error("请先确认牌阵");
     const apiKey = credentials.get("apiKey");
     if (!apiKey) throw new Error("尚未配置模型 API Key；牌阵已保存在本地，可稍后解读");
     repository.save({ ...reading, status: "interpreting", updatedAt: new Date().toISOString() });
     try {
-      const interpretation = await new OpenAICompatibleProvider({ apiKey, ...settings }).interpret(reading.interpretationInput);
+      const provider = createModelProvider({ apiKey, ...settings });
+      // 流式输出：通过 IPC 事件实时推送进度到渲染进程
+      const interpretation = await provider.interpretStream(
+        reading.interpretationInput,
+        (delta, reasoning) => {
+          event.sender.send("tarot:interpret-progress", { id, delta, reasoning });
+        },
+      );
       const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
       repository.save(completed);
       return publicReading(completed);
     } catch (error) {
-      repository.save({ ...reading, status: "failed", updatedAt: new Date().toISOString() });
-      throw error;
+      // 流式失败时回退到非流式
+      try {
+        const provider = createModelProvider({ apiKey, ...settings });
+        const interpretation = await provider.interpret(reading.interpretationInput);
+        const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
+        repository.save(completed);
+        return publicReading(completed);
+      } catch (fallbackError) {
+        repository.save({ ...reading, status: "failed", updatedAt: new Date().toISOString() });
+        const classified = classifyModelError(fallbackError);
+        throw new Error(classified.userMessage);
+      }
+    }
+  });
+  // 从 maka-agent 的 connection-model-discovery.ts 抄的：拉取可用模型列表
+  ipcMain.handle("tarot:fetch-models", async (_event, opts?: { apiKey?: string; baseUrl?: string; providerType?: string }) => {
+    const apiKey = opts?.apiKey || credentials.get("apiKey");
+    if (!apiKey) return { ok: false, models: [], userMessage: "尚未配置 API Key" };
+    const baseUrl = opts?.baseUrl || settings.baseUrl;
+    const providerType = opts?.providerType || settings.providerType;
+    try {
+      const models = await fetchProviderModels(baseUrl, apiKey, providerType);
+      return { ok: true, models, userMessage: `找到 ${models.length} 个模型` };
+    } catch (error) {
+      return { ok: false, models: [], userMessage: error instanceof Error ? error.message : "拉取失败" };
+    }
+  });
+  // 从 maka-agent 的 connections:test IPC handler 抄来的测试连接
+  ipcMain.handle("tarot:test-connection", async (_event, opts?: { apiKey?: string; model?: string; baseUrl?: string; providerType?: string }) => {
+    const apiKey = opts?.apiKey || credentials.get("apiKey");
+    if (!apiKey) return { ok: false, userMessage: "尚未配置 API Key" };
+    const model = opts?.model || settings.model;
+    const rawUrl = (opts?.baseUrl || settings.baseUrl).replace(/\/$/, "");
+    try {
+      // 所有 MiniMax 平台都走标准 OpenAI 兼容的 /chat/completions 端点
+      const url = `${rawUrl}/chat/completions`;
+      const body = JSON.stringify({ model, messages: [{ role: "user", content: "reply with ok" }], max_tokens: 10, temperature: 0 });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body,
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { error?: { message?: string } };
+        const classified = classifyModelError(new Error(payload.error?.message ?? `HTTP ${response.status}`));
+        return { ok: false, userMessage: `${classified.userMessage}（${response.status}）`, statusCode: response.status };
+      }
+      return { ok: true, userMessage: "连接成功 ✅" };
+    } catch (error) {
+      const classified = classifyModelError(error);
+      return { ok: false, userMessage: classified.userMessage };
     }
   });
   ipcMain.handle("tarot:history", () => repository.list().map(publicReading));

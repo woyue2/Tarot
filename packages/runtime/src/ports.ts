@@ -45,4 +45,8 @@ export interface CredentialStore {
 
 export interface ModelProvider {
   interpret(input: TarotInterpretationInput): Promise<TarotInterpretation>;
+  interpretStream(
+    input: TarotInterpretationInput,
+    onProgress: (delta: string, reasoning: string) => void,
+  ): Promise<TarotInterpretation>;
 }

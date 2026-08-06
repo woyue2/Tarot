@@ -1,5 +1,7 @@
 # Tarot Local Agent 项目总览
 
+> 本文描述完整第一版的产品目标，不代表所有条目已经实现。当前仓库已经可以运行，但仍属于早期 MVP；实际完成度见 [当前实现状态](docs/00-implementation-status.md)，启动方法见 [README](README.md)。
+
 ## 1. 产品定位
 
 本项目是一个仅供个人使用的 Windows 本地塔罗 Agent 桌面应用。
@@ -81,6 +83,7 @@
 
 ## 4. 文档目录
 
+- [当前实现状态](docs/00-implementation-status.md)
 - [产品体验与选牌交互](docs/01-product-experience.md)
 - [Windows 本地架构](docs/02-technical-architecture.md)
 - [Tarot Agent、数据与计算模型](docs/03-agent-data-model.md)

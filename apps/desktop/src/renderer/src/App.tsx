@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,6 +14,13 @@ function StargateMark({ className = "" }: { className?: string }) {
   </svg>;
 }
 
+function NewConversationIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 3.5c5 0 8.5 3.2 8.5 7.6s-3.5 7.6-8.5 7.6c-1 0-2-.13-2.9-.4L5 20.5l.65-4.1A7.15 7.15 0 0 1 3.5 11.1C3.5 6.7 7 3.5 12 3.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M12 7.8v6.4M8.8 11h6.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>;
+}
+
 const stageTitles: Record<Stage, string> = {
   home: "新解读",
   select: "选择牌面",
@@ -25,7 +32,7 @@ export function App() {
   const [stage, setStage] = useState<Stage>("home");
   const [question, setQuestion] = useState("");
   const [draft, setDraft] = useState<{ id: string; deckSize: number }>();
-  const [selection, setSelection] = useState<number[]>([]);
+  const [selection, setSelection] = useState<(number | null)[]>([]);
   const [reading, setReading] = useState<ReadingView>();
   const [history, setHistory] = useState<ReadingView[]>([]);
   const [folders, setFolders] = useState<ReadingFolder[]>([]);
@@ -85,9 +92,20 @@ export function App() {
   }
 
   function toggleCard(index: number) {
-    setSelection((current) => current.includes(index)
-      ? current.filter((item) => item !== index)
-      : current.length < 5 ? [...current, index] : current);
+    setSelection((current) => {
+      const existingIndex = current.indexOf(index);
+      if (existingIndex >= 0) {
+        // 已选中：将该位置置为 null（保留空位）
+        return current.map((item, i) => i === existingIndex ? null : item);
+      }
+      // 未选中：寻找第一个空位填入，否则追加（不超过 5 个位置）
+      const firstNull = current.findIndex((item) => item === null);
+      if (firstNull >= 0) {
+        return current.map((item, i) => i === firstNull ? index : item);
+      }
+      if (current.length >= 5) return current;
+      return [...current, index];
+    });
   }
 
   async function confirmSelection() {
@@ -95,7 +113,8 @@ export function App() {
     setBusy(true);
     setError("");
     try {
-      const confirmed = await window.tarot.confirmReading({ id: draft.id, selectedIndexes: selection });
+      const selectedIndexes = selection.filter((item): item is number => item !== null);
+      const confirmed = await window.tarot.confirmReading({ id: draft.id, selectedIndexes });
       setReading(confirmed);
       setStage("result");
       setHistory(await window.tarot.history());
@@ -222,10 +241,22 @@ export function App() {
       showError(reason);
     }
   }
+
+  async function moveReading(id: string, folderId?: string) {
+    try {
+      const moved = await window.tarot.moveReading({ id, folderId: folderId ?? null });
+      setHistory((current) => current.map((item) => item.id === id ? moved : item));
+      setReading((current) => current?.id === id ? moved : current);
+      if (reading?.id === id) setActiveFolderId(folderId);
+    } catch (reason) {
+      showError(reason);
+    }
+  }
   const activeFolder = folders.find((folder) => folder.id === activeFolderId);
+  const selectedCount = selection.filter((item) => item !== null).length;
   const progressLabel = useMemo(
-    () => selection.length === 5 ? "五张已选好，可以确认" : `已选择 ${selection.length} / 5`,
-    [selection.length],
+    () => selectedCount === 5 ? "五张已选好，可以确认" : `已选择 ${selectedCount} / 5`,
+    [selectedCount],
   );
   const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
   const displayModel = currentPreset?.label
@@ -243,6 +274,7 @@ export function App() {
       onNewReadingInFolder={startInFolder}
       onCreateFolder={createFolder}
       onRenameFolder={renameFolder}
+      onMoveReading={moveReading}
       onOpenHistory={openHistory}
       onOpenSettings={() => { setStage("settings"); setSavedNotice(""); }}
     />
@@ -323,7 +355,7 @@ export function App() {
   </div>;
 }
 
-function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onOpenHistory, onOpenSettings }: {
+function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onMoveReading, onOpenHistory, onOpenSettings }: {
   stage: Stage;
   history: ReadingView[];
   folders: ReadingFolder[];
@@ -333,6 +365,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   onNewReadingInFolder(folderId: string): void;
   onCreateFolder(name: string): Promise<void>;
   onRenameFolder(id: string, name: string): Promise<void>;
+  onMoveReading(id: string, folderId?: string): Promise<void>;
   onOpenHistory(item: ReadingView): void;
   onOpenSettings(): void;
 }) {
@@ -341,6 +374,8 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   const [folderName, setFolderName] = useState("");
   const [renamingId, setRenamingId] = useState<string>();
   const [renameValue, setRenameValue] = useState("");
+  const [draggedReadingId, setDraggedReadingId] = useState<string>();
+  const [dropTarget, setDropTarget] = useState<string>();
 
   async function submitFolder() {
     if (!folderName.trim()) return;
@@ -360,7 +395,36 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   }
 
   const visibleHistory = history.filter((item) => item.revealed);
-  const renderConversation = (item: ReadingView) => <button className="folder-conversation" key={item.id} onClick={() => onOpenHistory(item)}><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>;
+  const ungroupedHistory = visibleHistory.filter((item) => !item.folderId);
+  const draggedReading = visibleHistory.find((item) => item.id === draggedReadingId);
+
+  function canDropInto(folderId?: string) {
+    return Boolean(draggedReading && draggedReading.folderId !== folderId);
+  }
+
+  async function dropReading(event: DragEvent, folderId?: string) {
+    event.preventDefault();
+    const readingId = draggedReadingId ?? event.dataTransfer.getData("text/plain");
+    setDropTarget(undefined);
+    setDraggedReadingId(undefined);
+    if (!readingId || visibleHistory.find((item) => item.id === readingId)?.folderId === folderId) return;
+    setCollapsed((current) => ({ ...current, [folderId ?? "ungrouped"]: false }));
+    await onMoveReading(readingId, folderId);
+  }
+
+  const renderConversation = (item: ReadingView) => <button
+    className="folder-conversation"
+    key={item.id}
+    draggable
+    aria-grabbed={draggedReadingId === item.id}
+    onDragStart={(event) => {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", item.id);
+      setDraggedReadingId(item.id);
+    }}
+    onDragEnd={() => { setDraggedReadingId(undefined); setDropTarget(undefined); }}
+    onClick={() => onOpenHistory(item)}
+  ><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>;
 
   return <aside className="sidebar">
     <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
@@ -377,18 +441,32 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
           const items = visibleHistory.filter((item) => item.folderId === folder.id);
           const isCollapsed = collapsed[folder.id] === true;
           const isRenaming = renamingId === folder.id;
-          return <div className="folder-group" key={folder.id} data-active={activeFolderId === folder.id}>
+          return <div
+            className="folder-group"
+            key={folder.id}
+            data-active={activeFolderId === folder.id}
+            data-drop-target={dropTarget === folder.id}
+            onDragEnter={() => setDropTarget(canDropInto(folder.id) ? folder.id : undefined)}
+            onDragOver={(event) => { if (canDropInto(folder.id)) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }}
+            onDrop={(event) => { if (canDropInto(folder.id)) void dropReading(event, folder.id); }}
+          >
             <div className="folder-row">
               <button className="folder-toggle" data-collapsed={isCollapsed} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: !isCollapsed }))} aria-label={isCollapsed ? "展开" : "折叠"}>›</button>
               <span className="folder-icon">▱</span>
               {isRenaming ? <input className="folder-rename-input" autoFocus value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRename(folder.id); if (event.key === "Escape") setRenamingId(undefined); }} onBlur={() => void submitRename(folder.id)} /> : <button className="folder-name" onDoubleClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: false }))}>{folder.name}<small>{items.length}</small></button>}
               <button className="folder-rename" onClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} title="重命名 Folder" aria-label={`重命名 ${folder.name}`}>···</button>
-              <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此 Folder 下新建解读" aria-label={`在 ${folder.name} 下新建解读`}>✎</button>
+              <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此分组下新建对话" aria-label={`在 ${folder.name} 下新建对话`}><NewConversationIcon /></button>
             </div>
             <div className="folder-children-wrap" data-collapsed={isCollapsed}><div className="folder-children">{items.length > 0 ? items.map(renderConversation) : <button className="folder-empty" onClick={() => onNewReadingInFolder(folder.id)}>＋ 添加第一个问题</button>}</div></div>
           </div>;
         })}
-        {visibleHistory.some((item) => !item.folderId) && <div className="folder-group ungrouped"><div className="folder-row"><button className="folder-toggle" data-collapsed={collapsed.ungrouped === true} onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))} aria-label={collapsed.ungrouped ? "展开" : "折叠"}>›</button><span className="folder-icon">▱</span><button className="folder-name">未分组<small>{visibleHistory.filter((item) => !item.folderId).length}</small></button></div><div className="folder-children-wrap" data-collapsed={collapsed.ungrouped === true}><div className="folder-children">{visibleHistory.filter((item) => !item.folderId).map(renderConversation)}</div></div></div>}
+        {(ungroupedHistory.length > 0 || draggedReadingId) && <div
+          className="folder-group ungrouped"
+          data-drop-target={dropTarget === "ungrouped"}
+          onDragEnter={() => setDropTarget(canDropInto() ? "ungrouped" : undefined)}
+          onDragOver={(event) => { if (canDropInto()) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }}
+          onDrop={(event) => { if (canDropInto()) void dropReading(event); }}
+        ><div className="folder-row"><button className="folder-toggle" data-collapsed={collapsed.ungrouped === true} onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))} aria-label={collapsed.ungrouped ? "展开" : "折叠"}>›</button><span className="folder-icon">▱</span><button className="folder-name" onClick={() => setCollapsed((current) => ({ ...current, ungrouped: false }))}>未分组<small>{ungroupedHistory.length}</small></button></div><div className="folder-children-wrap" data-collapsed={collapsed.ungrouped === true}><div className="folder-children">{ungroupedHistory.map(renderConversation)}</div></div></div>}
       </div>
     </section>
     <footer className="sidebar-footer">
