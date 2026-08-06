@@ -267,10 +267,18 @@ export function App() {
     try {
       await window.tarot.deleteFolder(id);
       setFolders((current) => current.filter((f) => f.id !== id));
-      setHistory((current) => current.map((item) => item.folderId === id ? { ...item, folderId: undefined } : item));
+      setHistory((current) => current.map((item) => {
+        if (item.folderId !== id) return item;
+        const { folderId: _folderId, ...rest } = item;
+        return rest as ReadingView;
+      }));
       if (activeFolderId === id) {
         setActiveFolderId(undefined);
-        if (reading?.folderId === id) setReading((prev) => prev ? { ...prev, folderId: undefined } : prev);
+        if (reading?.folderId === id) setReading((prev) => {
+          if (!prev) return prev;
+          const { folderId: _folderId, ...rest } = prev;
+          return rest as ReadingView;
+        });
       }
     } catch (reason) {
       showError(reason);

@@ -251,9 +251,12 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .folder-icon { width: 19px; color: var(--foreground-secondary); font-size: 17px; line-height: 1; transform: rotate(180deg); }
 .folder-name { min-width: 0; height: 30px; flex: 1; padding: 0 4px; display: flex; align-items: center; gap: 6px; overflow: hidden; color: inherit; text-align: left; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .folder-name small { margin-left: auto; color: var(--muted-foreground); font-size: 9px; font-weight: 500; }
-.folder-compose, .folder-rename { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 8px; color: var(--muted-foreground); }
+.folder-compose, .folder-rename, .folder-delete { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 8px; color: var(--muted-foreground); }
 .folder-rename { opacity: 0; font-size: 12px; letter-spacing: 1px; }
 .folder-row:hover .folder-rename { opacity: 1; }
+.folder-delete { opacity: 0; border: 0; color: #b42318; background: transparent; font-size: 17px; line-height: 1; }
+.folder-row:hover .folder-delete { opacity: 1; }
+.folder-delete:hover { color: #991b1b; background: #fef2f2; }
 .folder-compose { border: 1px solid var(--border); color: var(--foreground-secondary); background: var(--surface-selected); }
 .folder-compose svg { width: 19px; height: 19px; }
 .folder-compose:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-wash); }
@@ -262,10 +265,14 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .folder-children-wrap { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.22s ease; }
 .folder-children-wrap[data-collapsed="true"] { grid-template-rows: 0fr; }
 .folder-children { position: relative; margin: 1px 0 5px 26px; padding-left: 8px; border-left: 1px solid var(--border); overflow: hidden; min-height: 0; }
-.folder-conversation { width: 100%; min-height: 42px; padding: 6px 7px; display: flex; align-items: flex-start; gap: 7px; border: 0; border-radius: 7px; color: var(--foreground-secondary); background: transparent; cursor: pointer; text-align: left; }
+.folder-conversation-wrap { position: relative; display: flex; align-items: center; }
+.folder-conversation { width: 100%; min-height: 42px; padding: 6px 28px 6px 7px; display: flex; align-items: flex-start; gap: 7px; border: 0; border-radius: 7px; color: var(--foreground-secondary); background: transparent; cursor: pointer; text-align: left; }
 .folder-conversation:hover { color: var(--foreground); background: var(--surface-hover); }
 .folder-conversation[draggable="true"] { cursor: grab; }
 .folder-conversation[aria-grabbed="true"] { opacity: .45; cursor: grabbing; }
+.conversation-delete { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 6px; color: transparent; background: transparent; cursor: pointer; font-size: 14px; line-height: 1; }
+.folder-conversation-wrap:hover .conversation-delete { color: #b42318; }
+.conversation-delete:hover { color: #991b1b; background: #fef2f2; }
 .folder-group[data-drop-target="true"] > .folder-row { color: var(--accent-deep); background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
 .folder-group[data-drop-target="true"] > .folder-children-wrap { border-radius: 7px; background: rgba(79, 143, 220, .07); }
 .folder-conversation > span { width: 13px; padding-top: 2px; color: var(--accent); font-size: 9px; text-align: center; }
