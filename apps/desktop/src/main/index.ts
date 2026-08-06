@@ -90,6 +90,14 @@ function registerIpc(): void {
     repository.save(updated);
     return publicReading(updated);
   });
+  ipcMain.handle("tarot:delete-folder", (_event, id: string) => {
+    if (!repository.deleteFolder(id)) throw new Error("删除分组失败");
+    return { ok: true };
+  });
+  ipcMain.handle("tarot:delete-reading", (_event, id: string) => {
+    if (!repository.deleteReading(id)) throw new Error("删除解读记录失败");
+    return { ok: true };
+  });
   ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());
     if (input.clearApiKey) credentials.delete("apiKey");

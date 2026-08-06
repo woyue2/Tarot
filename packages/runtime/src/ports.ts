@@ -21,6 +21,7 @@ export interface ReadingRepository {
   save(reading: StoredReading): void;
   find(id: string): StoredReading | undefined;
   list(limit?: number): StoredReading[];
+  deleteReading(id: string): boolean;
 }
 
 export interface ReadingFolder {
@@ -35,6 +36,7 @@ export interface FolderRepository {
   findFolder(id: string): ReadingFolder | undefined;
   saveFolder(folder: ReadingFolder): void;
   renameFolder(id: string, name: string): ReadingFolder | undefined;
+  deleteFolder(id: string): boolean;
 }
 
 export interface CredentialStore {

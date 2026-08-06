@@ -47,7 +47,9 @@ interface Window {
     bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; presetProviders: PresetProvider[] }>;
     createFolder(name: string): Promise<ReadingFolder>;
     renameFolder(input: { id: string; name: string }): Promise<ReadingFolder>;
+    deleteFolder(id: string): Promise<{ ok: boolean }>;
     moveReading(input: { id: string; folderId: string | null }): Promise<ReadingView>;
+    deleteReading(id: string): Promise<{ ok: boolean }>;
     saveSettings(input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }): Promise<TarotSettings>;
     createReading(input: { question: string; mode: "manual" | "random"; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;

@@ -107,6 +107,16 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
     return result.changes > 0 ? this.findFolder(id) : undefined;
   }
 
+  deleteFolder(id: string): boolean {
+    const result = this.database.prepare("DELETE FROM reading_folders WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
+  deleteReading(id: string): boolean {
+    const result = this.database.prepare("DELETE FROM readings WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
   close(): void {
     this.database.close();
   }

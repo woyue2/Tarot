@@ -213,6 +213,24 @@ export function App() {
     setError("");
   }
 
+  async function deleteReading(id: string) {
+    const item = history.find((h) => h.id === id);
+    if (!item) return;
+    if (!window.confirm("确定删除这条解读记录？此操作不可恢复。")) return;
+    try {
+      await window.tarot.deleteReading(id);
+      setHistory((current) => current.filter((h) => h.id !== id));
+      if (reading?.id === id) {
+        setReading(undefined);
+        setStage("home");
+        setQuestion("");
+        setActiveFolderId(undefined);
+      }
+    } catch (reason) {
+      showError(reason);
+    }
+  }
+
   function startInFolder(folderId: string) {
     setActiveFolderId(folderId);
     setStage("home");
@@ -237,6 +255,23 @@ export function App() {
     try {
       const renamed = await window.tarot.renameFolder({ id, name });
       setFolders((current) => current.map((folder) => folder.id === id ? renamed : folder));
+    } catch (reason) {
+      showError(reason);
+    }
+  }
+
+  async function deleteFolder(id: string) {
+    const folder = folders.find((f) => f.id === id);
+    if (!folder) return;
+    if (!window.confirm(`确定删除分组「${folder.name}」？该分组下的解读将变为未分组。`)) return;
+    try {
+      await window.tarot.deleteFolder(id);
+      setFolders((current) => current.filter((f) => f.id !== id));
+      setHistory((current) => current.map((item) => item.folderId === id ? { ...item, folderId: undefined } : item));
+      if (activeFolderId === id) {
+        setActiveFolderId(undefined);
+        if (reading?.folderId === id) setReading((prev) => prev ? { ...prev, folderId: undefined } : prev);
+      }
     } catch (reason) {
       showError(reason);
     }
@@ -274,7 +309,9 @@ export function App() {
       onNewReadingInFolder={startInFolder}
       onCreateFolder={createFolder}
       onRenameFolder={renameFolder}
+      onDeleteFolder={deleteFolder}
       onMoveReading={moveReading}
+      onDeleteReading={deleteReading}
       onOpenHistory={openHistory}
       onOpenSettings={() => { setStage("settings"); setSavedNotice(""); }}
     />
@@ -309,16 +346,16 @@ export function App() {
             <p className="eyebrow">CHOOSE WITHOUT OVERTHINKING</p>
             <h1>凭直觉选出五张牌</h1>
             <p className="lead compact">左右滑动牌列，依次点选。再次点击可撤回；确认以后才会揭晓牌面与正逆位。</p>
-            <div className="selection-status"><span>{progressLabel}</span><div>{Array.from({ length: 5 }, (_, index) => <i key={index} className={index < selection.length ? "filled" : ""}>{index < selection.length ? index + 1 : ""}</i>)}</div></div>
+            <div className="selection-status"><span>{progressLabel}</span><div>{Array.from({ length: 5 }, (_, index) => <i key={index} className={typeof selection[index] === "number" ? "filled" : ""}>{typeof selection[index] === "number" ? index + 1 : ""}</i>)}</div></div>
             <div className="deck-scroller" role="listbox" aria-label="78 张背面朝上的塔罗牌" aria-multiselectable="true">
               {Array.from({ length: draft.deckSize }, (_, index) => {
-                const order = selection.indexOf(index);
+                const order = selection.findIndex((item) => item === index);
                 return <motion.button whileTap={{ scale: .97 }} key={index} className={`deck-card ${order >= 0 ? "selected" : ""}`} onClick={() => toggleCard(index)} role="option" aria-selected={order >= 0} aria-label={`第 ${index + 1} 张牌${order >= 0 ? `，选择顺序 ${order + 1}` : ""}`}>
                   <img src="/cards/card-back.webp" alt="" draggable={false} />{order >= 0 && <span>{order + 1}</span>}
                 </motion.button>;
               })}
             </div>
-            <div className="sticky-actions"><Button label="取消重选" variant="ghost" size="lg" onClick={reset} /><Button label={selection.length === 5 ? "确认并揭牌" : `还需选择 ${5 - selection.length} 张`} variant="primary" size="lg" isDisabled={selection.length !== 5 || busy} isLoading={busy} onClick={() => void confirmSelection()} /></div>
+            <div className="sticky-actions"><Button label="取消重选" variant="ghost" size="lg" onClick={reset} /><Button label={selectedCount === 5 ? "确认并揭牌" : `还需选择 ${5 - selectedCount} 张`} variant="primary" size="lg" isDisabled={selectedCount !== 5 || busy} isLoading={busy} onClick={() => void confirmSelection()} /></div>
           </motion.section>}
 
           {stage === "result" && reading && <motion.section className="result-view" key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -355,7 +392,7 @@ export function App() {
   </div>;
 }
 
-function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onMoveReading, onOpenHistory, onOpenSettings }: {
+function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onDeleteFolder, onMoveReading, onDeleteReading, onOpenHistory, onOpenSettings }: {
   stage: Stage;
   history: ReadingView[];
   folders: ReadingFolder[];
@@ -365,7 +402,9 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   onNewReadingInFolder(folderId: string): void;
   onCreateFolder(name: string): Promise<void>;
   onRenameFolder(id: string, name: string): Promise<void>;
+  onDeleteFolder(id: string): Promise<void>;
   onMoveReading(id: string, folderId?: string): Promise<void>;
+  onDeleteReading(id: string): Promise<void>;
   onOpenHistory(item: ReadingView): void;
   onOpenSettings(): void;
 }) {
@@ -412,19 +451,21 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
     await onMoveReading(readingId, folderId);
   }
 
-  const renderConversation = (item: ReadingView) => <button
-    className="folder-conversation"
-    key={item.id}
-    draggable
-    aria-grabbed={draggedReadingId === item.id}
-    onDragStart={(event) => {
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", item.id);
-      setDraggedReadingId(item.id);
-    }}
-    onDragEnd={() => { setDraggedReadingId(undefined); setDropTarget(undefined); }}
-    onClick={() => onOpenHistory(item)}
-  ><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>;
+  const renderConversation = (item: ReadingView) => <div className="folder-conversation-wrap" key={item.id}>
+    <button
+      className="folder-conversation"
+      draggable
+      aria-grabbed={draggedReadingId === item.id}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", item.id);
+        setDraggedReadingId(item.id);
+      }}
+      onDragEnd={() => { setDraggedReadingId(undefined); setDropTarget(undefined); }}
+      onClick={() => onOpenHistory(item)}
+    ><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>
+    <button className="conversation-delete" onClick={(event) => { event.stopPropagation(); void onDeleteReading(item.id); }} title="删除这条解读" aria-label={`删除 ${item.question}`}>×</button>
+  </div>;
 
   return <aside className="sidebar">
     <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
@@ -456,6 +497,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
               {isRenaming ? <input className="folder-rename-input" autoFocus value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRename(folder.id); if (event.key === "Escape") setRenamingId(undefined); }} onBlur={() => void submitRename(folder.id)} /> : <button className="folder-name" onDoubleClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: false }))}>{folder.name}<small>{items.length}</small></button>}
               <button className="folder-rename" onClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} title="重命名 Folder" aria-label={`重命名 ${folder.name}`}>···</button>
               <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此分组下新建对话" aria-label={`在 ${folder.name} 下新建对话`}><NewConversationIcon /></button>
+              <button className="folder-delete" onClick={() => void onDeleteFolder(folder.id)} title="删除分组" aria-label={`删除分组 ${folder.name}`}>×</button>
             </div>
             <div className="folder-children-wrap" data-collapsed={isCollapsed}><div className="folder-children">{items.length > 0 ? items.map(renderConversation) : <button className="folder-empty" onClick={() => onNewReadingInFolder(folder.id)}>＋ 添加第一个问题</button>}</div></div>
           </div>;
