@@ -10,6 +10,7 @@ interface PresetProvider {
 }
 
 interface TarotSettings { providerType: string; model: string; baseUrl: string; hasApiKey: boolean }
+interface AppPreferences { enableStreaming: boolean; hideModelUi: boolean }
 interface ReadingFolder { id: string; name: string; createdAt: string; updatedAt: string }
 interface RevealedCard {
   cardId: string;
@@ -44,13 +45,15 @@ interface ReadingView {
 
 interface Window {
   tarot: {
-    bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; presetProviders: PresetProvider[] }>;
+    bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; appPreferences: AppPreferences; presetProviders: PresetProvider[] }>;
     createFolder(name: string): Promise<ReadingFolder>;
     renameFolder(input: { id: string; name: string }): Promise<ReadingFolder>;
     deleteFolder(id: string): Promise<{ ok: boolean }>;
     moveReading(input: { id: string; folderId: string | null }): Promise<ReadingView>;
     deleteReading(id: string): Promise<{ ok: boolean }>;
     saveSettings(input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }): Promise<TarotSettings>;
+    getAppPreferences(): Promise<AppPreferences>;
+    setAppPreferences(value: { enableStreaming?: boolean; hideModelUi?: boolean }): Promise<AppPreferences>;
     createReading(input: { question: string; mode: "manual" | "random"; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;
     interpret(id: string): Promise<ReadingView>;
@@ -59,5 +62,7 @@ interface Window {
     testConnection(opts?: { apiKey?: string | undefined; model?: string | undefined; baseUrl?: string | undefined; providerType?: string | undefined }): Promise<{ ok: boolean; userMessage: string; statusCode?: number }>;
     fetchModels(opts?: { apiKey?: string | undefined; baseUrl?: string | undefined; providerType?: string | undefined }): Promise<{ ok: boolean; models: Array<{ id: string; displayName?: string }>; userMessage: string }>;
     onInterpretProgress(callback: (data: { id: string; delta: string; reasoning: string }) => void): () => void;
+    onAppPreferencesChanged(callback: (data: AppPreferences) => void): () => void;
+    onOpenSettings(callback: () => void): () => void;
   };
 }

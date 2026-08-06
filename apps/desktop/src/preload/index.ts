@@ -8,6 +8,8 @@ const api = {
   moveReading: (input: { id: string; folderId: string | null }) => ipcRenderer.invoke("tarot:move-reading", input),
   deleteReading: (id: string) => ipcRenderer.invoke("tarot:delete-reading", id),
   saveSettings: (input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }) => ipcRenderer.invoke("tarot:save-settings", input),
+  getAppPreferences: () => ipcRenderer.invoke("tarot:get-app-preferences"),
+  setAppPreferences: (value: { enableStreaming?: boolean; hideModelUi?: boolean }) => ipcRenderer.invoke("tarot:set-app-preferences", value),
   createReading: (input: { question: string; mode: "manual" | "random"; folderId?: string }) => ipcRenderer.invoke("tarot:create-reading", input),
   confirmReading: (input: { id: string; selectedIndexes?: number[] }) => ipcRenderer.invoke("tarot:confirm-reading", input),
   interpret: (id: string) => ipcRenderer.invoke("tarot:interpret", id),
@@ -19,6 +21,16 @@ const api = {
     const handler = (_event: unknown, data: { id: string; delta: string; reasoning: string }) => callback(data);
     ipcRenderer.on("tarot:interpret-progress", handler);
     return () => ipcRenderer.removeListener("tarot:interpret-progress", handler);
+  },
+  onAppPreferencesChanged: (callback: (data: { enableStreaming: boolean; hideModelUi: boolean }) => void) => {
+    const handler = (_event: unknown, data: { enableStreaming: boolean; hideModelUi: boolean }) => callback(data);
+    ipcRenderer.on("tarot:app-preferences-changed", handler);
+    return () => ipcRenderer.removeListener("tarot:app-preferences-changed", handler);
+  },
+  onOpenSettings: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on("tarot:open-settings", handler);
+    return () => ipcRenderer.removeListener("tarot:open-settings", handler);
   },
 };
 

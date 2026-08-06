@@ -38,6 +38,7 @@ export function App() {
   const [folders, setFolders] = useState<ReadingFolder[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<string>();
   const [settings, setSettings] = useState<TarotSettings>({ providerType: "openai", model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1", hasApiKey: false });
+  const [appPreferences, setAppPreferences] = useState<AppPreferences>({ enableStreaming: false, hideModelUi: true });
   const [presetProviders, setPresetProviders] = useState<PresetProvider[]>([]);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,8 +51,24 @@ export function App() {
       setHistory(data.history);
       setFolders(data.folders);
       setSettings(data.settings);
+      setAppPreferences(data.appPreferences);
       setPresetProviders(data.presetProviders);
     }).catch(showError);
+  }, []);
+
+  // 监听主进程推送的配置变化和打开设置指令
+  useEffect(() => {
+    const unsubscribePrefs = window.tarot.onAppPreferencesChanged((data) => {
+      setAppPreferences(data);
+    });
+    const unsubscribeOpenSettings = window.tarot.onOpenSettings(() => {
+      setStage("settings");
+      setSavedNotice("");
+    });
+    return () => {
+      unsubscribePrefs();
+      unsubscribeOpenSettings();
+    };
   }, []);
 
   // 注册流式解读进度监听，收到 delta 时追加到 interpretProgress
@@ -313,6 +330,7 @@ export function App() {
       folders={folders}
       activeFolderId={activeFolderId}
       settings={settings}
+      hideModelUi={appPreferences.hideModelUi}
       onNewReading={reset}
       onNewReadingInFolder={startInFolder}
       onCreateFolder={createFolder}
@@ -327,9 +345,11 @@ export function App() {
     <section className="content-shell">
       <header className="content-titlebar">
         <div><span>星径</span><b>{stageTitles[stage]}</b></div>
-        <button className="connection-chip" data-ready={settings.hasApiKey} onClick={() => setStage("settings")}>
-          <i />{settings.hasApiKey ? displayModel : "配置模型"}
-        </button>
+        {!appPreferences.hideModelUi && (
+          <button className="connection-chip" data-ready={settings.hasApiKey} onClick={() => setStage("settings")}>
+            <i />{settings.hasApiKey ? displayModel : "配置模型"}
+          </button>
+        )}
       </header>
 
       <main className="content-scroll">
@@ -382,6 +402,7 @@ export function App() {
           {stage === "settings" && <ModelSettings
             key="settings"
             settings={settings}
+            appPreferences={appPreferences}
             apiKey={apiKey}
             busy={busy}
             savedNotice={savedNotice}
@@ -400,12 +421,13 @@ export function App() {
   </div>;
 }
 
-function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onDeleteFolder, onMoveReading, onDeleteReading, onOpenHistory, onOpenSettings }: {
+function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelUi, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onDeleteFolder, onMoveReading, onDeleteReading, onOpenHistory, onOpenSettings }: {
   stage: Stage;
   history: ReadingView[];
   folders: ReadingFolder[];
   activeFolderId?: string | undefined;
   settings: TarotSettings;
+  hideModelUi: boolean;
   onNewReading(): void;
   onNewReadingInFolder(folderId: string): void;
   onCreateFolder(name: string): Promise<void>;
@@ -476,11 +498,13 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   </div>;
 
   return <aside className="sidebar">
-    <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
+    <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small></small></div></div>
     <button className="new-reading-button" onClick={onNewReading}><span>＋</span><b>新解读</b><kbd>Ctrl N</kbd></button>
     <nav className="sidebar-nav" aria-label="主导航">
       <button data-active={stage !== "settings"} onClick={onNewReading}><span>✧</span><b>探索</b></button>
-      <button data-active={stage === "settings"} onClick={onOpenSettings}><span>⌘</span><b>模型连接</b><i className={settings.hasApiKey ? "ready" : ""} /></button>
+      {!hideModelUi && (
+        <button data-active={stage === "settings"} onClick={onOpenSettings}><span>⌘</span><b>模型连接</b><i className={settings.hasApiKey ? "ready" : ""} /></button>
+      )}
     </nav>
     <section className="sidebar-history folder-tree">
       <div className="sidebar-section-title"><span>最近记录</span><button className="add-folder-button" onClick={() => setCreatingFolder(true)} title="新建 Folder" aria-label="新建 Folder">＋</button></div>
@@ -520,14 +544,16 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
       </div>
     </section>
     <footer className="sidebar-footer">
-      <button onClick={onOpenSettings}><span className="model-status" data-ready={settings.hasApiKey} /><div><b>{settings.hasApiKey ? settings.model : "尚未连接模型"}</b><small>{settings.hasApiKey ? "API 已配置" : "设置 API 地址与 Token"}</small></div><span>›</span></button>
-      <p>● 数据仅保存在本机</p>
+      {!hideModelUi && (
+        <button onClick={onOpenSettings}><span className="model-status" data-ready={settings.hasApiKey} /><div><b>{settings.hasApiKey ? settings.model : "尚未连接模型"}</b><small>{settings.hasApiKey ? "API 已配置" : "设置 API 地址与 Token"}</small></div><span>›</span></button>
+      )}
     </footer>
   </aside>;
 }
 
-function ModelSettings({ settings, apiKey, busy, savedNotice, presetProviders, onApiKeyChange, onSettingsChange, onProviderChange, onModelChange, onSave, onClear }: {
+function ModelSettings({ settings, appPreferences, apiKey, busy, savedNotice, presetProviders, onApiKeyChange, onSettingsChange, onProviderChange, onModelChange, onSave, onClear }: {
   settings: TarotSettings;
+  appPreferences: AppPreferences;
   apiKey: string;
   busy: boolean;
   savedNotice: string;
@@ -624,38 +650,40 @@ function ModelSettings({ settings, apiKey, busy, savedNotice, presetProviders, o
       </div>
       <div className="settings-fields">
         {/* Provider 选择器 */}
-        <label>
-          <span>模型提供商</span>
-          <small>切换后自动填入 API 地址和推荐模型</small>
-          <select
-            className="provider-select"
-            value={settings.providerType}
-            onChange={(e) => onProviderChange(e.target.value)}
-          >
-            <optgroup label="━━ 推荐 ━━">
-              {presetProviders.filter((p) => p.type === "openai" || p.type === "minimax" || p.type === "deepseek").map((p) => (
-                <option key={p.type} value={p.type}>{p.label}</option>
-              ))}
-            </optgroup>
-            {categoryOrder.map((cat) => {
-              const items = grouped[cat];
-              if (!items || items.length === 0) return null;
-              return (
-                <optgroup key={cat} label={categoryLabels[cat] ?? cat}>
-                  {items.filter((p) => p.type !== "openai" && p.type !== "minimax" && p.type !== "deepseek").map((p) => (
-                    <option key={p.type} value={p.type}>{p.label}</option>
-                  ))}
-                </optgroup>
-              );
-            })}
-            <optgroup label="━━ 自定义 ━━">
-              <option value="custom">自定义 API</option>
-            </optgroup>
-          </select>
-        </label>
+        {!appPreferences.hideModelUi && (
+          <label>
+            <span>模型提供商</span>
+            <small>切换后自动填入 API 地址和推荐模型</small>
+            <select
+              className="provider-select"
+              value={settings.providerType}
+              onChange={(e) => onProviderChange(e.target.value)}
+            >
+              <optgroup label="━━ 推荐 ━━">
+                {presetProviders.filter((p) => p.type === "openai" || p.type === "minimax" || p.type === "deepseek").map((p) => (
+                  <option key={p.type} value={p.type}>{p.label}</option>
+                ))}
+              </optgroup>
+              {categoryOrder.map((cat) => {
+                const items = grouped[cat];
+                if (!items || items.length === 0) return null;
+                return (
+                  <optgroup key={cat} label={categoryLabels[cat] ?? cat}>
+                    {items.filter((p) => p.type !== "openai" && p.type !== "minimax" && p.type !== "deepseek").map((p) => (
+                      <option key={p.type} value={p.type}>{p.label}</option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+              <optgroup label="━━ 自定义 ━━">
+                <option value="custom">自定义 API</option>
+              </optgroup>
+            </select>
+          </label>
+        )}
 
         {/* 推荐模型下拉（仅当有推荐列表时） */}
-        {recommendedModels.length > 0 && (
+        {!appPreferences.hideModelUi && recommendedModels.length > 0 && (
           <label>
             <span>推荐模型</span>
             <small>常用模型快捷选择</small>
@@ -684,8 +712,16 @@ function ModelSettings({ settings, apiKey, busy, savedNotice, presetProviders, o
           </label>
         )}
 
-        <label><span>API 地址</span><small>填写到版本路径，例如 https://api.openai.com/v1</small><input value={settings.baseUrl} onChange={(event) => onSettingsChange({ ...settings, baseUrl: event.target.value })} spellCheck={false} /></label>
-        <label><span>模型名称</span><small>服务端接受的实际 model ID</small><input value={settings.model} onChange={(event) => onSettingsChange({ ...settings, model: event.target.value })} spellCheck={false} /></label>
+        {appPreferences.hideModelUi && (
+          <div className="settings-readonly-model">
+            <span>当前模型</span>
+            <b>{currentPreset ? `${currentPreset.label} · ${settings.model}` : settings.model}</b>
+            <small>模型选择已在 Config 中隐藏</small>
+          </div>
+        )}
+
+        <label><span>API 地址</span><small>填写到版本路径，例如 https://api.openai.com/v1</small><input value={settings.baseUrl} disabled={appPreferences.hideModelUi} onChange={(event) => onSettingsChange({ ...settings, baseUrl: event.target.value })} spellCheck={false} /></label>
+        <label><span>模型名称</span><small>服务端接受的实际 model ID</small><input value={settings.model} disabled={appPreferences.hideModelUi} onChange={(event) => onSettingsChange({ ...settings, model: event.target.value })} spellCheck={false} /></label>
         <label><span>API Token</span><small>{settings.hasApiKey ? "已加密保存在 Windows 安全存储；输入新值即可更换" : "Token 不会传给渲染界面或写入解读历史"}</small><input type="password" value={apiKey} onChange={(event) => onApiKeyChange(event.target.value)} placeholder={settings.hasApiKey ? "输入新的 Token 以替换现有值" : "sk-…"} autoComplete="off" /></label>
       </div>
       <div className="settings-actions">

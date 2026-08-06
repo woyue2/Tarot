@@ -1,11 +1,12 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import { createSeededRandom, randomSelection, shuffleDeck, type DeckEntry, type TarotCard } from "@tarot/core";
 import { buildInterpretationInput, type StoredReading } from "@tarot/runtime";
 import cardsData from "../../../../resources/cards.json";
 import manifest from "../../../../resources/content-manifest.json";
 import methodology from "../../../../resources/methodology.json";
+import { AppPreferencesStore } from "./app-preferences";
 import { ElectronCredentialStore } from "./credentials";
 import { createModelProvider, fetchProviderModels, type ProviderType } from "./model";
 import { ModelPreferencesStore } from "./preferences";
@@ -16,7 +17,10 @@ const cards = cardsData.cards as TarotCard[];
 let repository: SqliteReadingRepository;
 let credentials: ElectronCredentialStore;
 let preferences: ModelPreferencesStore;
+let appPreferences: AppPreferencesStore;
 let settings = { providerType: "openai" as ProviderType, model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" };
+let appPrefs = { enableStreaming: false, hideModelUi: true };
+let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -29,8 +33,52 @@ function createWindow(): void {
     icon: join(__dirname, "../../build/icon.png"),
     webPreferences: { preload: join(__dirname, "../preload/index.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
+  mainWindow = window;
+  window.on("closed", () => { mainWindow = null; });
   if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(process.env.ELECTRON_RENDERER_URL);
   else void window.loadFile(join(__dirname, "../renderer/index.html"));
+}
+
+function buildAppMenu(): void {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    { role: "fileMenu" },
+    { role: "editMenu" },
+    { role: "viewMenu" },
+    { role: "windowMenu" },
+    {
+      label: "Config",
+      submenu: [
+        {
+          label: "流式输出",
+          type: "checkbox",
+          checked: appPrefs.enableStreaming,
+          click: () => {
+            appPrefs = appPreferences.set({ ...appPrefs, enableStreaming: !appPrefs.enableStreaming });
+            mainWindow?.webContents.send("tarot:app-preferences-changed", appPrefs);
+            buildAppMenu();
+          },
+        },
+        {
+          label: "隐藏模型选择 UI",
+          type: "checkbox",
+          checked: appPrefs.hideModelUi,
+          click: () => {
+            appPrefs = appPreferences.set({ ...appPrefs, hideModelUi: !appPrefs.hideModelUi });
+            mainWindow?.webContents.send("tarot:app-preferences-changed", appPrefs);
+            buildAppMenu();
+          },
+        },
+        { type: "separator" },
+        {
+          label: "打开设置",
+          click: () => {
+            mainWindow?.webContents.send("tarot:open-settings");
+          },
+        },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 function publicReading(reading: StoredReading) {
@@ -42,6 +90,7 @@ function registerIpc(): void {
     folders: repository.listFolders(),
     history: repository.list().map(publicReading),
     settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) },
+    appPreferences: appPrefs,
     presetProviders: Object.entries(PROVIDER_PRESETS).map(([type, preset]) => ({
       type,
       label: preset.label,
@@ -108,6 +157,16 @@ function registerIpc(): void {
     });
     return { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) };
   });
+  ipcMain.handle("tarot:get-app-preferences", () => appPrefs);
+  ipcMain.handle("tarot:set-app-preferences", (_event, value: { enableStreaming?: boolean; hideModelUi?: boolean }) => {
+    appPrefs = appPreferences.set({
+      enableStreaming: value.enableStreaming ?? appPrefs.enableStreaming,
+      hideModelUi: value.hideModelUi ?? appPrefs.hideModelUi,
+    });
+    mainWindow?.webContents.send("tarot:app-preferences-changed", appPrefs);
+    buildAppMenu();
+    return appPrefs;
+  });
   ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; folderId?: string }) => {
     const question = input.question?.trim();
     if (!question) throw new Error("请先写下想探索的问题");
@@ -139,13 +198,19 @@ function registerIpc(): void {
     repository.save({ ...reading, status: "interpreting", updatedAt: new Date().toISOString() });
     try {
       const provider = createModelProvider({ apiKey, ...settings });
-      // 流式输出：通过 IPC 事件实时推送进度到渲染进程
-      const interpretation = await provider.interpretStream(
-        reading.interpretationInput,
-        (delta, reasoning) => {
-          event.sender.send("tarot:interpret-progress", { id, delta, reasoning });
-        },
-      );
+      if (appPrefs.enableStreaming) {
+        // 流式输出：通过 IPC 事件实时推送进度到渲染进程
+        const interpretation = await provider.interpretStream(
+          reading.interpretationInput,
+          (delta, reasoning) => {
+            event.sender.send("tarot:interpret-progress", { id, delta, reasoning });
+          },
+        );
+        const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
+        repository.save(completed);
+        return publicReading(completed);
+      }
+      const interpretation = await provider.interpret(reading.interpretationInput);
       const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
       repository.save(completed);
       return publicReading(completed);
@@ -211,10 +276,18 @@ app.whenReady().then(() => {
   repository = new SqliteReadingRepository(join(app.getPath("userData"), "tarot.sqlite"));
   credentials = new ElectronCredentialStore(join(app.getPath("userData"), "credentials.json"));
   preferences = new ModelPreferencesStore(join(app.getPath("userData"), "settings.json"));
+  appPreferences = new AppPreferencesStore(join(app.getPath("userData"), "app-preferences.json"));
   settings = preferences.get();
+  appPrefs = appPreferences.get();
   registerIpc();
   createWindow();
-  app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+  buildAppMenu();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+      buildAppMenu();
+    }
+  });
 });
 
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
