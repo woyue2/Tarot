@@ -5,6 +5,15 @@ import { AnimatePresence, motion } from "framer-motion";
 
 type Stage = "home" | "select" | "result" | "settings";
 
+function StargateMark({ className = "" }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 160 160" fill="none" aria-hidden="true">
+    <path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+    <path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" stroke="currentColor" strokeOpacity=".52" strokeWidth="3" strokeLinecap="round" />
+    <path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor" />
+    <path d="M42 113h76" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+  </svg>;
+}
+
 const stageTitles: Record<Stage, string> = {
   home: "新解读",
   select: "选择牌面",
@@ -21,19 +30,32 @@ export function App() {
   const [history, setHistory] = useState<ReadingView[]>([]);
   const [folders, setFolders] = useState<ReadingFolder[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<string>();
-  const [settings, setSettings] = useState<TarotSettings>({ model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1", hasApiKey: false });
+  const [settings, setSettings] = useState<TarotSettings>({ providerType: "openai", model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1", hasApiKey: false });
+  const [presetProviders, setPresetProviders] = useState<PresetProvider[]>([]);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
+  const [interpretProgress, setInterpretProgress] = useState(""); // 流式解读进度文本
 
   useEffect(() => {
     void window.tarot.bootstrap().then((data) => {
       setHistory(data.history);
       setFolders(data.folders);
       setSettings(data.settings);
+      setPresetProviders(data.presetProviders);
     }).catch(showError);
   }, []);
+
+  // 注册流式解读进度监听，收到 delta 时追加到 interpretProgress
+  useEffect(() => {
+    const unsubscribe = window.tarot.onInterpretProgress((data) => {
+      if (reading?.id === data.id) {
+        setInterpretProgress((prev) => prev + data.delta);
+      }
+    });
+    return unsubscribe;
+  }, [reading?.id]);
 
   function showError(reason: unknown) {
     const message = reason instanceof Error ? reason.message : String(reason);
@@ -93,11 +115,14 @@ export function App() {
     }
     setBusy(true);
     setError("");
+    setInterpretProgress(""); // 清空上一次的进度文本
+    setReading({ ...reading, status: "interpreting" }); // 标记为解读中，触发流式预览
     try {
       const completed = await window.tarot.interpret(reading.id);
       setReading(completed);
       setHistory(await window.tarot.history());
     } catch (reason) {
+      setReading(reading); // 出错时恢复到解读前的状态
       showError(reason);
     } finally {
       setBusy(false);
@@ -111,10 +136,15 @@ export function App() {
       const saved = await window.tarot.saveSettings({
         ...(apiKey ? { apiKey } : {}),
         ...(clearApiKey ? { clearApiKey: true } : {}),
+        providerType: settings.providerType,
         model: settings.model,
         baseUrl: settings.baseUrl,
       });
       setSettings(saved);
+      // 刷新 preset provider 列表（可能已过时但保底）
+      if (presetProviders.length === 0) {
+        setPresetProviders(await window.tarot.listPresetProviders());
+      }
       setApiKey("");
       setError("");
       setSavedNotice(clearApiKey ? "Token 已清除" : "连接设置已保存");
@@ -123,6 +153,26 @@ export function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleProviderChange(type: string) {
+    if (type === "custom") {
+      setSettings((prev) => ({ ...prev, providerType: "custom" }));
+      return;
+    }
+    const preset = presetProviders.find((p) => p.type === type);
+    if (preset) {
+      setSettings({
+        ...settings,
+        providerType: type,
+        baseUrl: preset.baseUrl,
+        model: preset.defaultModel,
+      });
+    }
+  }
+
+  function handleModelChange(model: string) {
+    setSettings({ ...settings, model });
   }
 
   function reset() {
@@ -177,6 +227,10 @@ export function App() {
     () => selection.length === 5 ? "五张已选好，可以确认" : `已选择 ${selection.length} / 5`,
     [selection.length],
   );
+  const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
+  const displayModel = currentPreset?.label
+    ? `${currentPreset.label} · ${settings.model}`
+    : settings.model;
 
   return <div className="app-frame">
     <Sidebar
@@ -197,21 +251,21 @@ export function App() {
       <header className="content-titlebar">
         <div><span>星径</span><b>{stageTitles[stage]}</b></div>
         <button className="connection-chip" data-ready={settings.hasApiKey} onClick={() => setStage("settings")}>
-          <i />{settings.hasApiKey ? settings.model : "配置模型"}
+          <i />{settings.hasApiKey ? displayModel : "配置模型"}
         </button>
       </header>
 
       <main className="content-scroll">
         <AnimatePresence mode="wait">
           {stage === "home" && <motion.section className="home" key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="hero-orbit" aria-hidden="true"><span>✦</span></div>
+            <div className="hero-orbit" aria-hidden="true"><StargateMark /></div>
             <p className="eyebrow">A QUIET SPACE FOR REFLECTION</p>
             {activeFolder && <div className="active-folder-chip"><span>▱</span><b>{activeFolder.name}</b><small>新问题</small></div>}
             <h1>让五张牌，照见此刻的路径</h1>
-            <p className="lead">写下你想探索的问题。牌由本地程序抽取并锁定，AI 只负责解释，不替你做决定。</p>
+            <p className="lead"></p>
             <div className="question-panel astryx-surface">
               <TextArea label="你想探索什么？" value={question} onChange={setQuestion} placeholder="例如：未来三个月，我该如何调整工作方向？" rows={4} isRequired />
-              <div className="question-footer"><span>{question.length} / 300</span><span>尽量聚焦一个时间范围和主题</span></div>
+              <div className="question-footer"><span>{question.length} / 300</span><span>三个月内的问题</span></div>
             </div>
             <div className="mode-actions">
               <Button label="自己选五张" variant="primary" size="lg" width="100%" isDisabled={!question.trim() || busy} isLoading={busy} onClick={() => void begin("manual")} />
@@ -240,8 +294,11 @@ export function App() {
             <h1>{reading.interpretation?.headline ?? "牌阵已保存，等待解读"}</h1>
             <p className="lead compact">{reading.question}</p>
             <div className="revealed-grid">{reading.revealed?.map((item) => <article className="revealed-card" key={item.cardId}><div className="card-image"><img src={`/${item.card.image}`} alt={item.card.name} className={item.orientation === "reversed" ? "reversed" : ""} /></div><span>{item.positionName}</span><h3>{item.card.name}</h3><small>{item.orientation === "upright" ? "正位" : "逆位"}</small></article>)}</div>
-            {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div><p>数值来自本地固定表与公式，AI 无法修改。</p></div>}
-            {!reading.interpretation ? <div className="interpret-cta"><p>可以现在调用模型，也可以关闭应用后稍后继续。牌、顺序和正逆位不会改变。</p><Button label="开始 AI 解读" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => void interpret()} /></div> : <ReadingContent reading={reading} />}
+            {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div><p></p></div>}
+            {!reading.interpretation ? <>
+              <div className="interpret-cta"><p>可以现在调用模型，也可以关闭应用后稍后继续。牌、顺序和正逆位不会改变。</p><Button label="开始 AI 解读" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => void interpret()} /></div>
+              {reading.status === "interpreting" && interpretProgress && <div className="interpret-progress">{interpretProgress}</div>}
+            </> : <ReadingContent reading={reading} />}
             <div className="end-actions"><Button label="开始新的探索" variant="secondary" size="lg" onClick={reset} /></div>
           </motion.section>}
 
@@ -251,8 +308,11 @@ export function App() {
             apiKey={apiKey}
             busy={busy}
             savedNotice={savedNotice}
+            presetProviders={presetProviders}
             onApiKeyChange={setApiKey}
             onSettingsChange={setSettings}
+            onProviderChange={handleProviderChange}
+            onModelChange={handleModelChange}
             onSave={() => void saveSettings(false)}
             onClear={() => void saveSettings(true)}
           />}
@@ -303,7 +363,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
   const renderConversation = (item: ReadingView) => <button className="folder-conversation" key={item.id} onClick={() => onOpenHistory(item)}><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>;
 
   return <aside className="sidebar">
-    <div className="sidebar-brand"><span className="brand-mark">✦</span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
+    <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
     <button className="new-reading-button" onClick={onNewReading}><span>＋</span><b>新解读</b><kbd>Ctrl N</kbd></button>
     <nav className="sidebar-nav" aria-label="主导航">
       <button data-active={stage !== "settings"} onClick={onNewReading}><span>✧</span><b>探索</b></button>
@@ -319,16 +379,16 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
           const isRenaming = renamingId === folder.id;
           return <div className="folder-group" key={folder.id} data-active={activeFolderId === folder.id}>
             <div className="folder-row">
-              <button className="folder-toggle" onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: !isCollapsed }))} aria-label={isCollapsed ? "展开" : "折叠"}>{isCollapsed ? "›" : "⌄"}</button>
+              <button className="folder-toggle" data-collapsed={isCollapsed} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: !isCollapsed }))} aria-label={isCollapsed ? "展开" : "折叠"}>›</button>
               <span className="folder-icon">▱</span>
               {isRenaming ? <input className="folder-rename-input" autoFocus value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRename(folder.id); if (event.key === "Escape") setRenamingId(undefined); }} onBlur={() => void submitRename(folder.id)} /> : <button className="folder-name" onDoubleClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: false }))}>{folder.name}<small>{items.length}</small></button>}
               <button className="folder-rename" onClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} title="重命名 Folder" aria-label={`重命名 ${folder.name}`}>···</button>
               <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此 Folder 下新建解读" aria-label={`在 ${folder.name} 下新建解读`}>✎</button>
             </div>
-            {!isCollapsed && <div className="folder-children">{items.length > 0 ? items.map(renderConversation) : <button className="folder-empty" onClick={() => onNewReadingInFolder(folder.id)}>＋ 添加第一个问题</button>}</div>}
+            <div className="folder-children-wrap" data-collapsed={isCollapsed}><div className="folder-children">{items.length > 0 ? items.map(renderConversation) : <button className="folder-empty" onClick={() => onNewReadingInFolder(folder.id)}>＋ 添加第一个问题</button>}</div></div>
           </div>;
         })}
-        {visibleHistory.some((item) => !item.folderId) && <div className="folder-group ungrouped"><div className="folder-row"><button className="folder-toggle" onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))}>{collapsed.ungrouped ? "›" : "⌄"}</button><span className="folder-icon">▱</span><button className="folder-name">未分组<small>{visibleHistory.filter((item) => !item.folderId).length}</small></button></div>{!collapsed.ungrouped && <div className="folder-children">{visibleHistory.filter((item) => !item.folderId).map(renderConversation)}</div>}</div>}
+        {visibleHistory.some((item) => !item.folderId) && <div className="folder-group ungrouped"><div className="folder-row"><button className="folder-toggle" data-collapsed={collapsed.ungrouped === true} onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))} aria-label={collapsed.ungrouped ? "展开" : "折叠"}>›</button><span className="folder-icon">▱</span><button className="folder-name">未分组<small>{visibleHistory.filter((item) => !item.folderId).length}</small></button></div><div className="folder-children-wrap" data-collapsed={collapsed.ungrouped === true}><div className="folder-children">{visibleHistory.filter((item) => !item.folderId).map(renderConversation)}</div></div></div>}
       </div>
     </section>
     <footer className="sidebar-footer">
@@ -337,28 +397,189 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, onNewReadi
     </footer>
   </aside>;
 }
-function ModelSettings({ settings, apiKey, busy, savedNotice, onApiKeyChange, onSettingsChange, onSave, onClear }: {
+
+function ModelSettings({ settings, apiKey, busy, savedNotice, presetProviders, onApiKeyChange, onSettingsChange, onProviderChange, onModelChange, onSave, onClear }: {
   settings: TarotSettings;
   apiKey: string;
   busy: boolean;
   savedNotice: string;
+  presetProviders: PresetProvider[];
   onApiKeyChange(value: string): void;
   onSettingsChange(value: TarotSettings): void;
+  onProviderChange(type: string): void;
+  onModelChange(model: string): void;
   onSave(): void;
   onClear(): void;
 }) {
+  const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
+  const recommendedModels = currentPreset?.recommendedModels ?? [];
+  const [testResult, setTestResult] = useState<{ ok: boolean; userMessage: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [fetchedModels, setFetchedModels] = useState<Array<{ id: string; displayName?: string }>>([]);
+  const [fetchingModels, setFetchingModels] = useState(false);
+
+  // 按 category 分组
+  const grouped = useMemo(() => {
+    const groups: Record<string, PresetProvider[]> = {};
+    for (const p of presetProviders) {
+      (groups[p.category] ??= []).push(p);
+    }
+    return groups;
+  }, [presetProviders]);
+
+  async function testConnection() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await window.tarot.testConnection({
+        ...(apiKey ? { apiKey } : {}),
+        model: settings.model,
+        baseUrl: settings.baseUrl,
+        providerType: settings.providerType,
+      });
+      setTestResult(result);
+    } catch (reason) {
+      setTestResult({ ok: false, userMessage: reason instanceof Error ? reason.message : String(reason) });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  // 拉取可用模型列表
+  async function fetchAvailableModels() {
+    setFetchingModels(true);
+    try {
+      const result = await window.tarot.fetchModels({
+        ...(apiKey ? { apiKey } : {}),
+        baseUrl: settings.baseUrl,
+        providerType: settings.providerType,
+      });
+      if (result.ok) {
+        setFetchedModels(result.models);
+      }
+    } catch {
+      // 拉取失败时保持现有列表不变
+    } finally {
+      setFetchingModels(false);
+    }
+  }
+
+  const categoryOrder = ["domestic", "overseas", "local"];
+  const categoryLabels: Record<string, string> = {
+    domestic: "🇨🇳 国内模型",
+    overseas: "🌐 海外模型",
+    local: "💻 本地模型",
+  };
+
   return <motion.section className="settings-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-    <div className="settings-heading"><p className="eyebrow">SETTINGS · MODELS</p><h1>模型连接</h1><p>配置兼容 OpenAI Responses API 的云端或本地模型。运行时只把已确认的牌阵交给模型解释。</p></div>
+    <div className="settings-heading"><p className="eyebrow">SETTINGS · MODELS</p><h1>模型连接</h1><p>选择一个提供商，或使用自定义 API 地址。运行时只把已确认的牌阵交给模型解释。</p></div>
     <div className="settings-card">
-      <div className="settings-card-header"><div className="provider-logo">AI</div><div><h2>自定义 API</h2><p>OpenAI-compatible</p></div><span className="settings-status" data-ready={settings.hasApiKey}>{settings.hasApiKey ? "已连接" : "未配置"}</span></div>
+      <div className="settings-card-header">
+        <div className="provider-logo">
+          {settings.providerType === "openai" ? "O" :
+           settings.providerType === "minimax" || settings.providerType === "minimax-coding-plan" ? "M" :
+           settings.providerType === "deepseek" ? "D" :
+           settings.providerType === "siliconflow" ? "S" :
+           settings.providerType === "qwen" ? "Q" :
+           settings.providerType === "kimi" ? "K" :
+           settings.providerType === "tencent" ? "H" :
+           settings.providerType === "volcengine" ? "V" :
+           settings.providerType === "stepfun" ? "F" :
+           settings.providerType === "ollama" ? "Ol" :
+           "AI"}
+        </div>
+        <div>
+          <h2>{currentPreset?.label ?? "自定义 API"}</h2>
+          <p>{currentPreset ? (currentPreset.category === "domestic" ? "国内模型" : currentPreset.category === "overseas" ? "海外模型" : "本地模型") : "OpenAI-compatible"}</p>
+        </div>
+        <span className="settings-status" data-ready={settings.hasApiKey}>{settings.hasApiKey ? "已连接" : "未配置"}</span>
+      </div>
       <div className="settings-fields">
+        {/* Provider 选择器 */}
+        <label>
+          <span>模型提供商</span>
+          <small>切换后自动填入 API 地址和推荐模型</small>
+          <select
+            className="provider-select"
+            value={settings.providerType}
+            onChange={(e) => onProviderChange(e.target.value)}
+          >
+            <optgroup label="━━ 推荐 ━━">
+              {presetProviders.filter((p) => p.type === "openai" || p.type === "minimax" || p.type === "deepseek").map((p) => (
+                <option key={p.type} value={p.type}>{p.label}</option>
+              ))}
+            </optgroup>
+            {categoryOrder.map((cat) => {
+              const items = grouped[cat];
+              if (!items || items.length === 0) return null;
+              return (
+                <optgroup key={cat} label={categoryLabels[cat] ?? cat}>
+                  {items.filter((p) => p.type !== "openai" && p.type !== "minimax" && p.type !== "deepseek").map((p) => (
+                    <option key={p.type} value={p.type}>{p.label}</option>
+                  ))}
+                </optgroup>
+              );
+            })}
+            <optgroup label="━━ 自定义 ━━">
+              <option value="custom">自定义 API</option>
+            </optgroup>
+          </select>
+        </label>
+
+        {/* 推荐模型下拉（仅当有推荐列表时） */}
+        {recommendedModels.length > 0 && (
+          <label>
+            <span>推荐模型</span>
+            <small>常用模型快捷选择</small>
+            <select
+              className="provider-select"
+              value={settings.model}
+              onChange={(e) => onModelChange(e.target.value)}
+            >
+              {recommendedModels.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+              {fetchedModels.length > 0 && (
+                <optgroup label="拉取的模型">
+                  {fetchedModels.map((m) => (
+                    <option key={m.id} value={m.id}>{m.displayName ?? m.id}</option>
+                  ))}
+                </optgroup>
+              )}
+              <option value={settings.model} disabled={recommendedModels.includes(settings.model) || fetchedModels.some((m) => m.id === settings.model)}>
+                {recommendedModels.includes(settings.model) || fetchedModels.some((m) => m.id === settings.model) ? "" : `当前: ${settings.model}`}
+              </option>
+            </select>
+            <button className="fetch-models-btn" disabled={fetchingModels || busy} onClick={() => void fetchAvailableModels()}>
+              {fetchingModels ? "拉取中..." : "拉取可用模型"}
+            </button>
+          </label>
+        )}
+
         <label><span>API 地址</span><small>填写到版本路径，例如 https://api.openai.com/v1</small><input value={settings.baseUrl} onChange={(event) => onSettingsChange({ ...settings, baseUrl: event.target.value })} spellCheck={false} /></label>
         <label><span>模型名称</span><small>服务端接受的实际 model ID</small><input value={settings.model} onChange={(event) => onSettingsChange({ ...settings, model: event.target.value })} spellCheck={false} /></label>
         <label><span>API Token</span><small>{settings.hasApiKey ? "已加密保存在 Windows 安全存储；输入新值即可更换" : "Token 不会传给渲染界面或写入解读历史"}</small><input type="password" value={apiKey} onChange={(event) => onApiKeyChange(event.target.value)} placeholder={settings.hasApiKey ? "输入新的 Token 以替换现有值" : "sk-…"} autoComplete="off" /></label>
       </div>
-      <div className="settings-actions">{settings.hasApiKey && <Button label="清除 Token" variant="ghost" size="lg" isDisabled={busy} onClick={onClear} />}<span>{savedNotice}</span><Button label={settings.hasApiKey ? "保存并更新连接" : "保存连接"} variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={onSave} /></div>
+      <div className="settings-actions">
+        {settings.hasApiKey && <Button label="清除 Token" variant="ghost" size="lg" isDisabled={busy} onClick={onClear} />}
+        <span>{savedNotice}</span>
+        {currentPreset?.signupUrl && (
+          <a className="signup-link" href={currentPreset.signupUrl} target="_blank" rel="noopener noreferrer">注册 {currentPreset.label} ›</a>
+        )}
+        <div className="test-connection-group">
+          <button className="test-connection-btn" disabled={testing || busy} onClick={() => void testConnection()}>
+            {testing ? "测试中..." : "测试连接"}
+          </button>
+          {testResult && (
+            <span className={`test-result ${testResult.ok ? "success" : "failure"}`}>
+              {testResult.ok ? "✓" : "✗"} {testResult.userMessage}
+            </span>
+          )}
+        </div>
+        <Button label={settings.hasApiKey ? "保存并更新连接" : "保存连接"} variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={onSave} />
+      </div>
     </div>
-    <div className="security-note"><span>⌁</span><div><b>本地安全边界</b><p>API 地址和模型名保存在本地设置文件；Token 使用 Electron safeStorage 调用 Windows DPAPI 加密。前端只能知道“是否已配置”，无法读取明文。</p></div></div>
+    <div className="security-note"><span>⌁</span><div><b>本地安全边界</b><p>API 地址和模型名保存在本地设置文件；Token 使用 Electron safeStorage 调用 Windows DPAPI 加密。前端只能知道"是否已配置"，无法读取明文。</p></div></div>
   </motion.section>;
 }
 
