@@ -1,10 +1,43 @@
 import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { AnimatePresence, motion } from "framer-motion";
 import { CardRevealStage } from "./components/CardRevealStage";
 
 type Stage = "home" | "select" | "result" | "settings";
+
+// Keep this slightly longer than --shuffle-duration so the final card can settle.
+const SHUFFLE_ANIMATION_MS = 2500;
+const SHUFFLE_VISUAL_CARD_COUNT = 16;
+
+function ShuffleOverlay() {
+  return createPortal(
+    <div className="shuffle-overlay" role="status" aria-live="polite" aria-label="正在重新洗牌">
+      <div className="shuffle-overlay-stage" aria-hidden="true">
+        <div className="shuffle-overlay-deck">
+          {Array.from({ length: SHUFFLE_VISUAL_CARD_COUNT }, (_, index) => {
+            const side = index % 2 === 0 ? -1 : 1;
+            const style = {
+              "--shuffle-spread": `${(index - (SHUFFLE_VISUAL_CARD_COUNT - 1) / 2) * 38}px`,
+              "--shuffle-fan": `${(index - (SHUFFLE_VISUAL_CARD_COUNT - 1) / 2) * 1.4}deg`,
+              "--shuffle-cut": `${side * (70 + (index % 4) * 8)}px`,
+              "--shuffle-lift": `${-28 + (index % 5) * 12}px`,
+              "--shuffle-cross": `${-side * (38 + (index % 3) * 9)}px`,
+              "--shuffle-cross-y": `${18 - (index % 4) * 11}px`,
+              animationDelay: `${index * 7}ms`,
+              zIndex: index + 1,
+            } as CSSProperties;
+
+            return <img key={index} src="/cards/card-back.webp" alt="" draggable={false} style={style} />;
+          })}
+        </div>
+        <p>正在重新洗牌</p>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 function StargateMark({ className = "" }: { className?: string }) {
   return <svg className={className} viewBox="0 0 160 160" fill="none" aria-hidden="true">
@@ -212,8 +245,8 @@ export function App() {
     setShuffling(true);
     setError("");
     try {
-      // 等 CSS keyframe 动画（600ms）跑完整轮再换种子
-      await new Promise((resolve) => setTimeout(resolve, 650));
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      await new Promise((resolve) => setTimeout(resolve, reduceMotion ? 20 : SHUFFLE_ANIMATION_MS));
       const result = await window.tarot.reshuffleReading({ id: draft.id });
       setDraft(result);
       setSelection([]);
@@ -223,16 +256,6 @@ export function App() {
     } finally {
       setShuffling(false);
     }
-  }
-
-  function shuffleScatter(index: number, total: number) {
-    const center = total / 2;
-    const dist = Math.abs(index - center);
-    const direction = index < center ? 1 : -1;
-    // 横向对洗：左右两半向中间聚拢，最多偏移约 90px，保证不出滚动容器
-    const x = direction * Math.min(dist * 2.2, 90);
-    const rotate = direction * (4 + (index % 4) * 2);
-    return { x, rotate };
   }
 
   async function confirmSelection() {
@@ -463,6 +486,7 @@ export function App() {
     : settings.model;
 
   return <div className={`app-frame${shuffling ? " is-shuffling" : ""}`}>
+    {shuffling && <ShuffleOverlay />}
     <Sidebar
       stage={stage}
       history={history}
@@ -528,12 +552,10 @@ export function App() {
             <div className={`deck-scroller${shuffling ? " is-shuffling" : ""}`} role="listbox" aria-label="78 张背面朝上的塔罗牌" aria-multiselectable="true">
               {Array.from({ length: draft.deckSize }, (_, index) => {
                 const order = selection.findIndex((item) => item === index);
-                const s = shuffleScatter(index, draft.deckSize);
                 return <button
                   key={index}
-                  className={`deck-card${order >= 0 ? " selected" : ""}${shuffling ? " shuffling" : ""}`}
+                  className={`deck-card${order >= 0 ? " selected" : ""}`}
                   onClick={shuffling ? undefined : () => toggleCard(index)}
-                  style={shuffling ? { "--sx": `${s.x}px`, "--sr": `${s.rotate}deg` } as CSSProperties : undefined}
                   role="option"
                   aria-selected={order >= 0}
                   aria-label={`第 ${index + 1} 张牌${order >= 0 ? `，选择顺序 ${order + 1}` : ""}`}

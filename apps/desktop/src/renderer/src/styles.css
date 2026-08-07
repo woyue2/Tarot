@@ -137,17 +137,24 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .selection-status i { width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: 50%; color: white; font-size: 11px; font-style: normal; }
 .selection-status i.filled { border-color: var(--accent); background: var(--accent); box-shadow: 0 3px 10px rgba(79, 143, 220, .22); }
 .deck-scroller { margin: 0 -32px; padding: 30px max(6vw, 32px) 46px; display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-color: #c2c7ce transparent; touch-action: pan-x; }
-.content-shell.is-shuffling { overflow: visible; }
-.content-shell.is-shuffling .content-scroll { overflow: visible; }
-.deck-scroller.is-shuffling { overflow: visible; touch-action: none; }
-.app-frame.is-shuffling { overflow: visible; }
-@keyframes shuffle-card {
-  0%   { transform: translateX(0) rotate(0deg) scale(1); }
-  40%  { transform: translateX(var(--sx, 0)) rotate(var(--sr, 0deg)) scale(0.94); }
-  60%  { transform: translateX(calc(var(--sx, 0) * 0.25)) rotate(calc(var(--sr, 0deg) * 0.15)) scale(0.97); }
-  100% { transform: translateX(0) rotate(0deg) scale(1); }
+.deck-scroller.is-shuffling { pointer-events: none; opacity: .28; filter: blur(1px); transition: opacity .18s ease, filter .18s ease; }
+.shuffle-overlay { --shuffle-duration: 1.9s; position: fixed; inset: 0; z-index: 100; pointer-events: none; background: rgba(244, 246, 249, .66); backdrop-filter: blur(3px); animation: shuffle-overlay-veil var(--shuffle-duration) ease both; }
+[data-theme="dark"] .shuffle-overlay { background: rgba(17, 19, 24, .68); }
+.shuffle-overlay-stage { position: absolute; inset: 0 0 0 var(--sidebar-width); display: grid; place-items: center; padding-top: 32px; }
+.shuffle-overlay-deck { position: relative; width: 112px; height: 190px; perspective: 900px; }
+.shuffle-overlay-deck img { position: absolute; inset: 0; width: 112px; height: 190px; border: 1px solid #c5b8d2; border-radius: 10px; object-fit: cover; box-shadow: 0 16px 38px rgba(22, 17, 29, .2); transform-origin: 50% 110%; will-change: transform, opacity; animation: shuffle-overlay-card var(--shuffle-duration) cubic-bezier(.22, .74, .24, 1) both; }
+.shuffle-overlay-stage p { margin: 28px 0 0; color: var(--foreground-secondary); font-size: 12px; font-weight: 600; letter-spacing: .14em; animation: shuffle-overlay-label var(--shuffle-duration) ease both; }
+@keyframes shuffle-overlay-card {
+  0% { opacity: 0; transform: translate3d(var(--shuffle-spread), 42px, 0) rotate(var(--shuffle-fan)) scale(.8); }
+  16% { opacity: 1; }
+  32% { transform: translate3d(0, 0, 0) rotate(0) scale(.9); }
+  50% { transform: translate3d(var(--shuffle-cut), var(--shuffle-lift), 0) rotate(var(--shuffle-fan)) scale(.94); }
+  70% { transform: translate3d(var(--shuffle-cross), var(--shuffle-cross-y), 0) rotate(0) scale(.94); }
+  88% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(.9); }
+  100% { opacity: 0; transform: translate3d(0, -8px, 0) rotate(0) scale(.84); }
 }
-.deck-card.shuffling { animation: shuffle-card 0.6s ease-in-out; animation-fill-mode: forwards; z-index: 10; will-change: transform; }
+@keyframes shuffle-overlay-veil { 0% { opacity: 0; } 12%, 78% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes shuffle-overlay-label { 0%, 8%, 88%, 100% { opacity: 0; transform: translateY(5px); } 22%, 76% { opacity: 1; transform: translateY(0); } }
 .deck-card { position: relative; width: 112px; height: 190px; flex: 0 0 112px; padding: 0; overflow: visible; border: 1px solid #c5b8d2; border-radius: 10px; background: #2b2336; cursor: pointer; scroll-snap-align: center; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .deck-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; user-select: none; pointer-events: none; }
 .deck-card:hover { transform: translateY(-7px); border-color: #8b73a4; box-shadow: 0 16px 30px rgba(28, 22, 35, .18); }
