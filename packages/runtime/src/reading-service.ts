@@ -78,6 +78,7 @@ export interface PublicReading {
   revealed?: RevealedCard[] | undefined;
   calculation?: ReadingCalculation | undefined;
   interpretation?: TarotInterpretation | undefined;
+  drawnAt?: string | undefined;
   createdAt: string;
   updatedAt: string;
 }
@@ -204,6 +205,7 @@ export class ReadingService {
         card,
       };
     });
+    const now = this.env.now();
     const updated: StoredReading = {
       ...reading,
       selectedIndexes: indexes,
@@ -211,7 +213,8 @@ export class ReadingService {
       revealed,
       calculation: interpretationInput.calculation,
       interpretationInput,
-      updatedAt: this.env.now(),
+      drawnAt: now,
+      updatedAt: now,
     };
     this.repo.save(updated);
     return this.toPublic(updated);
@@ -309,6 +312,7 @@ export class ReadingService {
       revealed: reading.revealed as RevealedCard[] | undefined,
       calculation: reading.calculation as ReadingCalculation | undefined,
       interpretation: reading.interpretation,
+      drawnAt: reading.drawnAt,
       createdAt: reading.createdAt,
       updatedAt: reading.updatedAt,
     };

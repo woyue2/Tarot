@@ -779,6 +779,7 @@ function ResultView(props: {
   const revealed = reading.revealed;
   const calculation = reading.calculation;
   const interpretation = reading.interpretation;
+  const [zoomedCard, setZoomedCard] = useState<RevealedCard | null>(null);
 
   const revealedByPos = useMemo(() => {
     const map = new Map<number, RevealedCard>();
@@ -788,15 +789,30 @@ function ResultView(props: {
 
   const needsInterpret = !interpretation || reading.status === "failed";
 
+  const drawnAtText = reading.drawnAt
+    ? new Date(reading.drawnAt).toLocaleString("zh-CN", {
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
     <section>
       <p className="eyebrow">{reading.question}</p>
+      {drawnAtText && <p className="drawn-at">抽卡于 {drawnAtText}</p>}
       <h1 className="view-title">你的牌阵</h1>
 
       {revealed && (
         <div className="revealed-row">
           {revealed.map((card) => (
-            <div className="revealed-card" key={card.position}>
+            <button
+              className="revealed-card"
+              key={card.position}
+              aria-label={`放大查看 ${card.card.name}`}
+              onClick={() => setZoomedCard(card)}
+            >
               <div className="card-image">
                 <img
                   src={imageOf(card.card.image)}
@@ -809,9 +825,13 @@ function ResultView(props: {
               <span className="pos">{card.positionName}</span>
               <h3>{card.card.name}</h3>
               <small>{card.orientation === "reversed" ? "逆位" : "正位"}</small>
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {zoomedCard && (
+        <CardZoomModal card={zoomedCard} onClose={() => setZoomedCard(null)} />
       )}
 
       {calculation && <MetricsView calculation={calculation} />}
@@ -849,6 +869,47 @@ function ResultView(props: {
         </button>
       )}
     </section>
+  );
+}
+
+function CardZoomModal(props: { card: RevealedCard; onClose: () => void }) {
+  const { card } = props;
+  return (
+    <div
+      className="card-zoom-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${card.card.name} 放大视图`}
+      onClick={props.onClose}
+    >
+      <button
+        className="card-zoom-close"
+        aria-label="关闭"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onClose();
+        }}
+      >
+        ×
+      </button>
+      <div
+        className="card-zoom-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="card-zoom-image">
+          <img
+            src={imageOf(card.card.image)}
+            className={card.orientation === "reversed" ? "reversed" : ""}
+            alt={card.card.name}
+          />
+        </div>
+        <div className="card-zoom-info">
+          <span className="pos">{card.positionName}</span>
+          <h3>{card.card.name}</h3>
+          <small>{card.orientation === "reversed" ? "逆位" : "正位"}</small>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -956,26 +1017,31 @@ function HistoryView(props: {
         </button>
       </div>
       <div className="history-list">
-        {props.items.map((item) => (
-          <div className="history-item" key={item.id}>
-            <span className="glyph">
-              <CompassIcon />
-            </span>
-            <button
-              className="body"
-              style={{ border: "none", background: "transparent", textAlign: "left", flex: 1, minWidth: 0 }}
-              onClick={() => props.onOpen(item.id)}
-            >
-              <b>{item.question}</b>
-              <small>
-                {item.mode === "random" ? "随缘" : "手写"} · {item.status === "completed" ? "已完成" : "未完成"}
-              </small>
-            </button>
-            <button className="del" aria-label="删除" onClick={() => props.onDelete(item.id)}>
-              ×
-            </button>
-          </div>
-        ))}
+        {props.items.map((item) => {
+          const timeLabel = item.drawnAt
+            ? new Date(item.drawnAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })
+            : new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+          return (
+            <div className="history-item" key={item.id}>
+              <span className="glyph">
+                <CompassIcon />
+              </span>
+              <button
+                className="body"
+                style={{ border: "none", background: "transparent", textAlign: "left", flex: 1, minWidth: 0 }}
+                onClick={() => props.onOpen(item.id)}
+              >
+                <b>{item.question}</b>
+                <small>
+                  {item.mode === "random" ? "随缘" : "手写"} · {item.status === "completed" ? "已完成" : "未完成"} · {timeLabel}
+                </small>
+              </button>
+              <button className="del" aria-label="删除" onClick={() => props.onDelete(item.id)}>
+                ×
+              </button>
+            </div>
+          );
+        })}
       </div>
       <button className="btn ghost block" style={{ marginTop: 14 }} onClick={props.onClearHistory}>
         清空全部记录

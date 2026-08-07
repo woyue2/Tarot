@@ -32,6 +32,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
         calculation_json TEXT,
         interpretation_input_json TEXT,
         interpretation_json TEXT,
+        drawn_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
@@ -41,6 +42,9 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
     if (!columns.some((column) => column.name === "folder_id")) {
       this.database.exec("ALTER TABLE readings ADD COLUMN folder_id TEXT REFERENCES reading_folders(id) ON DELETE SET NULL");
     }
+    if (!columns.some((column) => column.name === "drawn_at")) {
+      this.database.exec("ALTER TABLE readings ADD COLUMN drawn_at TEXT");
+    }
     this.database.exec("CREATE INDEX IF NOT EXISTS readings_folder_id ON readings(folder_id, updated_at DESC)");
   }
 
@@ -49,8 +53,8 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       INSERT INTO readings (
         id, folder_id, question, mode, status, shuffle_seed, deck_json, selected_indexes_json,
         revealed_json, calculation_json, interpretation_input_json, interpretation_json,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        drawn_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         folder_id = excluded.folder_id,
         question = excluded.question,
@@ -63,6 +67,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
         calculation_json = excluded.calculation_json,
         interpretation_input_json = excluded.interpretation_input_json,
         interpretation_json = excluded.interpretation_json,
+        drawn_at = excluded.drawn_at,
         updated_at = excluded.updated_at
     `).run(
       reading.id, reading.folderId ?? null, reading.question, reading.mode, reading.status, reading.shuffleSeed,
@@ -71,6 +76,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       reading.calculation ? JSON.stringify(reading.calculation) : null,
       reading.interpretationInput ? JSON.stringify(reading.interpretationInput) : null,
       reading.interpretation ? JSON.stringify(reading.interpretation) : null,
+      reading.drawnAt ?? null,
       reading.createdAt, reading.updatedAt,
     );
     this.onDidSave?.("reading", reading.id);
@@ -141,6 +147,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       calculation: parse("calculation_json"),
       interpretationInput: parse("interpretation_input_json"),
       interpretation: parse("interpretation_json"),
+      drawnAt: typeof row.drawn_at === "string" ? row.drawn_at : undefined,
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
     };

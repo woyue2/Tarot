@@ -116,7 +116,8 @@ html[data-platform="win32"] .content-titlebar { padding-right: 150px; }
 .eyebrow { margin: 0 0 16px; color: var(--accent-deep); font-size: 10px; font-weight: 650; letter-spacing: .22em; }
 h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2 "STSong", "SimSun", serif; letter-spacing: .02em; text-wrap: balance; }
 .lead { max-width: 650px; margin: 20px auto 32px; color: var(--foreground-secondary); font-size: 14px; line-height: 1.8; }
-.lead.compact { margin-bottom: 28px; }
+.lead.compact { margin-bottom: 8px; }
+.drawn-at { margin: 0 auto 28px; color: var(--muted-foreground); font-size: 12px; letter-spacing: .02em; }
 .question-panel { width: min(720px, 100%); margin: 0 auto; padding: 22px; text-align: left; border: 1px solid var(--border); border-radius: 14px; background: var(--background); box-shadow: 0 10px 35px rgba(28, 36, 48, .055); }
 .question-footer { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted-foreground); font-size: 10px; }
 .mode-actions { width: min(720px, 100%); margin: 14px auto 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }

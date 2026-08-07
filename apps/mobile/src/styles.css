@@ -156,6 +156,12 @@ select {
   color: var(--muted-foreground);
 }
 
+.drawn-at {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
 h1.view-title {
   margin: 0 0 8px;
   font-size: 23px;
@@ -474,6 +480,16 @@ h1.view-title {
 .revealed-card {
   text-align: center;
   min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.revealed-card:active {
+  transform: scale(0.96);
 }
 
 .revealed-card .card-image {
@@ -510,6 +526,98 @@ h1.view-title {
 .revealed-card small {
   color: var(--foreground-secondary);
   font-size: 12px;
+}
+
+/* ===== 牌面放大层 ===== */
+.card-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 10, 14, 0.78);
+  backdrop-filter: saturate(1.2) blur(10px);
+  animation: fade-in 0.18s ease;
+}
+
+.card-zoom-close {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 22px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.card-zoom-content {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  max-width: 100%;
+  animation: zoom-in 0.22s ease;
+}
+
+.card-zoom-image {
+  width: min(80vw, 360px);
+  aspect-ratio: 2 / 3;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface-subtle);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.card-zoom-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-zoom-image img.reversed {
+  transform: rotate(180deg);
+}
+
+.card-zoom-info {
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card-zoom-info .pos {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.card-zoom-info h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card-zoom-info small {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .metrics {

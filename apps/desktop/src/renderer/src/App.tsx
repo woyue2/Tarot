@@ -575,6 +575,7 @@ export function App() {
             <p className="eyebrow">YOUR FIVE-CARD TIMELINE</p>
             <h1>{reading.interpretation?.headline ?? "牌阵已保存，等待解读"}</h1>
             <p className="lead compact">{reading.question}</p>
+            {reading.drawnAt && <p className="drawn-at">抽卡于 {new Date(reading.drawnAt).toLocaleString("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>}
             {reading.revealed && reading.revealed.length > 0 && (
               <CardRevealStage
                 cards={reading.revealed}
@@ -686,6 +687,12 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
     await onMoveReading(readingId, folderId);
   }
 
+  const formatDrawnAt = (iso?: string) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+  };
+
   const renderConversation = (item: ReadingView) => <div className="folder-conversation-wrap" key={item.id}>
     <button
       className="folder-conversation"
@@ -698,7 +705,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
       }}
       onDragEnd={() => { setDraggedReadingId(undefined); setDropTarget(undefined); }}
       onClick={() => onOpenHistory(item)}
-    ><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>
+    ><span>{item.status === "completed" ? "✦" : "○"}</span><div><b>{item.question}</b><small>{item.drawnAt ? formatDrawnAt(item.drawnAt) : new Date(item.updatedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}</small></div></button>
     <button className="conversation-delete" onClick={(event) => { event.stopPropagation(); void onDeleteReading(item.id); }} title="删除这条解读" aria-label={`删除 ${item.question}`}>×</button>
   </div>;
 

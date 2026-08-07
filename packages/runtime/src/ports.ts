@@ -13,6 +13,7 @@ export interface StoredReading {
   calculation?: unknown;
   interpretationInput?: TarotInterpretationInput | undefined;
   interpretation?: TarotInterpretation | undefined;
+  drawnAt?: string | undefined;
   createdAt: string;
   updatedAt: string;
 }

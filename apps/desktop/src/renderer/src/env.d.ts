@@ -40,6 +40,7 @@ interface ReadingView {
     reflectionQuestion: string;
     disclaimer: string;
   };
+  drawnAt?: string;
   createdAt: string;
   updatedAt: string;
 }

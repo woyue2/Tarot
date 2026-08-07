@@ -59,4 +59,5 @@ export interface ReadingDraft {
   shuffleSeed: string;
   deck: DeckEntry[];
   selectedIndexes: number[];
+  drawnAt?: string;
 }
