@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from "react";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { AnimatePresence, motion } from "framer-motion";
+import { CardRevealStage } from "./components/CardRevealStage";
 
 type Stage = "home" | "select" | "result" | "settings";
 
@@ -93,6 +94,7 @@ export function App() {
   const [presetProviders, setPresetProviders] = useState<PresetProvider[]>([]);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [shuffling, setShuffling] = useState(false);
   const [pendingMode, setPendingMode] = useState<"manual" | "random" | null>(null);
   const [error, setError] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
@@ -165,20 +167,72 @@ export function App() {
   }
 
   function toggleCard(index: number) {
-    setSelection((current) => {
-      const existingIndex = current.indexOf(index);
-      if (existingIndex >= 0) {
-        // 已选中：将该位置置为 null（保留空位）
-        return current.map((item, i) => i === existingIndex ? null : item);
-      }
+    const current = selection;
+    const existingIndex = current.indexOf(index);
+    let next: (number | null)[];
+    if (existingIndex >= 0) {
+      // 已选中：将该位置置为 null（保留空位），顺序角标前移
+      next = current.map((item, i) => i === existingIndex ? null : item);
+    } else {
       // 未选中：寻找第一个空位填入，否则追加（不超过 5 个位置）
       const firstNull = current.findIndex((item) => item === null);
       if (firstNull >= 0) {
-        return current.map((item, i) => i === firstNull ? index : item);
+        next = current.map((item, i) => i === firstNull ? index : item);
+      } else if (current.length >= 5) {
+        return;
+      } else {
+        next = [...current, index];
       }
-      if (current.length >= 5) return current;
-      return [...current, index];
-    });
+    }
+    setSelection(next);
+    // 持久化部分选牌，使草稿恢复能还原选择状态
+    if (draft) {
+      const compact = next.filter((item): item is number => item !== null);
+      void persistSelection(compact);
+    }
+  }
+
+  async function persistSelection(indexes: number[]) {
+    if (!draft) return;
+    try {
+      await window.tarot.updateSelection({ id: draft.id, selectedIndexes: indexes });
+    } catch {
+      // 草稿保存失败不影响选牌本身
+    }
+  }
+
+  function clearSelection() {
+    if (selectedCount === 0) return;
+    setSelection([]);
+    if (draft) void persistSelection([]);
+  }
+
+  async function reshuffle() {
+    if (!draft || shuffling) return;
+    setShuffling(true);
+    setError("");
+    try {
+      // 等 CSS keyframe 动画（600ms）跑完整轮再换种子
+      await new Promise((resolve) => setTimeout(resolve, 650));
+      const result = await window.tarot.reshuffleReading({ id: draft.id });
+      setDraft(result);
+      setSelection([]);
+      setHistory(await window.tarot.history());
+    } catch (reason) {
+      showError(reason);
+    } finally {
+      setShuffling(false);
+    }
+  }
+
+  function shuffleScatter(index: number, total: number) {
+    const center = total / 2;
+    const dist = Math.abs(index - center);
+    const direction = index < center ? 1 : -1;
+    // 横向对洗：左右两半向中间聚拢，最多偏移约 90px，保证不出滚动容器
+    const x = direction * Math.min(dist * 2.2, 90);
+    const rotate = direction * (4 + (index % 4) * 2);
+    return { x, rotate };
   }
 
   async function confirmSelection() {
@@ -196,6 +250,16 @@ export function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function resumeDraft(item: ReadingView) {
+    // 恢复未完成草稿：牌序来自库中原样保存的种子与牌堆，选择状态原样回填
+    setDraft({ id: item.id, deckSize: 78 });
+    setSelection((item.selectedIndexes ?? []).slice());
+    setQuestion(item.question);
+    setActiveFolderId(item.folderId);
+    setStage("select");
+    setError("");
   }
 
   async function interpret() {
@@ -398,7 +462,7 @@ export function App() {
     ? `${currentPreset.label} · ${settings.model}`
     : settings.model;
 
-  return <div className="app-frame">
+  return <div className={`app-frame${shuffling ? " is-shuffling" : ""}`}>
     <Sidebar
       stage={stage}
       history={history}
@@ -414,10 +478,11 @@ export function App() {
       onMoveReading={moveReading}
       onDeleteReading={deleteReading}
       onOpenHistory={openHistory}
+      onResumeDraft={resumeDraft}
       onOpenSettings={() => { setStage("settings"); setSavedNotice(""); }}
     />
 
-    <section className="content-shell">
+    <section className={`content-shell${shuffling ? " is-shuffling" : ""}`}>
       <header className="content-titlebar">
         <div><span>星径</span><b>{stageTitles[stage]}</b></div>
         {!appPreferences.hideModelUi && (
@@ -460,22 +525,42 @@ export function App() {
             <h1>凭直觉选出五张牌</h1>
             <p className="lead compact">左右滑动牌列，依次点选。再次点击可撤回；确认以后才会揭晓牌面与正逆位。</p>
             <div className="selection-status"><span>{progressLabel}</span><div>{Array.from({ length: 5 }, (_, index) => <i key={index} className={typeof selection[index] === "number" ? "filled" : ""}>{typeof selection[index] === "number" ? index + 1 : ""}</i>)}</div></div>
-            <div className="deck-scroller" role="listbox" aria-label="78 张背面朝上的塔罗牌" aria-multiselectable="true">
+            <div className={`deck-scroller${shuffling ? " is-shuffling" : ""}`} role="listbox" aria-label="78 张背面朝上的塔罗牌" aria-multiselectable="true">
               {Array.from({ length: draft.deckSize }, (_, index) => {
                 const order = selection.findIndex((item) => item === index);
-                return <motion.button whileTap={{ scale: .97 }} key={index} className={`deck-card ${order >= 0 ? "selected" : ""}`} onClick={() => toggleCard(index)} role="option" aria-selected={order >= 0} aria-label={`第 ${index + 1} 张牌${order >= 0 ? `，选择顺序 ${order + 1}` : ""}`}>
-                  <img src="/cards/card-back.webp" alt="" draggable={false} />{order >= 0 && <span>{order + 1}</span>}
-                </motion.button>;
+                const s = shuffleScatter(index, draft.deckSize);
+                return <button
+                  key={index}
+                  className={`deck-card${order >= 0 ? " selected" : ""}${shuffling ? " shuffling" : ""}`}
+                  onClick={shuffling ? undefined : () => toggleCard(index)}
+                  style={shuffling ? { "--sx": `${s.x}px`, "--sr": `${s.rotate}deg` } as CSSProperties : undefined}
+                  role="option"
+                  aria-selected={order >= 0}
+                  aria-label={`第 ${index + 1} 张牌${order >= 0 ? `，选择顺序 ${order + 1}` : ""}`}
+                >
+                  <img src="/cards/card-back.webp" alt="" draggable={false} />{order >= 0 && !shuffling && <span>{order + 1}</span>}
+                </button>;
               })}
             </div>
-            <div className="sticky-actions"><Button label="取消重选" variant="ghost" size="lg" onClick={reset} /><Button label={selectedCount === 5 ? "确认并揭牌" : `还需选择 ${5 - selectedCount} 张`} variant="primary" size="lg" isDisabled={selectedCount !== 5 || busy} isLoading={busy} onClick={() => void confirmSelection()} /></div>
+            <div className="sticky-actions">
+              <Button label="重新洗牌" variant="ghost" size="lg" isDisabled={shuffling || busy} isLoading={shuffling} onClick={() => void reshuffle()} />
+              <Button label="清空选择" variant="ghost" size="lg" isDisabled={selectedCount === 0 || shuffling || busy} onClick={clearSelection} />
+              <Button label={selectedCount === 5 ? "确认并揭牌" : `还需选择 ${5 - selectedCount} 张`} variant="primary" size="lg" isDisabled={selectedCount !== 5 || shuffling || busy} isLoading={busy} onClick={() => void confirmSelection()} />
+            </div>
           </motion.section>}
 
           {stage === "result" && reading && <motion.section className="result-view" key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <p className="eyebrow">YOUR FIVE-CARD TIMELINE</p>
             <h1>{reading.interpretation?.headline ?? "牌阵已保存，等待解读"}</h1>
             <p className="lead compact">{reading.question}</p>
-            <div className="revealed-grid">{reading.revealed?.map((item) => <article className="revealed-card" key={item.cardId}><div className="card-image"><img src={`/${item.card.image}`} alt={item.card.name} className={item.orientation === "reversed" ? "reversed" : ""} /></div><span>{item.positionName}</span><h3>{item.card.name}</h3><small>{item.orientation === "upright" ? "正位" : "逆位"}</small></article>)}</div>
+            {reading.revealed && reading.revealed.length > 0 && (
+              <CardRevealStage
+                cards={reading.revealed}
+                autoReveal
+                key={reading.id}
+                onComplete={() => { /* 动画完成后的可选回调 */ }}
+              />
+            )}
             {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div></div>}
             {!reading.interpretation ? <>
               <div className="interpret-cta"><p>可以现在调用模型，也可以关闭应用后稍后继续。牌、顺序和正逆位不会改变。</p><Button label="开始 AI 解读" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => void interpret()} /></div>
@@ -517,7 +602,7 @@ export function App() {
   </div>;
 }
 
-function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelUi, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onDeleteFolder, onMoveReading, onDeleteReading, onOpenHistory, onOpenSettings }: {
+function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelUi, onNewReading, onNewReadingInFolder, onCreateFolder, onRenameFolder, onDeleteFolder, onMoveReading, onDeleteReading, onOpenHistory, onResumeDraft, onOpenSettings }: {
   stage: Stage;
   history: ReadingView[];
   folders: ReadingFolder[];
@@ -532,6 +617,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
   onMoveReading(id: string, folderId?: string): Promise<void>;
   onDeleteReading(id: string): Promise<void>;
   onOpenHistory(item: ReadingView): void;
+  onResumeDraft(item: ReadingView): void;
   onOpenSettings(): void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -562,6 +648,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
   const visibleHistory = history.filter((item) => item.revealed);
   const ungroupedHistory = visibleHistory.filter((item) => !item.folderId);
   const draggedReading = visibleHistory.find((item) => item.id === draggedReadingId);
+  const draftItems = history.filter((item) => item.status === "selecting");
 
   function canDropInto(folderId?: string) {
     return Boolean(draggedReading && draggedReading.folderId !== folderId);
@@ -603,6 +690,23 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
     </nav>
     <section className="sidebar-history folder-tree">
       <div className="sidebar-section-title"><span>最近记录</span><button className="add-folder-button" onClick={() => setCreatingFolder(true)} title="新建 Folder" aria-label="新建 Folder">＋</button></div>
+      {draftItems.length > 0 && (
+        <div className="draft-section">
+          <div className="sidebar-section-title"><span>进行中</span></div>
+          {draftItems.map((item) => (
+            <div className="folder-conversation-wrap" key={item.id}>
+              <button className="folder-conversation" onClick={() => onResumeDraft(item)} title="继续这个未完成的选择">
+                <span>◌</span>
+                <div>
+                  <b>{item.question}</b>
+                  <small>{item.selectedIndexes.length > 0 ? `已选 ${item.selectedIndexes.length} / 5，继续选择` : "选牌进行中"}</small>
+                </div>
+              </button>
+              <button className="conversation-delete" onClick={(event) => { event.stopPropagation(); void onDeleteReading(item.id); }} title="删除这条草稿" aria-label={`删除 ${item.question}`}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
       {!creatingFolder && folders.length === 0 && visibleHistory.length === 0 && (
         <div className="sidebar-empty">
           <p>还没有解读记录</p>

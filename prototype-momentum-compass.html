@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>动量-价值罗盘原型</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.2.8",
+      "react/jsx-runtime": "https://esm.sh/react@19.2.8/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@19.2.8",
+      "react-dom/client": "https://esm.sh/react-dom@19.2.8/client",
+      "framer-motion": "https://esm.sh/framer-motion@11.18.2",
+      "d3-scale": "https://esm.sh/d3-scale@4.0.2",
+      "htm": "https://esm.sh/htm"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --panel: rgba(22, 22, 26, 0.9);
+      --gold: #c9a227;
+      --gold-light: #e8d28a;
+      --gold-dim: #6d5a22;
+      --text: #f2efe6;
+      --muted: #9c998f;
+      --grid: rgba(201, 162, 39, 0.10);
+      --axis: rgba(201, 162, 39, 0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #app { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .frame { position: relative; width: min(640px, 92vw); aspect-ratio: 1; }
+    .hud {
+      position: absolute; top: -70px; left: 0; right: 0; text-align: center;
+    }
+    .hud h1 { margin: 0 0 6px; font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--gold-light); }
+    .hud p { margin: 0; font-size: 13px; color: var(--muted); }
+    svg { width: 100%; height: 100%; overflow: visible; }
+    .grid-ring { fill: none; stroke: var(--grid); stroke-width: 1; }
+    .grid-axis { stroke: var(--axis); stroke-width: 1; }
+    .tick { fill: var(--gold-dim); font-size: 9px; text-anchor: middle; dominant-baseline: middle; }
+    .label { fill: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-anchor: middle; dominant-baseline: middle; }
+    .label-title { fill: var(--gold-light); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; }
+    .needle { stroke: var(--gold-light); stroke-width: 2; stroke-linecap: round; fill: none; }
+    .needle-glow { stroke: var(--gold); stroke-width: 6; stroke-linecap: round; opacity: 0.22; filter: blur(3px); fill: none; }
+    .marker-core { fill: var(--gold); }
+    .marker-ring { fill: none; stroke: var(--gold-light); stroke-width: 1.5; }
+    .marker-glow { fill: var(--gold); opacity: 0.18; filter: blur(6px); }
+    .controls {
+      position: absolute; bottom: -110px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 24px; align-items: center;
+      background: var(--panel); border: 1px solid rgba(201,162,39,0.18);
+      padding: 16px 24px; border-radius: 16px;
+    }
+    .ctrl { display: flex; flex-direction: column; gap: 6px; min-width: 160px; }
+    .ctrl span { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+    .ctrl span b { color: var(--gold-light); font-weight: 500; }
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 3px; background: rgba(201,162,39,0.22); border-radius: 2px; outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(201,162,39,0.5);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%; background: var(--gold); cursor: pointer; border: none; box-shadow: 0 0 10px rgba(201,162,39,0.5);
+    }
+    .readout {
+      position: absolute; bottom: -170px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: var(--muted); font-size: 13px; letter-spacing: 0.03em;
+    }
+    .readout b { color: var(--gold-light); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import React, { useState, useMemo } from "react";
+    import { createRoot } from "react-dom/client";
+    import { motion } from "framer-motion";
+    import { scaleLinear } from "https://esm.sh/d3-scale@4.0.2";
+    import htm from "https://esm.sh/htm";
+
+    const html = htm.bind(React.createElement);
+    const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const SIZE = 640;
+    const PAD = 52;
+    const R = (SIZE - PAD * 2) / 2;
+    const CX = SIZE / 2;
+    const CY = SIZE / 2;
+
+    function App() {
+      const [momentum, setMomentum] = useState(0.55);
+      const [value, setValue] = useState(-0.35);
+
+      const xScale = useMemo(() => scaleLinear().domain([-1, 1]).range([CX - R, CX + R]), []);
+      const yScale = useMemo(() => scaleLinear().domain([-1, 1]).range([CY + R, CY - R]), []);
+
+      const px = xScale(value);
+      const py = yScale(momentum);
+
+      const rings = [0.25, 0.5, 0.75, 1.0];
+      const ticks = [-1, -0.5, 0, 0.5, 1];
+
+      const quadrant =
+        momentum >= 0 && value >= 0 ? "高动量 · 高价值" :
+        momentum >= 0 && value < 0 ? "高动量 · 低价值" :
+        momentum < 0 && value >= 0 ? "低动量 · 高价值" : "低动量 · 低价值";
+
+      return html`
+        <div id="app">
+          <div class="frame">
+            <div class="hud">
+              <h1>动量 · 价值 罗盘</h1>
+              <p>visx/d3-scale 数学 · 自绘 SVG · 黑金仪式仪表</p>
+            </div>
+            <svg viewBox="0 0 ${SIZE} ${SIZE}">
+              <!-- 同心圆网格 -->
+              ${rings.map((r) => html`<circle key=${r} class="grid-ring" cx=${CX} cy=${CY} r=${R * r} />`)}
+
+              <!-- 轴线 -->
+              <line class="grid-axis" x1=${CX} y1=${CY - R} x2=${CX} y2=${CY + R} />
+              <line class="grid-axis" x1=${CX - R} y1=${CY} x2=${CX + R} y2=${CY} />
+
+              <!-- 刻度数字 -->
+              ${ticks.map((t) => t !== 0 && html`<text key=${"x"+t} class="tick" x=${xScale(t)} y=${CY + 16}>${t}</text>`)}
+              ${ticks.map((t) => t !== 0 && html`<text key=${"y"+t} class="tick" x=${CX - 14} y=${yScale(t) + 3}>${t}</text>`)}
+
+              <!-- 象限标签 -->
+              <text class="label label-title" x=${CX} y=${CY - R - 22}>动量 +</text>
+              <text class="label" x=${CX} y=${CY - R - 8}>动能强劲</text>
+              <text class="label" x=${CX} y=${CY + R + 22}>动量 -</text>
+              <text class="label label-title" x=${CX - R - 18} y=${CY}>价值 -</text>
+              <text class="label label-title" x=${CX + R + 18} y=${CY}>价值 +</text>
+
+              <!-- 从中心到目标点的发光指针 -->
+              <motion.line
+                class="needle-glow"
+                x1=${CX} y1=${CY}
+                animate=${{ x2: px, y2: py }}
+                transition=${{ type: "spring", stiffness: 180, damping: 22, duration: REDUCED ? 0 : 0.8 }}
+              />
+              <motion.line
+                class="needle"
+                x1=${CX} y1=${CY}
+                animate=${{ x2: px, y2: py }}
+                transition=${{ type: "spring", stiffness: 180, damping: 22, duration: REDUCED ? 0 : 0.8 }}
+              />
+
+              <!-- 目标点：光晕 + 环 + 核心 -->
+              <motion.circle
+                class="marker-glow"
+                r=${18}
+                animate=${{ cx: px, cy: py }}
+                transition=${{ type: "spring", stiffness: 180, damping: 22, duration: REDUCED ? 0 : 0.8 }}
+              />
+              <motion.circle
+                class="marker-ring"
+                r=${10}
+                animate=${{ cx: px, cy: py }}
+                transition=${{ type: "spring", stiffness: 180, damping: 22, duration: REDUCED ? 0 : 0.8 }}
+              />
+              <motion.circle
+                class="marker-core"
+                r=${5}
+                animate=${{ cx: px, cy: py }}
+                transition=${{ type: "spring", stiffness: 180, damping: 22, duration: REDUCED ? 0 : 0.8 }}
+              />
+            </svg>
+
+            <div class="controls">
+              <div class="ctrl">
+                <span>动量 Momentum <b>${momentum.toFixed(2)}</b></span>
+                <input type="range" min="-1" max="1" step="0.01" value=${momentum} onInput=${(e) => setMomentum(parseFloat(e.target.value))} />
+              </div>
+              <div class="ctrl">
+                <span>价值 Value <b>${value.toFixed(2)}</b></span>
+                <input type="range" min="-1" max="1" step="0.01" value=${value} onInput=${(e) => setValue(parseFloat(e.target.value))} />
+              </div>
+            </div>
+
+            <div class="readout">当前象限：<b>${quadrant}</b></div>
+          </div>
+        </div>
+      `;
+    }
+
+    createRoot(document.getElementById("app")).render(html`<${App} />`);
+  </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D 选牌微交互原型</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.2.8",
+      "react/jsx-runtime": "https://esm.sh/react@19.2.8/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@19.2.8",
+      "react-dom/client": "https://esm.sh/react-dom@19.2.8/client",
+      "framer-motion": "https://esm.sh/framer-motion@11.18.2",
+      "htm": "https://esm.sh/htm"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --panel: rgba(22, 22, 26, 0.85);
+      --gold: #c9a227;
+      --gold-light: #e8d28a;
+      --gold-dim: #7a6420;
+      --text: #f2efe6;
+      --muted: #9c998f;
+      --aura: rgba(201, 162, 39, 0.55);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #app { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .stage { position: relative; width: min(960px, 92vw); height: 420px; display: flex; align-items: center; overflow: hidden; mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%); }
+    .rail { display: flex; gap: 22px; padding: 40px 60px; cursor: grab; }
+    .rail:active { cursor: grabbing; }
+    .card-wrap { position: relative; width: 130px; height: 208px; flex: 0 0 auto; perspective: 700px; }
+    .card {
+      width: 100%; height: 100%; border-radius: 14px;
+      background: linear-gradient(145deg, #1a1814 0%, #0f0e0c 100%);
+      border: 1.5px solid rgba(201, 162, 39, 0.25);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden; position: relative; user-select: none; touch-action: pan-y;
+    }
+    .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .card::after {
+      content: ""; position: absolute; inset: 0; border-radius: 14px;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.10), transparent 45%);
+      pointer-events: none;
+    }
+    .aura {
+      position: absolute; inset: -10px; border-radius: 18px;
+      border: 2px solid var(--gold); opacity: 0;
+      box-shadow: 0 0 28px var(--aura), inset 0 0 18px rgba(201,162,39,0.12);
+      pointer-events: none;
+    }
+    .corner {
+      position: absolute; top: -10px; left: -10px; width: 32px; height: 32px; border-radius: 50%;
+      background: var(--gold); color: #0b0b0d; font-weight: 700; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px var(--aura); opacity: 0; transform: scale(0.6);
+    }
+    .hint {
+      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      color: var(--muted); font-size: 13px; letter-spacing: 0.04em; text-align: center;
+    }
+    .hud {
+      position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+      text-align: center;
+    }
+    .hud h1 { margin: 0 0 6px; font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--gold-light); }
+    .hud p { margin: 0; font-size: 13px; color: var(--muted); }
+    .counter {
+      position: absolute; top: 28px; right: 32px;
+      color: var(--gold); font-size: 13px; letter-spacing: 0.05em;
+    }
+    .reset {
+      position: absolute; top: 28px; left: 32px;
+      background: transparent; border: 1px solid rgba(201,162,39,0.35);
+      color: var(--gold); padding: 6px 14px; border-radius: 999px; cursor: pointer;
+      font-size: 12px; letter-spacing: 0.05em; transition: all 0.2s;
+    }
+    .reset:hover { background: rgba(201,162,39,0.12); border-color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import React, { useState, useRef, useMemo } from "react";
+    import { createRoot } from "react-dom/client";
+    import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+    import htm from "https://esm.sh/htm";
+
+    const html = htm.bind(React.createElement);
+    const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const TOTAL = 22; // 大阿卡纳牌背数量
+    const CARD_W = 130, CARD_H = 208, GAP = 22;
+
+    function App() {
+      const [selected, setSelected] = useState([]); // [index, index, ...] in pick order
+      const railRef = useRef(null);
+      const x = useMotionValue(0);
+      const springX = useSpring(x, { stiffness: 220, damping: 28, mass: 0.8 });
+
+      // 计算可拖拽范围：左边至少露出最后一张，右边从 0 开始
+      const containerW = typeof window !== "undefined" ? Math.min(960, window.innerWidth * 0.92) : 960;
+      const contentW = TOTAL * (CARD_W + GAP) - GAP + 120; // padding 左右 60
+      const minX = Math.min(0, containerW - contentW - 40);
+
+      const toggle = (idx) => {
+        setSelected((prev) => {
+          const pos = prev.indexOf(idx);
+          if (pos >= 0) return prev.filter((i) => i !== idx);
+          if (prev.length >= 5) return prev; // 最多选 5 张
+          return [...prev, idx];
+        });
+      };
+
+      const reset = () => setSelected([]);
+
+      return html`
+        <div id="app">
+          <button class="reset" onClick=${reset}>重置选择</button>
+          <div class="counter">已选 ${selected.length} / 5</div>
+          <div class="hud">
+            <h1>选择你的牌</h1>
+            <p>横向滑动浏览 · 悬停抬升 · 点击选中（最多 5 张）</p>
+          </div>
+          <div class="stage" ref=${railRef}>
+            <motion.div
+              class="rail"
+              drag="x"
+              dragConstraints=${{ left: minX, right: 0 }}
+              dragElastic=${0.08}
+              dragTransition=${{ bounceStiffness: 220, bounceDamping: 24 }}
+              style=${{ x: springX }}
+              whileTap=${{ cursor: "grabbing" }}
+            >
+              ${Array.from({ length: TOTAL }, (_, i) => html`<${Card}
+                key=${i} index=${i}
+                order=${selected.indexOf(i) + 1}
+                selected=${selected.includes(i)}
+                onClick=${() => toggle(i)}
+              />`)}
+            </motion.div>
+          </div>
+          <div class="hint">拖拽卡带 · 牌背为统一烫金花纹 · 选中后出现金色光圈与顺序角标</div>
+        </div>
+      `;
+    }
+
+    function Card({ index, order, selected, onClick }) {
+      return html`
+        <motion.div
+          class="card-wrap"
+          onClick=${onClick}
+          whileHover=${REDUCED ? {} : { y: -14, scale: 1.06, rotateZ: (index % 2 === 0 ? -2 : 2), transition: { type: "spring", stiffness: 280, damping: 18 } }}
+          whileTap=${{ scale: 0.97 }}
+          transition=${{ layout: REDUCED ? {} : { type: "spring", stiffness: 260, damping: 22 } }}
+        >
+          <motion.div
+            class="card"
+            animate=${{
+              borderColor: selected ? "rgba(201,162,39,0.95)" : "rgba(201,162,39,0.25)",
+              boxShadow: selected
+                ? "0 18px 46px rgba(0,0,0,0.55), 0 0 34px rgba(201,162,39,0.35), inset 0 1px 0 rgba(255,255,255,0.08)"
+                : "0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",
+            }}
+            transition=${{ duration: REDUCED ? 0 : 0.35 }}
+          >
+            <img src="resources/cards/card-back.webp" alt="牌背" />
+          </motion.div>
+          <motion.div
+            class="aura"
+            initial=${false}
+            animate=${{ opacity: selected ? 1 : 0, scale: selected ? 1 : 0.85 }}
+            transition=${{ duration: REDUCED ? 0 : 0.35 }}
+          />
+          <motion.div
+            class="corner"
+            initial=${false}
+            animate=${{ opacity: selected ? 1 : 0, scale: selected ? 1 : 0.6 }}
+            transition=${{ type: "spring", stiffness: 320, damping: 18 }}
+          >${order}</motion.div>
+        </motion.div>
+      `;
+    }
+
+    createRoot(document.getElementById("app")).render(html`<${App} />`);
+  </script>
+</body>
+</html>

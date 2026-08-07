@@ -278,6 +278,8 @@ content-manifest.json
 
 摄像头手势必须通过与鼠标相同的选牌状态机，不能直接写入 `selectedIndexes` 或触发不可撤销确认。
 
+> 手机端的现状盘点、缺口、UI 考量与阶段化建议，详见 [手机版本后续准备计划](07-mobile-version-plan.md)。
+
 ## 10. 完成定义
 
 第一版完成必须同时满足：

@@ -214,6 +214,35 @@ function registerIpc(): void {
     repository.save(updated);
     return publicReading(updated);
   });
+  ipcMain.handle("tarot:update-selection", (_event, input: { id: string; selectedIndexes: number[] }) => {
+    const reading = repository.find(input.id);
+    if (!reading) throw new Error("没有找到这次解读");
+    if (reading.status !== "selecting") throw new Error("确认后的牌阵不能修改选择");
+    const indexes = Array.isArray(input.selectedIndexes) ? input.selectedIndexes : [];
+    if (indexes.length > 5) throw new Error("最多选择五张牌");
+    if (indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= 78)) throw new Error("无效的牌索引");
+    const updated: StoredReading = { ...reading, selectedIndexes: indexes, updatedAt: new Date().toISOString() };
+    repository.save(updated);
+    return { ok: true as const };
+  });
+  ipcMain.handle("tarot:reshuffle-reading", (_event, input: { id: string }) => {
+    const reading = repository.find(input.id);
+    if (!reading) throw new Error("没有找到这次解读");
+    if (reading.status !== "selecting") throw new Error("确认后的牌阵不能重新洗牌");
+    // 重新洗牌必须是明确的用户动作：换新种子与牌堆，清空已选，牌序固定身份随之改变
+    const seed = randomBytes(24).toString("hex");
+    const now = new Date().toISOString();
+    const updated: StoredReading = {
+      ...reading,
+      shuffleSeed: seed,
+      deck: shuffleDeck(cards, createSeededRandom(seed)),
+      selectedIndexes: [],
+      status: "selecting",
+      updatedAt: now,
+    };
+    repository.save(updated);
+    return { id: reading.id, deckSize: updated.deck.length };
+  });
   ipcMain.handle("tarot:interpret", async (event, id: string) => {
     const reading = repository.find(id);
     if (!reading?.interpretationInput) throw new Error("请先确认牌阵");

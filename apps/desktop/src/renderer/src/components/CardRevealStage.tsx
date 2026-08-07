@@ -1,0 +1,450 @@
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface RevealedCard {
+  cardId: string;
+  orientation: "upright" | "reversed";
+  position: number;
+  positionName: string;
+  card: { id: string; name: string; nameEn: string; image: string };
+}
+
+interface CardRevealStageProps {
+  cards: RevealedCard[];
+  autoReveal?: boolean;
+  onComplete?: () => void;
+  className?: string;
+}
+
+const CARD_W = 1.3;
+const CARD_H = 1.95;
+const CARD_D = 0.04;
+const BOX_ARGS: [number, number, number] = [CARD_W, CARD_H, CARD_D];
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** 根据牌数计算合适的排布参数 */
+function useLayout(n: number) {
+  return useMemo(() => {
+    // 目标：整排牌占视口宽度的 85% 左右
+    // PerspectiveCamera fov=42, distance=10 时 viewport 宽度≈ 2*10*tan(21°)≈7.7
+    const viewport = 7.7;
+    const desiredTotal = viewport * 0.88;
+    const rawTotal = n * CARD_W + (n - 1) * 0.25; // 默认间距 0.25
+    const scale = Math.min(1, desiredTotal / rawTotal);
+    const step = CARD_W * scale + 0.25 * scale;
+    return { scale, step };
+  }, [n]);
+}
+
+interface Rand {
+  sx: number;
+  sy: number;
+  sz: number;
+  delay: number;
+  dur: number;
+  arc: number;
+  yaw0: number;
+  spin: number;
+  roll: number;
+  breathPhase: number;
+  breathFreq: number;
+  hoverPhase: number;
+  hoverPhase2: number;
+  hoverFreq: number;
+}
+
+function makeRand(index: number, count: number): Rand {
+  const base = Math.sin(index * 12.9898 + count * 78.233) * 43758.5453;
+  const frac = (base - Math.floor(base)) as unknown as number;
+  const rnd = () => frac;
+  return {
+    sx: (index - (count - 1) / 2) * 0.35 + (Math.random() - 0.5) * 0.6,
+    sy: -3.2 - Math.random() * 0.8,
+    sz: -1.2 - Math.random() * 1.4,
+    delay: 0.1 + Math.random() * 0.55,
+    dur: 0.9 + Math.random() * 0.5,
+    arc: 0.25 + Math.random() * 0.35,
+    yaw0: (Math.random() - 0.5) * 0.7,
+    spin: (Math.random() - 0.5) * 0.6,
+    roll: (Math.random() - 0.5) * 0.45,
+    breathPhase: Math.random() * Math.PI * 2,
+    breathFreq: 0.55 + Math.random() * 0.45,
+    hoverPhase: Math.random() * Math.PI * 2,
+    hoverPhase2: Math.random() * Math.PI * 2,
+    hoverFreq: 0.45 + Math.random() * 0.4,
+  };
+}
+
+interface CardMeshProps {
+  index: number;
+  count: number;
+  faceUrl: string;
+  backUrl: string;
+  started: boolean;
+  flipped: boolean;
+  instant: boolean;
+  runId: number;
+  scale: number;
+  step: number;
+  onToggle?: () => void;
+}
+
+function CardMesh({
+  index,
+  count,
+  faceUrl,
+  backUrl,
+  started,
+  flipped,
+  instant,
+  runId,
+  scale,
+  step,
+  onToggle,
+}: CardMeshProps) {
+  const ref = useRef<THREE.Mesh>(null);
+  const textures = useLoader(THREE.TextureLoader, [faceUrl, backUrl]);
+  const faceTex = textures[0]!;
+  const backTex = textures[1]!;
+  const r = useRef<Rand>(makeRand(index, count));
+  const startRef = useRef<number | null>(null);
+  const revealedRef = useRef(false);
+  const faceUpAtRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    [faceTex, backTex].forEach((t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+    });
+    faceTex.wrapS = THREE.RepeatWrapping;
+    faceTex.repeat.x = -1;
+    faceTex.offset.x = 1;
+  }, [faceTex, backTex]);
+
+  useEffect(() => {
+    r.current = makeRand(index, count);
+    startRef.current = null;
+    revealedRef.current = false;
+    faceUpAtRef.current = null;
+    if (ref.current) {
+      ref.current.position.set(r.current.sx, r.current.sy, r.current.sz);
+      ref.current.scale.set(scale, scale, scale);
+    }
+  }, [runId, index, count, scale]);
+
+  const endPos = useMemo(
+    () => new THREE.Vector3((index - (count - 1) / 2) * step, 0, 0),
+    [index, count, step],
+  );
+
+  useFrame(({ clock }) => {
+    const m = ref.current;
+    if (!m) return;
+
+    if (instant) {
+      m.position.copy(endPos);
+      m.rotation.set(0, flipped ? Math.PI : 0, 0);
+      m.scale.set(scale, scale, scale);
+      if (flipped && faceUpAtRef.current === null) {
+        faceUpAtRef.current = clock.getElapsedTime();
+      }
+      return;
+    }
+
+    if (!started) {
+      startRef.current = null;
+      m.position.set(r.current.sx, r.current.sy, r.current.sz);
+      m.rotation.set(0, 0, 0);
+      m.scale.set(scale, scale, scale);
+      return;
+    }
+
+    if (startRef.current === null) startRef.current = clock.getElapsedTime();
+    const elapsed = clock.getElapsedTime() - startRef.current - r.current.delay;
+    const t = Math.max(0, Math.min(1, elapsed / r.current.dur));
+    const e = easeOutCubic(t);
+
+    m.position.x = THREE.MathUtils.lerp(r.current.sx, endPos.x, e);
+    m.position.y = THREE.MathUtils.lerp(r.current.sy, endPos.y, e) + r.current.arc * Math.sin(Math.PI * t);
+    m.position.z = THREE.MathUtils.lerp(r.current.sz, endPos.z, e);
+
+    const wob = 1 - t;
+    m.rotation.x = r.current.spin * wob * Math.sin(t * 6.0);
+    m.rotation.z = r.current.roll * wob * Math.sin(t * 5.0 + 1.0);
+
+    if (t >= 1) {
+      const targetYaw = flipped ? Math.PI : 0;
+      m.rotation.y = THREE.MathUtils.lerp(m.rotation.y, targetYaw, 0.12);
+    } else {
+      m.rotation.y = THREE.MathUtils.lerp(r.current.yaw0, 0, e);
+    }
+
+    if (t >= 1 && flipped && !revealedRef.current) {
+      revealedRef.current = true;
+      faceUpAtRef.current = clock.getElapsedTime();
+    }
+
+    if (t >= 1 && flipped) {
+      const time = clock.getElapsedTime();
+      const faceUpTime = Math.max(0, time - (faceUpAtRef.current ?? time));
+      const decay = Math.exp(-faceUpTime / 2.6);
+      const breathAmp = 0.014 * decay + 0.0015;
+      const hoverAmpX = 0.022 * decay + 0.002;
+      const hoverAmpY = 0.045 * decay + 0.003;
+      const hoverAmpZ = 0.02 * decay + 0.002;
+      const tiltAmpX = 0.008 * decay + 0.001;
+      const tiltAmpZ = 0.006 * decay + 0.001;
+      const breath = 1 + breathAmp * Math.sin(time * r.current.breathFreq + r.current.breathPhase);
+      m.scale.set(scale * breath, scale * breath, scale * (1 + (breath - 1) * 0.25));
+      m.position.x += hoverAmpX * Math.sin(time * r.current.hoverFreq + r.current.hoverPhase);
+      m.position.y += hoverAmpY * Math.sin(time * r.current.hoverFreq * 0.72 + r.current.hoverPhase2);
+      m.position.z += hoverAmpZ * Math.sin(time * r.current.hoverFreq * 1.15 + r.current.breathPhase);
+      m.rotation.x += tiltAmpX * Math.sin(time * r.current.breathFreq * 0.42 + r.current.hoverPhase);
+      m.rotation.z += tiltAmpZ * Math.sin(time * r.current.hoverFreq * 0.58 + r.current.breathPhase);
+    } else {
+      m.scale.set(scale, scale, scale);
+    }
+  });
+
+  return (
+    <mesh ref={ref} onClick={(e) => { e.stopPropagation(); onToggle?.(); }}>
+      <boxGeometry args={BOX_ARGS} />
+      <meshPhysicalMaterial
+        attach="material-4"
+        map={backTex ?? null}
+        color="#ffffff"
+        roughness={0.24}
+        metalness={0.42}
+        clearcoat={0.6}
+        clearcoatRoughness={0.1}
+        sheen={0.65}
+        sheenColor={new THREE.Color("#ffe9a8")}
+        sheenRoughness={0.45}
+        iridescence={1.0}
+        iridescenceIOR={1.35}
+        iridescenceThicknessRange={[100, 450]}
+      />
+      <meshPhysicalMaterial
+        attach="material-5"
+        map={faceTex ?? null}
+        color="#ffffff"
+        roughness={0.46}
+        metalness={0.04}
+        clearcoat={0.22}
+        clearcoatRoughness={0.2}
+        sheen={0.2}
+        sheenColor={new THREE.Color("#fff4d6")}
+        sheenRoughness={0.6}
+        iridescence={0.15}
+        iridescenceIOR={1.2}
+        iridescenceThicknessRange={[200, 350]}
+      />
+      <meshStandardMaterial attach="material-0" color="#c9a227" roughness={0.25} metalness={0.72} />
+      <meshStandardMaterial attach="material-1" color="#c9a227" roughness={0.25} metalness={0.72} />
+      <meshStandardMaterial attach="material-2" color="#c9a227" roughness={0.25} metalness={0.72} />
+      <meshStandardMaterial attach="material-3" color="#c9a227" roughness={0.25} metalness={0.72} />
+    </mesh>
+  );
+}
+
+function MagicCircle() {
+  return (
+    <div className="card-reveal-magic-circle" aria-hidden="true">
+      <svg viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="96" stroke="currentColor" strokeWidth="0.6" opacity="0.45" />
+        <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="0.5" opacity="0.32" />
+        <circle cx="100" cy="100" r="64" stroke="currentColor" strokeWidth="0.5" opacity="0.22" strokeDasharray="3 5" />
+        <circle cx="100" cy="100" r="48" stroke="currentColor" strokeWidth="0.4" opacity="0.18" />
+        {Array.from({ length: 12 }, (_, i) => {
+          const a = (i * 30 * Math.PI) / 180;
+          const x1 = 100 + Math.cos(a) * 54;
+          const y1 = 100 + Math.sin(a) * 54;
+          const x2 = 100 + Math.cos(a) * 62;
+          const y2 = 100 + Math.sin(a) * 62;
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="0.6" opacity="0.35" />;
+        })}
+        <polygon
+          points={Array.from({ length: 6 }, (_, i) => {
+            const a = (i * 60 - 90) * Math.PI / 180;
+            return `${100 + Math.cos(a) * 38},${100 + Math.sin(a) * 38}`;
+          }).join(" ")}
+          stroke="currentColor"
+          strokeWidth="0.4"
+          opacity="0.22"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function Scene({
+  cards,
+  started,
+  flipped,
+  instant,
+  runId,
+  onToggle,
+}: {
+  cards: RevealedCard[];
+  started: boolean;
+  flipped: boolean[];
+  instant: boolean;
+  runId: number;
+  onToggle: (index: number) => void;
+}) {
+  const { scale, step } = useLayout(cards.length);
+  const backUrl = "/cards/card-back.webp";
+
+  return (
+    <Suspense fallback={null}>
+      <ambientLight intensity={0.42} />
+      <directionalLight position={[4, 6, 5]} intensity={1.6} color="#fff8e7" />
+      <pointLight position={[0, 0, 3.2]} intensity={0.7} color="#f5c842" />
+      <spotLight position={[-5, 2, 4]} angle={0.35} penumbra={0.6} intensity={1.1} color="#fff0c8" target-position={[0, 0, 0]} />
+      {cards.map((card, i) => (
+        <CardMesh
+          key={card.cardId}
+          index={i}
+          count={cards.length}
+          faceUrl={`/${card.card.image}`}
+          backUrl={backUrl}
+          started={started}
+          flipped={flipped[i] ?? false}
+          instant={instant}
+          runId={runId}
+          scale={scale}
+          step={step}
+          onToggle={() => onToggle(i)}
+        />
+      ))}
+    </Suspense>
+  );
+}
+
+function CardInfo({ card, index }: { card: RevealedCard; index: number }) {
+  return (
+    <motion.div
+      className="card-reveal-info"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 + 0.3 }}
+    >
+      <span className="card-reveal-position">{card.positionName}</span>
+      <h3>{card.card.name}</h3>
+      <small>{card.orientation === "upright" ? "正位" : "逆位"}</small>
+    </motion.div>
+  );
+}
+
+export function CardRevealStage({ cards, autoReveal = true, onComplete, className }: CardRevealStageProps) {
+  const [started, setStarted] = useState(false);
+  const [flipped, setFlipped] = useState<boolean[]>([]);
+  const [instant, setInstant] = useState(false);
+  const [runId, setRunId] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
+  const timers = useRef<number[]>([]);
+
+  const clearTimers = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+
+  const play = () => {
+    clearTimers();
+    setRunId((n) => n + 1);
+    setFlipped(new Array(cards.length).fill(false));
+    setShowInfo(false);
+    setInstant(false);
+    setStarted(false);
+
+    if (prefersReducedMotion()) {
+      setStarted(true);
+      setFlipped(new Array(cards.length).fill(true));
+      setShowInfo(true);
+      onComplete?.();
+      return;
+    }
+
+    timers.current.push(window.setTimeout(() => setStarted(true), 650));
+    cards.forEach((_, i) => {
+      timers.current.push(
+        window.setTimeout(() => {
+          setFlipped((prev) => {
+            const next = [...prev];
+            next[i] = true;
+            return next;
+          });
+          if (i === cards.length - 1) {
+            timers.current.push(window.setTimeout(() => {
+              setShowInfo(true);
+              onComplete?.();
+            }, 1200));
+          }
+        }, 1250 + i * 360),
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (autoReveal) play();
+    return clearTimers;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length, autoReveal]);
+
+  const toggle = (index: number) => {
+    setFlipped((prev) => {
+      const next = [...prev];
+      next[index] = !next[index];
+      return next;
+    });
+  };
+
+  const skip = () => {
+    clearTimers();
+    setInstant(true);
+    setStarted(true);
+    setFlipped(new Array(cards.length).fill(true));
+    setShowInfo(true);
+    onComplete?.();
+  };
+
+  return (
+    <div className={`card-reveal-stage ${className ?? ""}`}>
+      <MagicCircle />
+      <div className="card-reveal-canvas-wrap">
+        <Canvas
+          camera={{ position: [0, 0, 10], fov: 42, near: 0.1, far: 100 }}
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          dpr={Math.min(window.devicePixelRatio, 2)}
+        >
+          <Scene cards={cards} started={started} flipped={flipped} instant={instant} runId={runId} onToggle={toggle} />
+        </Canvas>
+      </div>
+      <div className="card-reveal-toolbar">
+        <button type="button" onClick={play}>重新揭牌</button>
+        <button type="button" onClick={skip}>跳过动画</button>
+      </div>
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            className="card-reveal-info-grid"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {cards.map((card, i) => (
+              <CardInfo key={card.cardId} card={card} index={i} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

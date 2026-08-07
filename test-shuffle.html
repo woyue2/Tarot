@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
+  .deck-scroller { display: flex; gap: 8px; padding: 30px 32px; overflow-x: auto; }
+  .deck-card {
+    position: relative; width: 112px; height: 190px; flex: 0 0 112px;
+    border: 1px solid #c5b8d2; border-radius: 10px; background: #2b2336;
+    transition: transform .18s ease;
+  }
+  .deck-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
+  .deck-card:hover { transform: translateY(-7px); border-color: #8b73a4; }
+
+  @keyframes shuffle-card {
+    0%   { transform: translateX(0) rotate(0deg) scale(1); }
+    40%  { transform: translateX(var(--sx, 0)) rotate(var(--sr, 0deg)) scale(0.94); }
+    60%  { transform: translateX(calc(var(--sx, 0) * 0.25)) rotate(calc(var(--sr, 0deg) * 0.15)) scale(0.97); }
+    100% { transform: translateX(0) rotate(0deg) scale(1); }
+  }
+  .deck-card.shuffling { animation: shuffle-card 0.6s ease-in-out; animation-fill-mode: forwards; z-index: 10; }
+
+  #btn { margin-top: 30px; padding: 12px 30px; font-size: 16px; cursor: pointer; }
+  #log { margin-top: 20px; font-family: monospace; font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+  <div class="deck-scroller" id="deck"></div>
+  <button id="btn" onclick="doShuffle()">重新洗牌</button>
+  <div id="log"></div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const TOTAL = 20; // only 20 cards for testing
+  const log = document.getElementById('log');
+
+  function shuffleScatter(index, total) {
+    const center = total / 2;
+    const dist = Math.abs(index - center);
+    const direction = index < center ? 1 : -1;
+    const x = direction * Math.min(dist * 2.2, 90);
+    const rotate = direction * (4 + (index % 4) * 2);
+    return { x, rotate };
+  }
+
+  // build cards
+  for (let i = 0; i < TOTAL; i++) {
+    const card = document.createElement('div');
+    card.className = 'deck-card';
+    card.innerHTML = '<img src="resources/cards/card-back.webp" alt="">';
+    deck.appendChild(card);
+  }
+
+  let shuffling = false;
+  function doShuffle() {
+    if (shuffling) return;
+    shuffling = true;
+    log.textContent = 'shuffling...';
+
+    const cards = deck.querySelectorAll('.deck-card');
+    cards.forEach((card, i) => {
+      const s = shuffleScatter(i, TOTAL);
+      card.style.setProperty('--sx', `${s.x}px`);
+      card.style.setProperty('--sr', `${s.rotate}deg`);
+      card.classList.add('shuffling');
+    });
+
+    setTimeout(() => {
+      cards.forEach(card => {
+        card.classList.remove('shuffling');
+        card.style.removeProperty('--sx');
+        card.style.removeProperty('--sr');
+      });
+      shuffling = false;
+      log.textContent = 'done';
+    }, 650);
+  }
+</script>
+</body>
+</html>

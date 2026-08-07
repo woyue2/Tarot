@@ -61,6 +61,8 @@ interface Window {
     r2Status(): Promise<{ configured: boolean; enabled: boolean }>;
     createReading(input: { question: string; mode: "manual" | "random"; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;
+    updateSelection(input: { id: string; selectedIndexes: number[] }): Promise<{ ok: boolean }>;
+    reshuffleReading(input: { id: string }): Promise<{ id: string; deckSize: number }>;
     interpret(id: string): Promise<ReadingView>;
     history(): Promise<ReadingView[]>;
     listPresetProviders(): Promise<PresetProvider[]>;

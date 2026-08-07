@@ -83,7 +83,7 @@
     </div>
     <div class="hud">
       <h1>TAROT · 五张牌阵</h1>
-      <p>金粉短暂汇聚 → 揭晓时一次短时爆发 → 背景仅余极淡魔法阵</p>
+      <p>牌组从下方错峰升起 → 依次 3D 翻开 · 翻开后呼吸由明显渐弱至几乎静止</p>
     </div>
     <div id="fallback">正在从 CDN 加载 Three.js（需要联网）…<br/>若长时间无反应，请检查网络后刷新。</div>
   </div>
@@ -128,6 +128,12 @@ function makeRand(i) {
     yaw0: (Math.random() - 0.5) * 0.7,                 // 起飞时的初始偏航，落定回正
     spin: (Math.random() - 0.5) * 0.6,                 // 俯仰摆动幅度
     roll: (Math.random() - 0.5) * 0.45,               // 翻滚摆动幅度
+    // 翻开后的独立呼吸参数
+    breathPhase: Math.random() * Math.PI * 2,
+    breathFreq: 0.7 + Math.random() * 0.6,
+    hoverPhase: Math.random() * Math.PI * 2,
+    hoverPhase2: Math.random() * Math.PI * 2,
+    hoverFreq: 0.45 + Math.random() * 0.4,
   };
 }
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
@@ -138,6 +144,7 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
   const r = useRef(null);
   const startRef = useRef(null);
   const revealedRef = useRef(false);
+  const faceUpAtRef = useRef(null);
   if (!r.current) r.current = makeRand(index);
 
   useEffect(() => {
@@ -156,6 +163,7 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
     r.current = makeRand(index);
     startRef.current = null;
     revealedRef.current = false;
+    faceUpAtRef.current = null;
     if (ref.current) ref.current.position.set(r.current.sx, r.current.sy, r.current.sz);
   }, [runId, index]);
 
@@ -166,6 +174,8 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
     if (instant) {
       m.position.copy(ep);
       m.rotation.set(0, flipped ? Math.PI : 0, 0);
+      m.scale.set(1, 1, 1);
+      if (flipped && faceUpAtRef.current === null) faceUpAtRef.current = clock.getElapsedTime();
       return;
     }
     if (!started) {
@@ -173,6 +183,7 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
       startRef.current = null;
       m.position.set(r.current.sx, r.current.sy, r.current.sz);
       m.rotation.set(0, 0, 0);
+      m.scale.set(1, 1, 1);
       return;
     }
     if (startRef.current === null) startRef.current = clock.getElapsedTime();
@@ -195,10 +206,32 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
       // 起飞偏航 → 落定回正，牌背始终大致朝向相机
       m.rotation.y = THREE.MathUtils.lerp(r.current.yaw0, 0, e);
     }
-    // 落定且翻面完成的瞬间，通知粒子在该牌位置爆发
+    // 落定且翻面完成的瞬间，通知粒子在该牌位置爆发，并记录开始呼吸的时间
     if (t >= 1 && flipped && !revealedRef.current) {
       revealedRef.current = true;
+      faceUpAtRef.current = clock.getElapsedTime();
       if (onReveal) onReveal(index, clock.getElapsedTime());
+    }
+    // 翻开后的独立呼吸：幅度从较明显缓慢衰减到几乎不可察觉，但永不归零
+    if (t >= 1 && flipped) {
+      const time = clock.getElapsedTime();
+      const faceUpTime = Math.max(0, time - (faceUpAtRef.current || time));
+      const decay = Math.exp(-faceUpTime / 2.6); // 约 2.6 秒后半衰，5 秒后只剩 15%
+      const breathAmp = 0.014 * decay + 0.0015;   // 刚翻开 1.5% 缩放，最后稳定在 0.15%
+      const hoverAmpX = 0.022 * decay + 0.002;
+      const hoverAmpY = 0.045 * decay + 0.003;
+      const hoverAmpZ = 0.020 * decay + 0.002;
+      const tiltAmpX = 0.008 * decay + 0.001;
+      const tiltAmpZ = 0.006 * decay + 0.001;
+      const breath = 1 + breathAmp * Math.sin(time * r.current.breathFreq + r.current.breathPhase);
+      m.scale.set(breath, breath, 1 + (breath - 1) * 0.25);
+      m.position.x += hoverAmpX * Math.sin(time * r.current.hoverFreq + r.current.hoverPhase);
+      m.position.y += hoverAmpY * Math.sin(time * r.current.hoverFreq * 0.72 + r.current.hoverPhase2);
+      m.position.z += hoverAmpZ * Math.sin(time * r.current.hoverFreq * 1.15 + r.current.breathPhase);
+      m.rotation.x += tiltAmpX * Math.sin(time * r.current.breathFreq * 0.42 + r.current.hoverPhase);
+      m.rotation.z += tiltAmpZ * Math.sin(time * r.current.hoverFreq * 0.58 + r.current.breathPhase);
+    } else {
+      m.scale.set(1, 1, 1);
     }
     // 把当前世界坐标共享给粒子系统，使金粉贴着这张牌走
     if (cardPosRef && cardPosRef[index]) cardPosRef[index].copy(m.position);
@@ -207,12 +240,14 @@ function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardP
   return html`
     <mesh ref=${ref} onClick=${(e) => { e.stopPropagation(); onToggle(index); }}>
       <boxGeometry args=${BOX_ARGS} />
-      <meshStandardMaterial attach="material-4" map=${backTex} roughness=${0.55} metalness=${0.12} />
-      <meshStandardMaterial attach="material-5" map=${faceTex} roughness=${0.55} metalness=${0.12} />
-      <meshStandardMaterial attach="material-0" color="#caa24a" roughness=${0.4} metalness=${0.5} />
-      <meshStandardMaterial attach="material-1" color="#caa24a" roughness=${0.4} metalness=${0.5} />
-      <meshStandardMaterial attach="material-2" color="#caa24a" roughness=${0.4} metalness=${0.5} />
-      <meshStandardMaterial attach="material-3" color="#caa24a" roughness=${0.4} metalness=${0.5} />
+      <!-- 牌背：全息箔 / 烫金质感 —— 高 metalness + 强 iridescence，逆光时出彩虹偏光 -->
+      <meshPhysicalMaterial attach="material-4" map=${backTex} color="#ffffff" roughness=${0.24} metalness=${0.42} clearcoat=${0.6} clearcoatRoughness=${0.1} sheen=${0.65} sheenColor=${new THREE.Color("#ffe9a8")} sheenRoughness=${0.45} iridescence=${1.0} iridescenceIOR=${1.35} iridescenceThicknessRange=${[100, 450]} />
+      <!-- 牌面：偏哑光的实体印刷感，只保留轻微清漆 -->
+      <meshPhysicalMaterial attach="material-5" map=${faceTex} color="#ffffff" roughness=${0.46} metalness=${0.04} clearcoat=${0.22} clearcoatRoughness=${0.2} sheen=${0.2} sheenColor=${new THREE.Color("#fff4d6")} sheenRoughness=${0.6} iridescence=${0.15} iridescenceIOR=${1.2} iridescenceThicknessRange=${[200, 350]} />
+      <meshStandardMaterial attach="material-0" color="#c9a227" roughness=${0.25} metalness=${0.72} />
+      <meshStandardMaterial attach="material-1" color="#c9a227" roughness=${0.25} metalness=${0.72} />
+      <meshStandardMaterial attach="material-2" color="#c9a227" roughness=${0.25} metalness=${0.72} />
+      <meshStandardMaterial attach="material-3" color="#c9a227" roughness=${0.25} metalness=${0.72} />
     </mesh>
   `;
 }
@@ -370,10 +405,10 @@ function Particles({ started, revealedAt, cardPosRef, runId }) {
 function Scene({ started, flipped, instant, runId, revealedAt, cardPosRef, onToggle, onReveal }) {
   return html`
     <${Suspense} fallback=${null}>
-      <ambientLight intensity=${0.65} />
-      <directionalLight position=${[3, 5, 4]} intensity=${1.25} color="#fff6e0" />
-      <pointLight position=${[0, 0, 3]} intensity=${0.9} color="#f5c842" />
-      ${!instant && html`<${Particles} started=${started} revealedAt=${revealedAt} cardPosRef=${cardPosRef} runId=${runId} />`}
+      <ambientLight intensity=${0.42} />
+      <directionalLight position=${[4, 6, 5]} intensity=${1.6} color="#fff8e7" />
+      <pointLight position=${[0, 0, 3.2]} intensity=${0.7} color="#f5c842" />
+      <spotLight position=${[-5, 2, 4]} angle=${0.35} penumbra=${0.6} intensity=${1.1} color="#fff0c8" target-position=${[0, 0, 0]} />
       ${CARDS.map((c, i) => html`
         <${Card}
           key=${c.id} index=${i}

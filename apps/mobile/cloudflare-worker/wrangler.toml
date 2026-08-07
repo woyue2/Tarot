@@ -1,0 +1,14 @@
+name = "tarot-r2-sync"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# R2 存储桶绑定：把 bucket_name 换成你自己已有的桶名
+# （与桌面端「Cloudflare R2 云同步」用的是同一个桶即可跨设备共享）
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "tarot-sync"
+
+# SYNC_TOKEN 不要写进文件，用 secret 注入：
+#   npx wrangler secret put SYNC_TOKEN
+# 部署：
+#   npx wrangler deploy

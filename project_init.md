@@ -90,6 +90,7 @@
 - [开发路线与验收标准](docs/04-implementation-roadmap.md)
 - [Astryx UI 与视觉规范](docs/05-ui-design-system.md)
 - [数据来源、版本与本地运维](docs/06-data-operations.md)
+- [手机版本后续准备计划](docs/07-mobile-version-plan.md)
 
 ## 5. 现有资料的职责
 
