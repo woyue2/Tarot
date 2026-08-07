@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+// main.tsx 已 import @capacitor/core 激活 CapacitorHttp fetch patch
 import {
   readingService,
   repository,
@@ -117,25 +118,7 @@ export function App() {
     setToast(next);
   }
 
-  // ---- R2 云同步（启用时在每个写操作后自动推送） ----
-
-  async function pushAfterWrite(opts: { readingId?: string; folderId?: string }): Promise<void> {
-    if (!loadR2Settings().enabled) return;
-    const sync = createR2Sync();
-    if (!sync) return;
-    try {
-      if (opts.readingId) {
-        const reading = repository.find(opts.readingId);
-        if (reading) await sync.pushReading(reading);
-      }
-      if (opts.folderId) {
-        const folder = repository.findFolder(opts.folderId);
-        if (folder) await sync.pushFolder(folder);
-      }
-    } catch (error) {
-      notify("R2 同步失败：" + (error instanceof Error ? error.message : "未知错误"));
-    }
-  }
+  // ---- R2 云同步（打开应用 10 秒后自动双向同步一次；删除操作仍实时同步到云端） ----
 
   async function deleteFromR2(opts: { readingId?: string; folderId?: string }): Promise<void> {
     if (!loadR2Settings().enabled) return;
@@ -148,6 +131,22 @@ export function App() {
       notify("R2 删除同步失败：" + (error instanceof Error ? error.message : "未知错误"));
     }
   }
+
+  useEffect(() => {
+    if (!loadR2Settings().enabled) return;
+    const sync = createR2Sync();
+    if (!sync) return;
+    const timer = window.setTimeout(() => {
+      void sync.sync().then((report) => {
+        refreshHistory();
+        refreshFolders();
+        if (report.errors.length > 0) {
+          notify("R2 同步失败：" + report.errors[0]);
+        }
+      });
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // ---- 解读流程 ----
 
@@ -168,7 +167,6 @@ export function App() {
         setCurrentReading(confirmed);
         refreshHistory();
         setView("result");
-        void pushAfterWrite({ readingId: confirmed.id });
       } else {
         setDraftId(created.id);
         setDraftMode("manual");
@@ -229,7 +227,6 @@ export function App() {
       setCurrentReading(confirmed);
       refreshHistory();
       setView("result");
-      void pushAfterWrite({ readingId: confirmed.id });
     } catch (error) {
       notify(error instanceof Error ? error.message : "确认牌阵失败");
     }
@@ -246,7 +243,6 @@ export function App() {
       const confirmed = readingService.confirmReading({ id: created.id });
       setCurrentReading(confirmed);
       refreshHistory();
-      void pushAfterWrite({ readingId: confirmed.id });
     } catch (error) {
       notify(error instanceof Error ? error.message : "重新抽取失败");
     }
@@ -271,7 +267,6 @@ export function App() {
       });
       setCurrentReading(result);
       refreshHistory();
-      void pushAfterWrite({ readingId: result.id });
     } catch (error) {
       notify(error instanceof Error ? error.message : "解读失败，请检查连接后重试");
       const refreshed = readingService.find(reading.id);
@@ -300,6 +295,7 @@ export function App() {
   }
 
   function deleteReading(id: string) {
+    if (!window.confirm("确定要删除这条记录吗？此操作不可恢复。")) return;
     try {
       readingService.deleteReading(id);
       refreshHistory();
@@ -421,7 +417,11 @@ export function App() {
             onDelete={deleteReading}
             onClearHistory={() => {
               if (historyList.length === 0) return;
-              historyList.forEach((item) => readingService.deleteReading(item.id));
+              if (!window.confirm(`确定要清空全部 ${historyList.length} 条记录吗？此操作不可恢复。`)) return;
+              historyList.forEach((item) => {
+                readingService.deleteReading(item.id);
+                void deleteFromR2({ readingId: item.id });
+              });
               refreshHistory();
               notify("已清空记录");
             }}
@@ -475,7 +475,6 @@ export function App() {
               const folder = readingService.createFolder(name);
               setActiveFolderId(folder.id);
               refreshFolders();
-              void pushAfterWrite({ folderId: folder.id });
             } catch (error) {
               notify(error instanceof Error ? error.message : "创建分组失败");
             }
@@ -484,12 +483,13 @@ export function App() {
             try {
               readingService.renameFolder(id, name);
               refreshFolders();
-              void pushAfterWrite({ folderId: id });
             } catch (error) {
               notify(error instanceof Error ? error.message : "重命名失败");
             }
           }}
           onDelete={(id) => {
+            const folder = folders.find((f) => f.id === id);
+            if (!window.confirm(`确定要删除分组「${folder?.name ?? ""}」吗？分组内的记录不会丢失，仅取消分组标记。`)) return;
             try {
               if (activeFolderId === id) setActiveFolderId(null);
               readingService.deleteFolder(id);
@@ -1257,7 +1257,7 @@ function SettingsView(props: {
           />
           <span>
             启用 R2 自动同步
-            <small>开启后，每次新建/解读/删除都会自动推送到 R2</small>
+            <small>开启后，每次打开应用 10 秒后自动做一次双向同步</small>
           </span>
         </label>
 
