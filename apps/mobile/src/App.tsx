@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   readingService,
   repository,
@@ -628,6 +628,21 @@ function ResultView(props: {
     return map;
   }, [revealed]);
 
+  // 揭牌横条：进入结果页 / 换牌时，把中间那张（时间流第 3 张「此刻」）滚到视口正中
+  const revealedRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = revealedRowRef.current;
+    if (!row) return;
+    const kids = row.children;
+    if (kids.length === 0) return;
+    const mid = kids[Math.floor(kids.length / 2)];
+    if (!(mid instanceof HTMLElement)) return;
+    const id = requestAnimationFrame(() => {
+      mid.scrollIntoView({ inline: "center", block: "nearest" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [reading.id, revealed]);
+
   const needsInterpret = !interpretation || reading.status === "failed";
 
   return (
@@ -636,7 +651,7 @@ function ResultView(props: {
       <h1 className="view-title">你的牌阵</h1>
 
       {revealed && (
-        <div className="revealed-row">
+        <div className="revealed-row" ref={revealedRowRef}>
           {revealed.map((card) => (
             <div className="revealed-card" key={card.position}>
               <div className="card-image">

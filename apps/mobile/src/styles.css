@@ -456,6 +456,7 @@ h1.view-title {
   grid-auto-columns: clamp(116px, 40vw, 168px); /* 响应式揭牌牌宽，窄屏不溢出、宽屏不过大 */
   gap: 12px;
   min-width: 0; /* 允许收缩，自身 overflow-x:auto 内部滚动 */
+  justify-content: center; /* 牌数较少/宽屏时整组居中；溢出时无副作用 */
   overflow-x: auto;
   padding-bottom: 12px;
   touch-action: pan-x;
