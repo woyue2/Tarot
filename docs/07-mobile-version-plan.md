@@ -29,10 +29,16 @@
 
 ### 0.3 仍待办（衔接原 Gap / Phase）
 
-- 选牌交互目前是「点击 + 原生滚动 + Pointer Events 点按」，`apps/mobile` 尚未实现桌面 roadmap 要求的「拖动选牌」`onPointerMove` 连续选择（见 §5，Phase M1）。
-- 安全区 / 44px / 软键盘 / 真机手感为 CSS 预留，待 Phase M0 真机点检。
-- 凭据与数据的 Capacitor 适配器（Keychain / SQLite）仍是 Gap，未实现。
-- 桌面端 `apps/desktop` 尚未切换到消费新的 `ReadingService`（可后续重构，解耦 IPC 与业务）。
+> 2026-08-07 本轮已补齐（详见 git log：aa95919 拖动选牌 / 4681f53 离线+导出 / 0926545 懒加载 / 54d5f25 桌面重构）：
+> - 选牌已升级为 Pointer Events 拖动连续选牌（触摸不捕获指针保留横滑、鼠标捕获指针，复用 `selectedIndexes` 状态机）。
+> - PWA 离线：手写 `public/sw.js`（导航 network-first、静态资源 stale-while-revalidate），生产构建注册；历史导出 JSON（不含密钥）。
+> - 牌面懒加载：选牌屏只渲染同款牌背（1 次请求）、结果屏只解码 5 张正面，`decoding="async"` 防主线程阻塞。
+> - 桌面端主进程已切到消费共享 `ReadingService`，桌面与手机共用同一份状态流转。
+>
+> 仍未做（环境/原生边界，非 PWA 代码缺口）：
+- **Capacitor 原生容器 + 移动 SQLite + Keychain/Keystore（方向 B / Phase M2）**：当前为纯 PWA，无原生壳；API Token 与 R2 Sync Token 仍为 localStorage 明文，待 Capacitor 后换系统钥匙串。属单独构建目标，不在当前 PWA 工程范围内。
+- **真机验收（Phase M0 / §10）**：需真实手机/模拟器逐条核对（360/600/1024 不破版、安全区避让、≥44px、触摸全流程、断网保留、reduced-motion、离线历史、低端机帧率）。沙箱无硬件，结构与 CSS 已就位，最终以真机为准。
+- 摄像头魔法手势（Phase M3 可选）未实现。
 
 ### 0.4 本次新增：Cloudflare R2 云同步（手机端）
 
@@ -77,7 +83,7 @@
 
 | 缺口 | 现状 | 影响 |
 |---|---|---|
-| 选牌交互实际实现 | 当前是「点击 + 原生滚动」，`src` 中无 `onPointerDown/onPointerMove/onPointerUp` 等指针处理器 | 原则 11 的 Pointer Events 仍是意图，触摸「拖动选牌」未真正落地 |
+| 选牌交互实际实现 | **已落地**：Pointer Events 拖动连续选牌（`onPointerDown/Move/Up` + `pointercancel`，鼠标捕获指针、触摸保留横滑），复用 `selectedIndexes` 状态机；键盘/单击仍走 `onClick` | 原则 11 的 Pointer Events 意图已真正落地 |
 | 移动打包 | **已落地 PWA 外壳**（`apps/mobile` Vite + React + manifest，已通过构建与预览验证）；Capacitor 容器（Direction B）未做 | PWA 可直接在手机浏览器内测；上架 / TestFlight 仍走 Capacitor（§7 方向 B） |
 | 移动数据与安全适配器 | 无移动 SQLite 封装、无 iOS Keychain / Android EncryptedSharedPreferences 等价物 | `safeStorage` 仅桌面可用 |
 | 跨设备云同步 | **已落地**：手机端经 Cloudflare Worker 代理读写 R2（`apps/mobile/cloudflare-worker/`），密钥不暴露前端；与桌面端共用同一桶双向同步 | 同步令牌仍明文存 localStorage，待 Capacitor 安全存储替换 |
