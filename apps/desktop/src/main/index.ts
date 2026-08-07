@@ -1,8 +1,8 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
-import { createSeededRandom, randomSelection, shuffleDeck, type DeckEntry, type TarotCard } from "@tarot/core";
-import { buildInterpretationInput, type StoredReading } from "@tarot/runtime";
+import { type TarotCard } from "@tarot/core";
+import { ReadingService, type ContentBundle, type RuntimeEnv } from "@tarot/runtime";
 import cardsData from "../../../../resources/cards.json";
 import manifest from "../../../../resources/content-manifest.json";
 import methodology from "../../../../resources/methodology.json";
@@ -24,6 +24,22 @@ let r2Sync: R2SyncService | null = null;
 let appPrefs = { enableStreaming: false, hideModelUi: true };
 let appPreferences: AppPreferencesStore;
 let mainWindow: BrowserWindow | null = null;
+let readingService: ReadingService;
+
+// 内容资源包与运行时环境：复用 resources/*.json，隔离 node:crypto，注入共享 ReadingService
+const content: ContentBundle = {
+  cards,
+  contentVersion: cardsData.contentVersion,
+  scoreTableVersion: cardsData.scoreTableVersion,
+  methodologyVersion: manifest.methodologyVersion,
+  methodologyStyle: methodology.principles.join("；"),
+};
+
+const nodeEnv: RuntimeEnv = {
+  uuid: () => randomUUID(),
+  seed: () => randomBytes(24).toString("hex"),
+  now: () => new Date().toISOString(),
+};
 
 function createWindow(): void {
   const isMac = process.platform === "darwin";
@@ -86,14 +102,10 @@ function buildAppMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-function publicReading(reading: StoredReading) {
-  return { id: reading.id, folderId: reading.folderId, question: reading.question, mode: reading.mode, status: reading.status, selectedIndexes: reading.selectedIndexes, revealed: reading.revealed, calculation: reading.calculation, interpretation: reading.interpretation, createdAt: reading.createdAt, updatedAt: reading.updatedAt };
-}
-
 function registerIpc(): void {
   ipcMain.handle("tarot:bootstrap", () => ({
     folders: repository.listFolders(),
-    history: repository.list().map(publicReading),
+    history: readingService.history(),
     settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) },
     appPreferences: appPrefs,
     r2Configured: isR2Configured(),
@@ -138,19 +150,14 @@ function registerIpc(): void {
     return folder;
   });
   ipcMain.handle("tarot:move-reading", (_event, input: { id: string; folderId: string | null }) => {
-    const reading = repository.find(input.id);
-    if (!reading) throw new Error("没有找到这次解读");
-    if (input.folderId && !repository.findFolder(input.folderId)) throw new Error("没有找到目标分组");
-    const updated: StoredReading = { ...reading, folderId: input.folderId ?? undefined };
-    repository.save(updated);
-    return publicReading(updated);
+    return readingService.moveReading(input.id, input.folderId);
   });
   ipcMain.handle("tarot:delete-folder", (_event, id: string) => {
     if (!repository.deleteFolder(id)) throw new Error("删除分组失败");
     return { ok: true };
   });
   ipcMain.handle("tarot:delete-reading", (_event, id: string) => {
-    if (!repository.deleteReading(id)) throw new Error("删除解读记录失败");
+    readingService.deleteReading(id);
     return { ok: true };
   });
   ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } }) => {
@@ -192,94 +199,32 @@ function registerIpc(): void {
     return appPrefs;
   });
   ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; folderId?: string }) => {
-    const question = input.question?.trim();
-    if (!question) throw new Error("请先写下想探索的问题");
-    if (input.folderId && !repository.findFolder(input.folderId)) throw new Error("没有找到所选 Folder");
-    const seed = randomBytes(24).toString("hex");
-    const now = new Date().toISOString();
-    const reading: StoredReading = { id: randomUUID(), ...(input.folderId ? { folderId: input.folderId } : {}), question, mode: input.mode === "random" ? "random" : "manual", status: "selecting", shuffleSeed: seed, deck: shuffleDeck(cards, createSeededRandom(seed)), selectedIndexes: [], createdAt: now, updatedAt: now };
-    repository.save(reading);
-    return { id: reading.id, folderId: reading.folderId, question, mode: reading.mode, deckSize: reading.deck.length };
+    return readingService.createReading({ question: input.question, mode: input.mode, ...(input.folderId ? { folderId: input.folderId } : {}) });
   });
   ipcMain.handle("tarot:confirm-reading", (_event, input: { id: string; selectedIndexes?: number[] }) => {
-    const reading = repository.find(input.id);
-    if (!reading) throw new Error("没有找到这次解读");
-    const indexes = reading.mode === "random" ? randomSelection() : (input.selectedIndexes ?? []);
-    if (indexes.length !== 5 || new Set(indexes).size !== 5 || indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= 78)) throw new Error("请选择恰好五张不同的牌");
-    const selected = indexes.map((index) => reading.deck[index]) as DeckEntry[];
-    const interpretationInput = buildInterpretationInput({ readingId: reading.id, question: reading.question, mode: reading.mode, selected, cards, metadata: { contentVersion: cardsData.contentVersion, scoreTableVersion: cardsData.scoreTableVersion, methodologyVersion: manifest.methodologyVersion, methodologyStyle: methodology.principles.join("；") } });
-    const catalog = new Map(cards.map((card) => [card.id, card]));
-    const revealed = selected.map((entry, index) => ({ ...entry, position: index + 1, positionName: interpretationInput.cards[index]!.positionName, card: catalog.get(entry.cardId) }));
-    const updated: StoredReading = { ...reading, selectedIndexes: indexes, status: "pending_interpretation", revealed, calculation: interpretationInput.calculation, interpretationInput, updatedAt: new Date().toISOString() };
-    repository.save(updated);
-    return publicReading(updated);
+    return readingService.confirmReading({ id: input.id, selectedIndexes: input.selectedIndexes });
   });
   ipcMain.handle("tarot:update-selection", (_event, input: { id: string; selectedIndexes: number[] }) => {
-    const reading = repository.find(input.id);
-    if (!reading) throw new Error("没有找到这次解读");
-    if (reading.status !== "selecting") throw new Error("确认后的牌阵不能修改选择");
-    const indexes = Array.isArray(input.selectedIndexes) ? input.selectedIndexes : [];
-    if (indexes.length > 5) throw new Error("最多选择五张牌");
-    if (indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= 78)) throw new Error("无效的牌索引");
-    const updated: StoredReading = { ...reading, selectedIndexes: indexes, updatedAt: new Date().toISOString() };
-    repository.save(updated);
-    return { ok: true as const };
+    return readingService.updateSelection({ id: input.id, selectedIndexes: input.selectedIndexes });
   });
   ipcMain.handle("tarot:reshuffle-reading", (_event, input: { id: string }) => {
-    const reading = repository.find(input.id);
-    if (!reading) throw new Error("没有找到这次解读");
-    if (reading.status !== "selecting") throw new Error("确认后的牌阵不能重新洗牌");
-    // 重新洗牌必须是明确的用户动作：换新种子与牌堆，清空已选，牌序固定身份随之改变
-    const seed = randomBytes(24).toString("hex");
-    const now = new Date().toISOString();
-    const updated: StoredReading = {
-      ...reading,
-      shuffleSeed: seed,
-      deck: shuffleDeck(cards, createSeededRandom(seed)),
-      selectedIndexes: [],
-      status: "selecting",
-      updatedAt: now,
-    };
-    repository.save(updated);
-    return { id: reading.id, deckSize: updated.deck.length };
+    return readingService.reshuffle({ id: input.id });
   });
   ipcMain.handle("tarot:interpret", async (event, id: string) => {
-    const reading = repository.find(id);
-    if (!reading?.interpretationInput) throw new Error("请先确认牌阵");
     const apiKey = credentials.get("apiKey");
     if (!apiKey) throw new Error("尚未配置模型 API Key；牌阵已保存在本地，可稍后解读");
-    repository.save({ ...reading, status: "interpreting", updatedAt: new Date().toISOString() });
+    const provider = createModelProvider({ apiKey, ...settings });
     try {
-      const provider = createModelProvider({ apiKey, ...settings });
-      if (appPrefs.enableStreaming) {
-        // 流式输出：通过 IPC 事件实时推送进度到渲染进程
-        const interpretation = await provider.interpretStream(
-          reading.interpretationInput,
-          (delta, reasoning) => {
-            event.sender.send("tarot:interpret-progress", { id, delta, reasoning });
-          },
-        );
-        const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
-        repository.save(completed);
-        return publicReading(completed);
-      }
-      const interpretation = await provider.interpret(reading.interpretationInput);
-      const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
-      repository.save(completed);
-      return publicReading(completed);
+      // 复用共享 ReadingService：流式优先（经 onProgress 推 IPC），失败回退非流式，异常标记 failed
+      return await readingService.interpret(id, provider, {
+        stream: appPrefs.enableStreaming,
+        onProgress: (delta, reasoning) => {
+          event.sender.send("tarot:interpret-progress", { id, delta, reasoning });
+        },
+      });
     } catch (error) {
-      // 流式失败时回退到非流式
-      try {
-        const provider = createModelProvider({ apiKey, ...settings });
-        const interpretation = await provider.interpret(reading.interpretationInput);
-        const completed = { ...reading, status: "completed", interpretation, updatedAt: new Date().toISOString() };
-        repository.save(completed);
-        return publicReading(completed);
-      } catch (fallbackError) {
-        repository.save({ ...reading, status: "failed", updatedAt: new Date().toISOString() });
-        const classified = classifyModelError(fallbackError);
-        throw new Error(classified.userMessage);
-      }
+      const classified = classifyModelError(error);
+      throw new Error(classified.userMessage);
     }
   });
   // 从 maka-agent 的 connection-model-discovery.ts 抄的：拉取可用模型列表
@@ -322,7 +267,7 @@ function registerIpc(): void {
       return { ok: false, userMessage: classified.userMessage };
     }
   });
-  ipcMain.handle("tarot:history", () => repository.list().map(publicReading));
+  ipcMain.handle("tarot:history", () => readingService.history());
 
   ipcMain.handle("tarot:test-r2-connection", async (_event, input: { accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string }) => {
     const endpoint = resolveR2Endpoint({ accountId: input.accountId ?? "", endpoint: input.endpoint });
@@ -389,6 +334,7 @@ function attachRepositorySyncHooks(): void {
 
 app.whenReady().then(() => {
   repository = new SqliteReadingRepository(join(app.getPath("userData"), "tarot.sqlite"));
+  readingService = new ReadingService(repository, content, nodeEnv);
   credentials = new ElectronCredentialStore(join(app.getPath("userData"), "credentials.json"));
   preferences = new ModelPreferencesStore(join(app.getPath("userData"), "settings.json"));
   appPreferences = new AppPreferencesStore(join(app.getPath("userData"), "app-preferences.json"));
