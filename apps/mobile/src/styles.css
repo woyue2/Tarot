@@ -657,6 +657,18 @@ h1.view-title {
 }
 
 /* ===== 记录列表 ===== */
+.history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.history-head .view-title {
+  margin: 0;
+}
+
 .history-list {
   display: grid;
   gap: 10px;

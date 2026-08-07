@@ -310,6 +310,35 @@ export function App() {
     }
   }
 
+  function exportData() {
+    try {
+      const readings = readingService.history(1000);
+      const folders = readingService.listFolders();
+      const payload = {
+        app: "@tarot/mobile",
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        note: "导出不含任何 API Key 或同步令牌",
+        folders,
+        readings,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tarot-mobile-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      notify("已导出记录（不含任何密钥）");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "导出失败");
+    }
+  }
+
   const activeFolder = folders.find((f) => f.id === activeFolderId) ?? null;
 
   // ---- 渲染 ----
@@ -392,6 +421,7 @@ export function App() {
               refreshHistory();
               notify("已清空记录");
             }}
+            onExport={exportData}
           />
         )}
 
@@ -911,6 +941,7 @@ function HistoryView(props: {
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onClearHistory: () => void;
+  onExport: () => void;
 }) {
   if (props.items.length === 0) {
     return (
@@ -927,7 +958,12 @@ function HistoryView(props: {
   return (
     <section>
       <p className="eyebrow">记录</p>
-      <h1 className="view-title">过往的解读</h1>
+      <div className="history-head">
+        <h1 className="view-title">过往的解读</h1>
+        <button className="btn ghost" onClick={props.onExport}>
+          导出
+        </button>
+      </div>
       <div className="history-list">
         {props.items.map((item) => (
           <div className="history-item" key={item.id}>

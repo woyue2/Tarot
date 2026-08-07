@@ -19,3 +19,12 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// PWA 离线：仅在构建产物（preview/build）注册，避免污染 vite dev
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* 注册失败不影响主流程 */
+    });
+  });
+}
