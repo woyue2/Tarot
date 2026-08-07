@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 const api = {
+  platform: process.platform,
   bootstrap: () => ipcRenderer.invoke("tarot:bootstrap"),
   createFolder: (name: string) => ipcRenderer.invoke("tarot:create-folder", name),
   renameFolder: (input: { id: string; name: string }) => ipcRenderer.invoke("tarot:rename-folder", input),

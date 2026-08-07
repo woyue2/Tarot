@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>星径 · 侧栏 Folder 图标改版预览</title>
+    <style>
+      :root {
+        --background: #ffffff;
+        --surface-canvas: #f3f4f6;
+        --surface-subtle: #f8f9fa;
+        --surface-hover: #eceff3;
+        --surface-selected: #e6eaf0;
+        --foreground: #27282b;
+        --foreground-secondary: #62666d;
+        --muted-foreground: #92969d;
+        --border: rgba(39, 40, 43, .10);
+        --border-strong: rgba(39, 40, 43, .16);
+        --accent: #4f8fdc;
+        --accent-wash: #eaf3ff;
+        --accent-deep: #2f70bd;
+        --success: #3b9a68;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--surface-canvas); color: var(--foreground); font-family: "Segoe UI Variable", "Microsoft YaHei UI", sans-serif; }
+      main { width: min(1080px, calc(100% - 48px)); margin: 0 auto; padding: 56px 0 80px; }
+      .eyebrow { margin: 0 0 12px; color: var(--accent-deep); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+      h1 { margin: 0 0 8px; font: 400 clamp(28px, 4vw, 40px)/1.2 "STSong", "SimSun", serif; letter-spacing: .02em; }
+      .intro { max-width: 640px; margin: 0 0 40px; color: var(--foreground-secondary); font-size: 14px; line-height: 1.8; }
+
+      .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 48px; }
+      .panel { padding: 26px; border: 1px solid var(--border); border-radius: 16px; background: var(--background); box-shadow: 0 12px 36px rgba(20, 24, 30, .045); }
+      .panel h2 { margin: 0 0 4px; font-size: 16px; }
+      .panel p { margin: 0 0 20px; color: var(--muted-foreground); font-size: 12px; }
+      .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--surface-subtle); margin-bottom: 8px; color: var(--foreground-secondary); font-size: 13px; }
+      .row:last-child { margin-bottom: 0; }
+      .glyph-box { width: 22px; height: 22px; flex: 0 0 22px; display: grid; place-items: center; color: var(--foreground-secondary); }
+      .glyph-box svg { width: 20px; height: 20px; }
+      .glyph-box.before { color: var(--foreground-secondary); }
+      .glyph-box.after { color: var(--accent-deep); }
+      .tag { margin-left: auto; font-size: 10px; letter-spacing: .12em; color: var(--muted-foreground); }
+
+      .demo-title { margin: 0 0 14px; font-size: 13px; color: var(--foreground-secondary); font-weight: 600; letter-spacing: .04em; }
+      .sidebar-mock { width: 264px; margin: 0 auto; padding: 14px 8px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-canvas); box-shadow: 0 16px 44px rgba(20, 24, 30, .06); }
+      .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 8px 10px 14px; }
+      .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: linear-gradient(145deg, #6aa5e8, #3d7fc9); box-shadow: 0 5px 15px rgba(62, 127, 201, .22); }
+      .brand-mark svg { width: 22px; height: 22px; }
+      .sidebar-brand b { font-size: 15px; letter-spacing: .08em; }
+      .sidebar-brand small { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 8px; letter-spacing: .16em; }
+      .section-title { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; color: var(--muted-foreground); font-size: 11px; font-weight: 600; }
+      .add-btn { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--foreground-secondary); cursor: pointer; font-size: 16px; }
+      .folder-group { margin-bottom: 3px; }
+      .folder-group.active > .folder-row { background: var(--surface-selected); }
+      .folder-row { display: flex; align-items: center; gap: 3px; min-height: 36px; padding: 0 5px; border-radius: 8px; color: var(--foreground-secondary); }
+      .folder-row:hover { color: var(--foreground); background: var(--surface-hover); }
+      .folder-toggle { width: 18px; height: 26px; border: 0; background: transparent; color: var(--muted-foreground); font-size: 17px; transform: rotate(90deg); cursor: pointer; }
+      .folder-icon { width: 18px; height: 18px; flex: 0 0 18px; display: grid; place-items: center; color: var(--foreground-secondary); }
+      .folder-icon svg { width: 17px; height: 17px; }
+      .folder-group.active .folder-icon { color: var(--accent-deep); }
+      .folder-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; text-align: left; color: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+      .folder-name small { margin-left: auto; color: var(--muted-foreground); font-size: 9px; font-weight: 500; }
+      .folder-children { margin: 1px 0 5px 26px; padding-left: 8px; border-left: 1px solid var(--border); }
+      .conv { width: 100%; min-height: 42px; padding: 6px 8px; display: flex; gap: 7px; border: 0; border-radius: 7px; background: transparent; text-align: left; color: var(--foreground-secondary); cursor: pointer; }
+      .conv:hover { color: var(--foreground); background: var(--surface-hover); }
+      .conv > span { color: var(--accent); font-size: 9px; padding-top: 2px; }
+      .conv b { display: block; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .conv small { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 8px; }
+      .ungrouped { opacity: .86; }
+      .home-chip { width: max-content; max-width: 100%; margin: 18px auto 0; padding: 5px 9px; display: flex; align-items: center; gap: 6px; border: 1px solid #cfe0f4; border-radius: 999px; color: var(--accent-deep); background: var(--accent-wash); font-size: 10px; }
+      .home-chip svg { width: 12px; height: 12px; flex: 0 0 12px; }
+      .home-chip small { padding-left: 6px; border-left: 1px solid #cfe0f4; color: var(--muted-foreground); font-size: 9px; }
+      .create-row { margin: 14px 6px 0; padding: 5px 6px; display: flex; align-items: center; gap: 5px; border: 1px solid var(--accent); border-radius: 8px; background: var(--background); box-shadow: 0 0 0 3px rgba(79, 143, 220, .1); }
+      .create-row svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--accent); }
+      .create-row input { flex: 1; min-width: 0; height: 25px; padding: 0 5px; border: 0; outline: 0; background: transparent; font-size: 12px; }
+      .create-row button { border: 0; background: transparent; color: var(--accent-deep); cursor: pointer; font-size: 10px; }
+      .note { margin-top: 36px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); color: var(--foreground-secondary); font-size: 12px; line-height: 1.7; }
+      .note b { color: var(--foreground); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">XINGJING · SIDEBAR ICONS</p>
+      <h1>侧栏 Folder 图标改版预览</h1>
+      <p class="intro">原来侧栏分组用 <code>▱</code> 占位方块当文件夹图标，还需靠 <code>rotate(180deg)</code> 把它"伪装"成文件夹。现统一换成与「星径」品牌一致的线性 Folder SVG：默认描边、当前所在分组用实心高亮。改前 / 改后对比见下。</p>
+
+      <section class="compare">
+        <article class="panel">
+          <h2>改前 · ▱ 占位</h2>
+          <p>方块字符 + 180° 翻转，字形依赖字体，缩放发虚</p>
+          <div class="row"><span class="glyph-box before">▱</span>工作方向 <span class="tag">FOLDER</span></div>
+          <div class="row"><span class="glyph-box before">▱</span>感情议题 <span class="tag">FOLDER</span></div>
+          <div class="row"><span class="glyph-box before">▱</span>未分组 <span class="tag">UNGROUPED</span></div>
+        </article>
+        <article class="panel">
+          <h2>改后 · Folder SVG</h2>
+          <p>矢量线性图标，1.7px 描边，与星门标识同源</p>
+          <div class="row"><span class="glyph-box after"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="currentColor"/></svg></span>工作方向（当前分组 · 实心高亮）<span class="tag">ACTIVE</span></div>
+          <div class="row"><span class="glyph-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg></span>感情议题 <span class="tag">FOLDER</span></div>
+          <div class="row"><span class="glyph-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg></span>未分组 <span class="tag">UNGROUPED</span></div>
+        </article>
+      </section>
+
+      <p class="demo-title">侧栏实际效果（含当前分组高亮、新建行、主页分组标签）</p>
+      <div class="sidebar-mock">
+        <div class="sidebar-brand"><span class="brand-mark"><svg viewBox="0 0 160 160" fill="none"><path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" stroke="currentColor" stroke-opacity=".52" stroke-width="3" stroke-linecap="round"/><path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor"/><path d="M42 113h76" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></span><div><b>星径</b><small>LOCAL TAROT</small></div></div>
+        <div class="section-title"><span>最近记录</span><button class="add-btn" title="新建 Folder">＋</button></div>
+
+        <div class="folder-group active">
+          <div class="folder-row">
+            <button class="folder-toggle">›</button>
+            <span class="folder-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="currentColor"/></svg></span>
+            <button class="folder-name">工作方向 <small>3</small></button>
+          </div>
+          <div class="folder-children">
+            <button class="conv"><span>✦</span><div><b>未来三个月如何调整工作方向？</b><small>8月3日</small></div></button>
+            <button class="conv"><span>○</span><div><b>是否该接受那个跨岗机会</b><small>7月28日</small></div></button>
+          </div>
+        </div>
+
+        <div class="folder-group">
+          <div class="folder-row">
+            <button class="folder-toggle">›</button>
+            <span class="folder-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg></span>
+            <button class="folder-name">感情议题 <small>1</small></button>
+          </div>
+        </div>
+
+        <div class="folder-group ungrouped">
+          <div class="folder-row">
+            <button class="folder-toggle">›</button>
+            <span class="folder-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg></span>
+            <button class="folder-name">未分组 <small>2</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-chip"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg><b>工作方向</b><small>新问题</small></div>
+
+      <div class="create-row"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg><input placeholder="Folder 名称" /><button>确认</button></div>
+
+      <div class="note"><b>改动说明：</b>新增 <code>FolderGlyph</code> 组件（描边/实心两态），替换 <code>App.tsx</code> 中全部 4 处 <code>▱</code>（主页分组标签、新建行、普通分组、未分组）。<code>styles.css</code> 中移除 <code>.folder-icon</code> 的 <code>rotate(180deg)</code> 歪招，改为正确的 18px 图标尺寸，并新增当前分组高亮态（实心 + 雾蓝主色）。TypeScript 类型检查已通过。</div>
+    </main>
+  </body>
+</html>

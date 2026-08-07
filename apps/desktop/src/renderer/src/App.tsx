@@ -33,6 +33,45 @@ function NewConversationIcon() {
   </svg>;
 }
 
+function ThemeSwitch() {
+  const [theme, setTheme] = useState<"light" | "dark">(
+    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+  );
+  function toggle() {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("xj-theme", next); } catch { /* storage may be unavailable */ }
+    setTheme(next);
+  }
+  return (
+    <button type="button" className="theme-switch" data-theme={theme} onClick={toggle} aria-label="切换浅色或星夜主题">
+      <span className="theme-switch-track"><i /></span>
+      <b>{theme === "dark" ? "星夜" : "浅色"}</b>
+    </button>
+  );
+}
+
+function GearIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>;
+}
+
+function HandPickIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M16 14.5a2.5 2.5 0 0 0-2.5-2.5H11V5.5a2.5 2.5 0 0 0-5 0v9.25l-1.6-1.45a1.5 1.5 0 1 0-2 2.1l4.1 4.6A2 2 0 0 0 8.5 21h6.25a2.5 2.5 0 0 0 2.5-2.5V14.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>;
+}
+
+function DiceIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="9" cy="9" r="1.4" fill="currentColor" />
+    <circle cx="15" cy="15" r="1.4" fill="currentColor" />
+  </svg>;
+}
+
 const stageTitles: Record<Stage, string> = {
   home: "新解读",
   select: "选择牌面",
@@ -54,6 +93,7 @@ export function App() {
   const [presetProviders, setPresetProviders] = useState<PresetProvider[]>([]);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingMode, setPendingMode] = useState<"manual" | "random" | null>(null);
   const [error, setError] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
   const [interpretProgress, setInterpretProgress] = useState(""); // 流式解读进度文本
@@ -101,6 +141,7 @@ export function App() {
   }
 
   async function begin(mode: "manual" | "random") {
+    setPendingMode(mode);
     setError("");
     setBusy(true);
     try {
@@ -119,6 +160,7 @@ export function App() {
       showError(reason);
     } finally {
       setBusy(false);
+      setPendingMode(null);
     }
   }
 
@@ -392,14 +434,24 @@ export function App() {
             <p className="eyebrow">A QUIET SPACE FOR REFLECTION</p>
             {activeFolder && <div className="active-folder-chip"><FolderGlyph className="chip-folder" /><b>{activeFolder.name}</b><small>新问题</small></div>}
             <h1>让五张牌，照见此刻的路径</h1>
-            <p className="lead"></p>
+            <p className="lead">在安静的空间里，和你的直觉对话。想清楚一个问题，剩下的交给牌。</p>
             <div className="question-panel astryx-surface">
               <TextArea label="你想探索什么？" value={question} onChange={setQuestion} placeholder="例如：未来三个月，我该如何调整工作方向？" rows={4} isRequired />
               <div className="question-footer"><span>{question.length} / 300</span><span>三个月内的问题</span></div>
             </div>
             <div className="mode-actions">
-              <Button label="自己选五张" variant="primary" size="lg" width="100%" isDisabled={!question.trim() || busy} isLoading={busy} onClick={() => void begin("manual")} />
-              <Button label="随机抽五张" variant="secondary" size="lg" width="100%" isDisabled={!question.trim() || busy} onClick={() => void begin("random")} />
+              <button type="button" className="mode-card mode-card-primary" disabled={!question.trim() || busy} onClick={() => void begin("manual")}>
+                <span className="mode-icon"><HandPickIcon /></span>
+                <b>自己选五张</b>
+                <span>凭直觉从牌列中逐一点选</span>
+                {pendingMode === "manual" && <span className="mode-loading">准备中…</span>}
+              </button>
+              <button type="button" className="mode-card" disabled={!question.trim() || busy} onClick={() => void begin("random")}>
+                <span className="mode-icon"><DiceIcon /></span>
+                <b>随机抽五张</b>
+                <span>系统随机翻开五张牌</span>
+                {pendingMode === "random" && <span className="mode-loading">准备中…</span>}
+              </button>
             </div>
           </motion.section>}
 
@@ -424,7 +476,7 @@ export function App() {
             <h1>{reading.interpretation?.headline ?? "牌阵已保存，等待解读"}</h1>
             <p className="lead compact">{reading.question}</p>
             <div className="revealed-grid">{reading.revealed?.map((item) => <article className="revealed-card" key={item.cardId}><div className="card-image"><img src={`/${item.card.image}`} alt={item.card.name} className={item.orientation === "reversed" ? "reversed" : ""} /></div><span>{item.positionName}</span><h3>{item.card.name}</h3><small>{item.orientation === "upright" ? "正位" : "逆位"}</small></article>)}</div>
-            {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div><p></p></div>}
+            {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div></div>}
             {!reading.interpretation ? <>
               <div className="interpret-cta"><p>可以现在调用模型，也可以关闭应用后稍后继续。牌、顺序和正逆位不会改变。</p><Button label="开始 AI 解读" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => void interpret()} /></div>
               {reading.status === "interpreting" && interpretProgress && <div className="interpret-progress">{interpretProgress}</div>}
@@ -452,6 +504,15 @@ export function App() {
         </AnimatePresence>
       </main>
       {error && <div className="error-toast" role="alert"><span>{error}</span><button onClick={() => setError("")} aria-label="关闭">×</button></div>}
+      <button
+        type="button"
+        className="fab-settings"
+        onClick={() => { setStage("settings"); setSavedNotice(""); setError(""); }}
+        aria-label="打开设置"
+        title="设置"
+      >
+        <GearIcon />
+      </button>
     </section>
   </div>;
 }
@@ -542,6 +603,12 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
     </nav>
     <section className="sidebar-history folder-tree">
       <div className="sidebar-section-title"><span>最近记录</span><button className="add-folder-button" onClick={() => setCreatingFolder(true)} title="新建 Folder" aria-label="新建 Folder">＋</button></div>
+      {!creatingFolder && folders.length === 0 && visibleHistory.length === 0 && (
+        <div className="sidebar-empty">
+          <p>还没有解读记录</p>
+          <span>从「探索」开始第一次提问，或点 ＋ 建立分组。</span>
+        </div>
+      )}
       {creatingFolder && <div className="folder-create-row"><FolderGlyph className="create-folder-icon" /><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitFolder(); if (event.key === "Escape") setCreatingFolder(false); }} onBlur={() => { if (!folderName.trim()) setCreatingFolder(false); }} placeholder="Folder 名称" /><button onMouseDown={(event) => event.preventDefault()} onClick={() => void submitFolder()}>确认</button></div>}
       <div className="folder-list">
         {folders.map((folder) => {
@@ -602,6 +669,7 @@ function SettingsPage({ settings, appPreferences, apiKey, busy, savedNotice, r2C
   onSaveR2(secretAccessKey: string): void;
 }) {
   const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
+  const providerInitial = (currentPreset?.label ?? "AI").trim().charAt(0) || "AI";
   const recommendedModels = currentPreset?.recommendedModels ?? [];
   const [testResult, setTestResult] = useState<{ ok: boolean; userMessage: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -662,22 +730,10 @@ function SettingsPage({ settings, appPreferences, apiKey, busy, savedNotice, r2C
   };
 
   return <motion.section className="settings-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-    <div className="settings-heading"><p className="eyebrow">SETTINGS</p><h1>设置</h1><p>配置模型连接与 Cloudflare R2 云同步。</p></div>
+    <div className="settings-heading"><p className="eyebrow">SETTINGS</p><h1>设置</h1><p>配置模型连接与 Cloudflare R2 云同步。</p><ThemeSwitch /></div>
     <div className="settings-card">
       <div className="settings-card-header">
-        <div className="provider-logo">
-          {settings.providerType === "openai" ? "O" :
-           settings.providerType === "minimax" || settings.providerType === "minimax-coding-plan" ? "M" :
-           settings.providerType === "deepseek" ? "D" :
-           settings.providerType === "siliconflow" ? "S" :
-           settings.providerType === "qwen" ? "Q" :
-           settings.providerType === "kimi" ? "K" :
-           settings.providerType === "tencent" ? "H" :
-           settings.providerType === "volcengine" ? "V" :
-           settings.providerType === "stepfun" ? "F" :
-           settings.providerType === "ollama" ? "Ol" :
-           "AI"}
-        </div>
+        <div className="provider-logo">{providerInitial}</div>
         <div>
           <h2>{currentPreset?.label ?? "自定义 API"}</h2>
           <p>{currentPreset ? (currentPreset.category === "domestic" ? "国内模型" : currentPreset.category === "overseas" ? "海外模型" : "本地模型") : "OpenAI-compatible"}</p>

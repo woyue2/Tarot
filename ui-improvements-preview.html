@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>星径 · UI 优化预览</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --sidebar-width: 240px;
+        --background: #ffffff;
+        --surface-canvas: #f3f4f6;
+        --surface-subtle: #f8f9fa;
+        --surface-hover: #eceff3;
+        --surface-selected: #e6eaf0;
+        --foreground: #27282b;
+        --foreground-secondary: #62666d;
+        --muted-foreground: #63676f;
+        --border: rgba(39, 40, 43, .10);
+        --border-strong: rgba(39, 40, 43, .16);
+        --accent: #4f8fdc;
+        --accent-wash: #eaf3ff;
+        --accent-deep: #2f70bd;
+        --success: #3b9a68;
+        --shadow-panel: 0 1px 2px rgba(20, 24, 30, .04), 0 12px 40px rgba(20, 24, 30, .035);
+        --radius: 13px;
+        font-family: "Segoe UI Variable", "Microsoft YaHei UI", sans-serif;
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --background: #171922;
+        --surface-canvas: #0e0f15;
+        --surface-subtle: #1c1f29;
+        --surface-hover: #242833;
+        --surface-selected: #2b303c;
+        --foreground: #e9ebf1;
+        --foreground-secondary: #aab1bd;
+        --muted-foreground: #838b99;
+        --border: rgba(255, 255, 255, .10);
+        --border-strong: rgba(255, 255, 255, .18);
+        --accent: #6aa5e8;
+        --accent-wash: rgba(106, 165, 232, .14);
+        --accent-deep: #8fc0f2;
+        --success: #4cc187;
+        --shadow-panel: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 40px rgba(0, 0, 0, .5);
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--surface-canvas); color: var(--foreground); }
+      .wrap { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: 48px 0 80px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+      .eyebrow { margin: 0 0 10px; color: var(--accent-deep); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+      h1 { margin: 0; font: 400 34px "STSong", "SimSun", serif; }
+      .theme-toggle { display: inline-flex; align-items: center; gap: 9px; padding: 0; border: 0; background: transparent; cursor: pointer; color: var(--foreground-secondary); font-size: 13px; }
+      .theme-toggle .track { width: 42px; height: 23px; display: grid; place-items: center; border-radius: 999px; background: var(--surface-selected); border: 1px solid var(--border-strong); }
+      .theme-toggle .track i { width: 17px; height: 17px; border-radius: 50%; background: var(--foreground-secondary); transform: translateX(-9px); transition: transform .2s ease, background .2s ease; }
+      :root[data-theme="dark"] .theme-toggle .track { background: var(--accent-deep); }
+      :root[data-theme="dark"] .theme-toggle .track i { transform: translateX(9px); background: #fff; }
+
+      .demo { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 16px; align-items: start; }
+      .sidebar { padding: 14px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-canvas); box-shadow: var(--shadow-panel); }
+      .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px; }
+      .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: linear-gradient(145deg, #6aa5e8, #3d7fc9); box-shadow: 0 5px 15px rgba(62, 127, 201, .22); }
+      .brand-mark svg { width: 20px; height: 20px; }
+      .sidebar-brand b { font-size: 15px; letter-spacing: .08em; }
+      .sidebar-brand small { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 10px; letter-spacing: .16em; }
+      .nav-btn { width: 100%; height: 34px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--foreground-secondary); cursor: pointer; font-size: 13px; text-align: left; margin-bottom: 4px; }
+      .nav-btn.active { color: var(--foreground); background: var(--surface-selected); font-weight: 600; }
+      .section-title { display: flex; justify-content: space-between; align-items: center; padding: 8px 6px 6px; color: var(--muted-foreground); font-size: 11px; font-weight: 600; }
+      .add-btn { width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent; color: var(--foreground-secondary); cursor: pointer; font-size: 15px; }
+      .sidebar-empty { margin: 4px 4px 0; padding: 16px 14px; border: 1px dashed var(--border-strong); border-radius: 10px; background: var(--surface-subtle); }
+      .sidebar-empty p { margin: 0 0 4px; color: var(--foreground-secondary); font-size: 12px; font-weight: 600; }
+      .sidebar-empty span { color: var(--muted-foreground); font-size: 11px; line-height: 1.6; }
+
+      .content { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--background); box-shadow: var(--shadow-panel); text-align: center; }
+      .hero-orbit { width: 54px; height: 54px; margin: 0 auto 18px; display: grid; place-items: center; border: 1px solid rgba(106, 165, 232, .35); border-radius: 50%; color: var(--accent); background: var(--accent-wash); box-shadow: 0 10px 30px rgba(79, 143, 220, .12); }
+      .hero-orbit svg { width: 33px; height: 33px; }
+      .content h2 { margin: 0; font: 400 38px "STSong", "SimSun", serif; letter-spacing: .02em; }
+      .lead { max-width: 620px; margin: 18px auto 28px; color: var(--foreground-secondary); font-size: 14px; line-height: 1.8; }
+      .q-panel { width: min(680px, 100%); margin: 0 auto; padding: 20px; text-align: left; border: 1px solid var(--border); border-radius: 14px; background: var(--background); box-shadow: 0 10px 35px rgba(28, 36, 48, .055); }
+      .q-panel label { display: block; color: var(--foreground); font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+      .q-panel textarea { width: 100%; min-height: 76px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface-subtle); color: var(--foreground); font: inherit; font-size: 13px; resize: vertical; }
+      .q-foot { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted-foreground); font-size: 11px; }
+      .mode-actions { width: min(680px, 100%); margin: 14px auto 0; display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
+      .btn { height: 44px; border: 0; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #fff; background: var(--accent); }
+      .btn.ghost { color: var(--foreground); background: var(--surface-subtle); border: 1px solid var(--border-strong); }
+
+      .focus-demo { margin-top: 34px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--background); box-shadow: var(--shadow-panel); }
+      .focus-demo h3 { margin: 0 0 4px; font-size: 15px; }
+      .focus-demo p { margin: 0 0 16px; color: var(--foreground-secondary); font-size: 13px; line-height: 1.7; }
+      .focus-row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .fbtn { height: 38px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--background); color: var(--foreground); cursor: pointer; font-size: 13px; }
+      .fbtn.show-focus { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+      .legend { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; color: var(--muted-foreground); font-size: 12px; }
+      .legend b { color: var(--foreground-secondary); }
+      .chip { display: inline-flex; align-items: center; gap: 6px; }
+      .swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--border-strong); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">XINGJING · UI POLISH</p>
+          <h1>UI 优化预览</h1>
+        </div>
+        <button class="theme-toggle" id="toggle" aria-label="切换浅色/星夜主题">
+          <span class="track"><i></i></span>
+          <span id="toggle-label">浅色</span>
+        </button>
+      </div>
+
+      <div class="demo">
+        <aside class="sidebar">
+          <div class="sidebar-brand">
+            <span class="brand-mark"><svg viewBox="0 0 160 160" fill="none"><path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" stroke="currentColor" stroke-opacity=".52" stroke-width="3" stroke-linecap="round"/><path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor"/><path d="M42 113h76" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></span>
+            <div><b>星径</b><small>LOCAL TAROT</small></div>
+          </div>
+          <button class="nav-btn active">✧ 探索</button>
+          <button class="nav-btn">⌘ 模型连接</button>
+          <div class="section-title"><span>最近记录</span><button class="add-btn" title="新建 Folder">＋</button></div>
+          <div class="sidebar-empty">
+            <p>还没有解读记录</p>
+            <span>从「探索」开始第一次提问，或点 ＋ 建立分组。</span>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="hero-orbit"><svg viewBox="0 0 160 160" fill="none"><path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" stroke="currentColor" stroke-opacity=".52" stroke-width="3" stroke-linecap="round"/><path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor"/><path d="M42 113h76" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></div>
+          <h2>让五张牌，照见此刻的路径</h2>
+          <p class="lead">在安静的空间里，和你的直觉对话。想清楚一个问题，剩下的交给牌。</p>
+          <div class="q-panel">
+            <label>你想探索什么？</label>
+            <textarea placeholder="例如：未来三个月，我该如何调整工作方向？"></textarea>
+            <div class="q-foot"><span>0 / 300</span><span>三个月内的问题</span></div>
+          </div>
+          <div class="mode-actions">
+            <button class="btn">自己选五张</button>
+            <button class="btn ghost">随机抽五张</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="focus-demo">
+        <h3>键盘焦点环（可达性修复）</h3>
+        <p>之前全应用没有 <code>:focus-visible</code>，键盘用户看不见自己在哪。现在可交互元素都有清晰的雾蓝描边。右侧按钮模拟了获得焦点时的状态。</p>
+        <div class="focus-row">
+          <button class="fbtn">普通按钮</button>
+          <button class="fbtn show-focus">获得焦点的按钮</button>
+          <button class="fbtn">另一个</button>
+        </div>
+        <div class="legend">
+          <span class="chip"><span class="swatch" style="background: var(--muted-foreground)"></span><b>次要文字</b> 已压深到 #63676f（对比度约 5.2:1，过 WCAG AA）</span>
+          <span class="chip"><span class="swatch" style="background: var(--accent)"></span><b>焦点 / 强调</b> 雾蓝主色</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById("toggle");
+      const label = document.getElementById("toggle-label");
+      btn.addEventListener("click", () => {
+        const dark = root.dataset.theme === "dark";
+        root.dataset.theme = dark ? "light" : "dark";
+        label.textContent = dark ? "浅色" : "星夜";
+      });
+    </script>
+  </body>
+</html>

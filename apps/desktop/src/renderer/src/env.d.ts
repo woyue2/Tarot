@@ -46,6 +46,7 @@ interface ReadingView {
 
 interface Window {
   tarot: {
+    platform: string;
     bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; appPreferences: AppPreferences; r2Configured?: boolean; presetProviders: PresetProvider[] }>;
     createFolder(name: string): Promise<ReadingFolder>;
     renameFolder(input: { id: string; name: string }): Promise<ReadingFolder>;

@@ -26,13 +26,15 @@ let appPreferences: AppPreferencesStore;
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
+  const isMac = process.platform === "darwin";
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 380,
     minHeight: 640,
     backgroundColor: "#08070d",
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: "hidden",
+    ...(isMac ? {} : { titleBarOverlay: { color: "#f3f4f6", symbolColor: "#27282b" } }),
     icon: join(__dirname, "../../build/icon.png"),
     webPreferences: { preload: join(__dirname, "../preload/index.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });

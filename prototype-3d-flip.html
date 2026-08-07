@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>塔罗 3D 翻牌原型 · Minimal Prototype</title>
+<style>
+  :root { --gold:#c9a227; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body {
+    background: radial-gradient(circle at 50% 38%, #1a160f 0%, #0c0a08 55%, #070605 100%);
+    color:#e9e2d0; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    overflow:hidden;
+  }
+  #app { position:fixed; inset:0; }
+  #stage { position:absolute; inset:0; z-index:1; }
+  .magic-circle {
+    position:absolute; inset:0; z-index:0;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none; color:rgba(201,162,39,0.16);
+    animation: mc-spin 100s linear infinite;
+  }
+  .magic-circle svg { width:min(70vw,70vh); height:auto; filter:blur(0.4px); }
+  @keyframes mc-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  .frame {
+    position:absolute; inset:18px; border:1px solid rgba(201,162,39,0.28);
+    border-radius:14px; pointer-events:none;
+  }
+  .hud { position:absolute; left:0; right:0; bottom:26px; text-align:center; z-index:6; }
+  .hud h1 { font-size:15px; font-weight:500; letter-spacing:2px; color:var(--gold); margin:0 0 6px; }
+  .hud p { font-size:12px; color:#9b927e; margin:0; }
+  .toolbar { position:absolute; top:30px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:6; }
+  button {
+    background:rgba(201,162,39,0.12); color:#e9e2d0; border:1px solid rgba(201,162,39,0.45);
+    padding:8px 16px; border-radius:999px; font-size:13px; cursor:pointer; transition:background .2s;
+  }
+  button:hover { background:rgba(201,162,39,0.28); }
+  #fallback {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:#9b927e; text-align:center; padding:24px;
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.2.8",
+    "react/jsx-runtime": "https://esm.sh/react@19.2.8/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@19.2.8",
+    "react-dom/client": "https://esm.sh/react-dom@19.2.8/client",
+    "three": "https://esm.sh/three@0.169.0",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@9.1.2?external=react,react-dom,three",
+    "htm": "https://esm.sh/htm"
+  }
+}
+</script>
+</head>
+<body>
+  <div id="app">
+    <div class="magic-circle">
+      <svg viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="96" stroke="currentColor" stroke-width="0.6" opacity="0.45"/>
+        <circle cx="100" cy="100" r="80" stroke="currentColor" stroke-width="0.5" opacity="0.32"/>
+        <circle cx="100" cy="100" r="64" stroke="currentColor" stroke-width="0.5" opacity="0.22" stroke-dasharray="3 5"/>
+        <circle cx="100" cy="100" r="48" stroke="currentColor" stroke-width="0.4" opacity="0.18"/>
+        <!-- 8 个方位刻度 -->
+        <line x1="100" y1="46" x2="100" y2="38" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+        <line x1="154" y1="100" x2="162" y2="100" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+        <line x1="100" y1="154" x2="100" y2="162" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+        <line x1="46" y1="100" x2="38" y2="100" stroke="currentColor" stroke-width="0.6" opacity="0.35"/>
+        <line x1="138.2" y1="61.8" x2="143.8" y2="56.2" stroke="currentColor" stroke-width="0.5" opacity="0.28"/>
+        <line x1="138.2" y1="138.2" x2="143.8" y2="143.8" stroke="currentColor" stroke-width="0.5" opacity="0.28"/>
+        <line x1="61.8" y1="138.2" x2="56.2" y2="143.8" stroke="currentColor" stroke-width="0.5" opacity="0.28"/>
+        <line x1="61.8" y1="61.8" x2="56.2" y2="56.2" stroke="currentColor" stroke-width="0.5" opacity="0.28"/>
+        <polygon points="100,62 132.9,81 132.9,119 100,138 67.1,119 67.1,81" stroke="currentColor" stroke-width="0.4" opacity="0.22"/>
+      </svg>
+    </div>
+    <div id="stage"></div>
+    <div class="frame"></div>
+    <div class="toolbar">
+      <button id="replay">重新洗牌</button>
+      <button id="skip">跳过动画</button>
+    </div>
+    <div class="hud">
+      <h1>TAROT · 五张牌阵</h1>
+      <p>金粉短暂汇聚 → 揭晓时一次短时爆发 → 背景仅余极淡魔法阵</p>
+    </div>
+    <div id="fallback">正在从 CDN 加载 Three.js（需要联网）…<br/>若长时间无反应，请检查网络后刷新。</div>
+  </div>
+
+<script type="module">
+import React, { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { createRoot } from "react-dom/client";
+import * as THREE from "three";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import htm from "htm";
+const html = htm.bind(React.createElement);
+
+document.getElementById("fallback").remove();
+
+const CARDS = [
+  { id: "major-00", name: "愚人" },
+  { id: "major-01", name: "魔术师" },
+  { id: "major-02", name: "女祭司" },
+  { id: "major-06", name: "恋人" },
+  { id: "major-10", name: "命运之轮" },
+].map((c) => ({
+  ...c,
+  face: `resources/cards/${c.id}.webp`,
+  back: "resources/cards/card-back.webp",
+}));
+
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const STEP = 1.35, CARD_W = 1.3, CARD_H = 1.95, CARD_D = 0.04;
+const BOX_ARGS = [CARD_W, CARD_H, CARD_D];
+
+function endPos(i) { return new THREE.Vector3((i - 2) * STEP, 0, 0); }
+
+// 每张牌一份随机种子：错峰起飞 / 起点扇形散开 / 飞行弧线高度 / 落定阻尼摆动
+function makeRand(i) {
+  return {
+    sx: (i - 2) * 0.55 + (Math.random() - 0.5) * 0.9,  // 起点横向：基准排开 + 抖动
+    sy: -3.7 - Math.random() * 0.9,                    // 起点纵向：都在画面下方、深浅不一
+    sz: -1.7 - Math.random() * 1.0,                    // 起点纵深：带视差
+    delay: Math.random() * 0.55,                       // 起飞延迟：错峰，避免齐步走
+    dur: 0.8 + Math.random() * 0.5,                    // 飞行时长：快慢不一
+    arc: 0.45 + Math.random() * 0.7,                   // 弧线抬升高度
+    yaw0: (Math.random() - 0.5) * 0.7,                 // 起飞时的初始偏航，落定回正
+    spin: (Math.random() - 0.5) * 0.6,                 // 俯仰摆动幅度
+    roll: (Math.random() - 0.5) * 0.45,               // 翻滚摆动幅度
+  };
+}
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+function Card({ index, faceUrl, backUrl, started, flipped, instant, runId, cardPosRef, onToggle, onReveal }) {
+  const ref = useRef();
+  const [faceTex, backTex] = useLoader(THREE.TextureLoader, [faceUrl, backUrl]);
+  const r = useRef(null);
+  const startRef = useRef(null);
+  const revealedRef = useRef(false);
+  if (!r.current) r.current = makeRand(index);
+
+  useEffect(() => {
+    for (const t of [faceTex, backTex]) {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+    }
+    // 翻面后从正面视角看 -z 面会左右镜像，这里把牌面图水平翻转修正
+    faceTex.wrapS = THREE.RepeatWrapping;
+    faceTex.repeat.x = -1;
+    faceTex.offset.x = 1;
+  }, [faceTex, backTex]);
+
+  // 每次重新洗牌：重新随机种子，并把计时器/位置复位到起点
+  useEffect(() => {
+    r.current = makeRand(index);
+    startRef.current = null;
+    revealedRef.current = false;
+    if (ref.current) ref.current.position.set(r.current.sx, r.current.sy, r.current.sz);
+  }, [runId, index]);
+
+  useFrame(({ clock }) => {
+    const m = ref.current;
+    if (!m) return;
+    const ep = endPos(index);
+    if (instant) {
+      m.position.copy(ep);
+      m.rotation.set(0, flipped ? Math.PI : 0, 0);
+      return;
+    }
+    if (!started) {
+      // 洗牌完成前停在起点（下方），不飞入
+      startRef.current = null;
+      m.position.set(r.current.sx, r.current.sy, r.current.sz);
+      m.rotation.set(0, 0, 0);
+      return;
+    }
+    if (startRef.current === null) startRef.current = clock.getElapsedTime();
+    const elapsed = clock.getElapsedTime() - startRef.current - r.current.delay;
+    const t = Math.max(0, Math.min(1, elapsed / r.current.dur));
+    const e = easeOutCubic(t);
+    // 位置：起点 → 终点，叠加正弦弧线（先抬升后落下，避免直线僵硬）
+    m.position.x = THREE.MathUtils.lerp(r.current.sx, ep.x, e);
+    m.position.y = THREE.MathUtils.lerp(r.current.sy, ep.y, e) + r.current.arc * Math.sin(Math.PI * t);
+    m.position.z = THREE.MathUtils.lerp(r.current.sz, ep.z, e);
+    // 落定前的阻尼摆动（俯仰 + 翻滚），越接近终点越收敛为 0
+    const wob = 1 - t;
+    m.rotation.x = r.current.spin * wob * Math.sin(t * 6.0);
+    m.rotation.z = r.current.roll * wob * Math.sin(t * 5.0 + 1.0);
+    if (t >= 1) {
+      // 落定后才做 3D 翻转（翻面在飞入结束后更自然）
+      const targetYaw = flipped ? Math.PI : 0;
+      m.rotation.y = THREE.MathUtils.lerp(m.rotation.y, targetYaw, 0.12);
+    } else {
+      // 起飞偏航 → 落定回正，牌背始终大致朝向相机
+      m.rotation.y = THREE.MathUtils.lerp(r.current.yaw0, 0, e);
+    }
+    // 落定且翻面完成的瞬间，通知粒子在该牌位置爆发
+    if (t >= 1 && flipped && !revealedRef.current) {
+      revealedRef.current = true;
+      if (onReveal) onReveal(index, clock.getElapsedTime());
+    }
+    // 把当前世界坐标共享给粒子系统，使金粉贴着这张牌走
+    if (cardPosRef && cardPosRef[index]) cardPosRef[index].copy(m.position);
+  });
+
+  return html`
+    <mesh ref=${ref} onClick=${(e) => { e.stopPropagation(); onToggle(index); }}>
+      <boxGeometry args=${BOX_ARGS} />
+      <meshStandardMaterial attach="material-4" map=${backTex} roughness=${0.55} metalness=${0.12} />
+      <meshStandardMaterial attach="material-5" map=${faceTex} roughness=${0.55} metalness=${0.12} />
+      <meshStandardMaterial attach="material-0" color="#caa24a" roughness=${0.4} metalness=${0.5} />
+      <meshStandardMaterial attach="material-1" color="#caa24a" roughness=${0.4} metalness=${0.5} />
+      <meshStandardMaterial attach="material-2" color="#caa24a" roughness=${0.4} metalness=${0.5} />
+      <meshStandardMaterial attach="material-3" color="#caa24a" roughness=${0.4} metalness=${0.5} />
+    </mesh>
+  `;
+}
+
+// 金色粒子系统：克制、短暂、古金色——确认时汇聚，揭晓时短时爆发，随后消失
+function makeParticles() {
+  const N = 500;  // 少而精，避免廉价光斑团
+  const pos = new Float32Array(N * 3);
+  const alpha = new Float32Array(N);
+  const size = new Float32Array(N);
+  const cardIdx = new Int8Array(N);
+  const seed = new Float32Array(N);
+  const twinkle = new Float32Array(N); // 闪烁相位
+  const freq = new Float32Array(N);    // 闪烁频率
+  const scatter = new Float32Array(N * 3);
+  const dir = new Float32Array(N * 3); // 爆发方向
+  for (let i = 0; i < N; i++) {
+    // 起始：分散在画面后方的大体积内，自然无序
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r0 = 4 + Math.random() * 3;
+    scatter[i * 3] = r0 * Math.sin(phi) * Math.cos(theta);
+    scatter[i * 3 + 1] = r0 * Math.cos(phi) * 0.6;
+    scatter[i * 3 + 2] = -2 - Math.random() * 3.5;
+    const ci = Math.floor(Math.random() * 5);
+    cardIdx[i] = ci;
+    seed[i] = Math.random();
+    twinkle[i] = Math.random() * Math.PI * 2;
+    freq[i] = 1.5 + Math.random() * 2.5;
+    size[i] = 0.35 + Math.random() * 0.75;  // 小颗粒，更像尘埃
+    // 爆发方向：从牌位向外，略偏相机
+    dir[i * 3] = (Math.random() - 0.5) * 1.2;
+    dir[i * 3 + 1] = (Math.random() - 0.5) * 1.2;
+    dir[i * 3 + 2] = Math.random() * 0.5 + 0.1;
+    pos[i * 3] = scatter[i * 3];
+    pos[i * 3 + 1] = scatter[i * 3 + 1];
+    pos[i * 3 + 2] = scatter[i * 3 + 2];
+    alpha[i] = 0;
+  }
+  return { N, pos, alpha, size, cardIdx, seed, twinkle, freq, scatter, dir };
+}
+
+const PARTICLE_VERT = `
+  attribute float aAlpha;
+  attribute float aSize;
+  varying float vAlpha;
+  uniform float uSize;
+  void main() {
+    vAlpha = aAlpha;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = uSize * aSize * (1.0 / -mv.z);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+const PARTICLE_FRAG = `
+  varying float vAlpha;
+  uniform vec3 uColor;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float d = length(c);
+    if (d > 0.5) discard;
+    float a = smoothstep(0.5, 0.0, d) * vAlpha;
+    gl_FragColor = vec4(uColor, a);
+  }
+`;
+
+function Particles({ started, revealedAt, cardPosRef, runId }) {
+  const dataRef = useRef(null);
+  if (!dataRef.current) dataRef.current = makeParticles();
+  const data = dataRef.current;
+  const startedAt = useRef(null);
+  const _c = useRef(new THREE.Vector3());
+
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    // 古金色 #c9a227（与项目 CSS 一致），不再用亮黄
+    uniforms: { uSize: { value: 52.0 }, uColor: { value: new THREE.Color("#c9a227") } },
+    vertexShader: PARTICLE_VERT,
+    fragmentShader: PARTICLE_FRAG,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), []);
+
+  const geom = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(data.pos, 3));
+    g.setAttribute("aAlpha", new THREE.BufferAttribute(data.alpha, 1));
+    g.setAttribute("aSize", new THREE.BufferAttribute(data.size, 1));
+    return g;
+  }, [data]);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (!started) {
+      startedAt.current = null;
+      for (let i = 0; i < data.N; i++) {
+        data.pos[i * 3] = data.scatter[i * 3];
+        data.pos[i * 3 + 1] = data.scatter[i * 3 + 1];
+        data.pos[i * 3 + 2] = data.scatter[i * 3 + 2];
+        data.alpha[i] = 0;
+      }
+      geom.attributes.position.needsUpdate = true;
+      geom.attributes.aAlpha.needsUpdate = true;
+      return;
+    }
+    if (startedAt.current === null) startedAt.current = t;
+    const conv = t - startedAt.current;
+    const CONVERGE = 1.3, BURST = 0.85;
+    for (let i = 0; i < data.N; i++) {
+      const ci = data.cardIdx[i];
+      const cp = (cardPosRef && cardPosRef[ci]) ? cardPosRef[ci] : _c.current.set(0, 0, 0);
+      const revealed = revealedAt[ci] > 0;
+      // 闪烁：所有阶段的 alpha 都叠加轻微 shimmer，避免死斑
+      const shimmer = 0.75 + 0.25 * Math.sin(t * data.freq[i] + data.twinkle[i]);
+      if (!revealed) {
+        // 汇聚到牌周围的松散云雾；多数位于牌后方，不遮挡牌面
+        const delay = data.seed[i] * 0.45;
+        const pc = Math.min(1, Math.max(0, (conv - delay) / CONVERGE));
+        const e = easeOutCubic(pc);
+        const jx = (Math.random() - 0.5) * 0.05; // 极弱抖动，让云自然
+        const jy = (Math.random() - 0.5) * 0.07;
+        const tx = cp.x + (data.seed[i] - 0.5) * 0.7 + jx;
+        const ty = cp.y + (data.twinkle[i] % 1 - 0.5) * 1.0 + jy;
+        const tz = cp.z - 0.3 - data.seed[i] * 0.4; // 偏后方，不压牌面
+        data.pos[i * 3] = data.scatter[i * 3] + (tx - data.scatter[i * 3]) * e;
+        data.pos[i * 3 + 1] = data.scatter[i * 3 + 1] + (ty - data.scatter[i * 3 + 1]) * e;
+        data.pos[i * 3 + 2] = data.scatter[i * 3 + 2] + (tz - data.scatter[i * 3 + 2]) * e;
+        data.alpha[i] = 0.22 * e * shimmer; // 低透明度，克制
+      } else {
+        const bt = t - revealedAt[ci];
+        if (bt < BURST) {
+          // 揭晓：向外爆发并淡出，结束后彻底消失
+          const p = bt / BURST;
+          const e = easeOutCubic(p);
+          const r = e * 1.8;
+          data.pos[i * 3] = cp.x + data.dir[i * 3] * r;
+          data.pos[i * 3 + 1] = cp.y + data.dir[i * 3 + 1] * r + e * 0.35;
+          data.pos[i * 3 + 2] = cp.z + data.dir[i * 3 + 2] * r;
+          data.alpha[i] = 0.6 * (1 - p) * shimmer;
+        } else {
+          // 爆发后消失，不形成常驻光环
+          data.alpha[i] = 0;
+        }
+      }
+    }
+    geom.attributes.position.needsUpdate = true;
+    geom.attributes.aAlpha.needsUpdate = true;
+  });
+
+  return html`
+    <points material=${material} geometry=${geom} />
+  `;
+}
+
+function Scene({ started, flipped, instant, runId, revealedAt, cardPosRef, onToggle, onReveal }) {
+  return html`
+    <${Suspense} fallback=${null}>
+      <ambientLight intensity=${0.65} />
+      <directionalLight position=${[3, 5, 4]} intensity=${1.25} color="#fff6e0" />
+      <pointLight position=${[0, 0, 3]} intensity=${0.9} color="#f5c842" />
+      ${!instant && html`<${Particles} started=${started} revealedAt=${revealedAt} cardPosRef=${cardPosRef} runId=${runId} />`}
+      ${CARDS.map((c, i) => html`
+        <${Card}
+          key=${c.id} index=${i}
+          faceUrl=${c.face} backUrl=${c.back}
+          started=${started} flipped=${flipped[i]} instant=${instant} runId=${runId}
+          cardPosRef=${cardPosRef}
+          onToggle=${onToggle} onReveal=${onReveal}
+        />
+      `)}
+    <//>
+  `;
+}
+
+function App() {
+  const [started, setStarted] = useState(REDUCED);
+  const [flipped, setFlipped] = useState([false, false, false, false, false]);
+  const [instant, setInstant] = useState(REDUCED);
+  const [runId, setRunId] = useState(0);
+  const [revealedAt, setRevealedAt] = useState([0, 0, 0, 0, 0]);
+  const cardPosRef = useRef(CARDS.map(() => new THREE.Vector3(0, -6, 0))); // 各牌实时世界坐标，供粒子贴附
+  const timers = useRef([]);
+
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+
+  const play = () => {
+    clearTimers();
+    setRunId((n) => n + 1);            // 触发每张牌重新随机种子
+    setRevealedAt([0, 0, 0, 0, 0]);    // 复位粒子爆发时刻
+    setFlipped([false, false, false, false, false]);
+    setInstant(false);
+    setStarted(false);
+    if (REDUCED) { setStarted(true); setFlipped([true, true, true, true, true]); return; }
+    timers.current.push(setTimeout(() => setStarted(true), 650));
+    CARDS.forEach((_, i) =>
+      timers.current.push(setTimeout(() => setFlipped((f) => { const n = [...f]; n[i] = true; return n; }), 1250 + i * 360))
+    );
+  };
+
+  // 某张牌落定翻面完成的瞬间（由 Card 在 useFrame 内回调），记录其时钟时刻供粒子爆发
+  const onReveal = (i, t) => setRevealedAt((a) => { const n = [...a]; n[i] = t; return n; });
+
+  useEffect(() => { play(); return clearTimers; }, []);
+
+  const toggle = (i) => setFlipped((f) => { const n = [...f]; n[i] = !n[i]; return n; });
+  const skip = () => {
+    clearTimers();
+    setStarted(true);
+    setInstant(true);
+    setFlipped([true, true, true, true, true]);
+  };
+
+  useEffect(() => {
+    document.getElementById("replay").addEventListener("click", play);
+    document.getElementById("skip").addEventListener("click", skip);
+    return () => {
+      document.getElementById("replay").removeEventListener("click", play);
+      document.getElementById("skip").removeEventListener("click", skip);
+    };
+  }, []);
+
+  return html`
+    <${Canvas} dpr=${[1, 2]} gl=${{ antialias: true, alpha: true }} camera=${{ position: [0, 0, 7], fov: 45 }}>
+      <${Scene} started=${started} flipped=${flipped} instant=${instant} runId=${runId} revealedAt=${revealedAt} cardPosRef=${cardPosRef} onToggle=${toggle} onReveal=${onReveal} />
+    <//>
+  `;
+}
+
+createRoot(document.getElementById("stage")).render(html`<${App} />`);
+</script>
+</body>
+</html>
