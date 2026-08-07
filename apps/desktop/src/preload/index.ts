@@ -7,7 +7,7 @@ const api = {
   deleteFolder: (id: string) => ipcRenderer.invoke("tarot:delete-folder", id),
   moveReading: (input: { id: string; folderId: string | null }) => ipcRenderer.invoke("tarot:move-reading", input),
   deleteReading: (id: string) => ipcRenderer.invoke("tarot:delete-reading", id),
-  saveSettings: (input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }) => ipcRenderer.invoke("tarot:save-settings", input),
+  saveSettings: (input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } }) => ipcRenderer.invoke("tarot:save-settings", input),
   getAppPreferences: () => ipcRenderer.invoke("tarot:get-app-preferences"),
   setAppPreferences: (value: { enableStreaming?: boolean; hideModelUi?: boolean }) => ipcRenderer.invoke("tarot:set-app-preferences", value),
   createReading: (input: { question: string; mode: "manual" | "random"; folderId?: string }) => ipcRenderer.invoke("tarot:create-reading", input),
@@ -17,6 +17,9 @@ const api = {
   listPresetProviders: () => ipcRenderer.invoke("tarot:list-preset-providers"),
   testConnection: (opts?: { apiKey?: string | undefined; model?: string | undefined; baseUrl?: string | undefined; providerType?: string | undefined }) => ipcRenderer.invoke("tarot:test-connection", opts),
   fetchModels: (opts?: { apiKey?: string | undefined; baseUrl?: string | undefined; providerType?: string | undefined }) => ipcRenderer.invoke("tarot:fetch-models", opts),
+  testR2Connection: (input: { accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string }) => ipcRenderer.invoke("tarot:test-r2-connection", input),
+  syncNow: () => ipcRenderer.invoke("tarot:sync-now"),
+  r2Status: () => ipcRenderer.invoke("tarot:r2-status"),
   onInterpretProgress: (callback: (data: { id: string; delta: string; reasoning: string }) => void) => {
     const handler = (_event: unknown, data: { id: string; delta: string; reasoning: string }) => callback(data);
     ipcRenderer.on("tarot:interpret-progress", handler);

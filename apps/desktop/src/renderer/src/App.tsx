@@ -10,7 +10,19 @@ function StargateMark({ className = "" }: { className?: string }) {
     <path d="M50 113V77c0-17 13-31 30-31s30 14 30 31v36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
     <path d="M63 113V79c0-10 7-18 17-18s17 8 17 18v34" stroke="currentColor" strokeOpacity=".52" strokeWidth="3" strokeLinecap="round" />
     <path d="m80 67 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill="currentColor" />
-    <path d="M42 113h76" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <path d="M42 113h76" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+  </svg>;
+}
+
+function FolderGlyph({ filled = false, className = "" }: { filled?: boolean; className?: string }) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M3 7.4c0-.77.63-1.4 1.4-1.4h3.9c.5 0 .98.22 1.3.6l1.1 1.3c.33.4.82.62 1.32.62h7.6c.77 0 1.4.63 1.4 1.4v8.3c0 .77-.63 1.4-1.4 1.4H4.4c-.77 0-1.4-.63-1.4-1.4V7.4Z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+      fill={filled ? "currentColor" : "none"}
+    />
   </svg>;
 }
 
@@ -25,7 +37,7 @@ const stageTitles: Record<Stage, string> = {
   home: "新解读",
   select: "选择牌面",
   result: "解读详情",
-  settings: "模型连接",
+  settings: "设置",
 };
 
 export function App() {
@@ -45,6 +57,7 @@ export function App() {
   const [error, setError] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
   const [interpretProgress, setInterpretProgress] = useState(""); // 流式解读进度文本
+  const [r2Configured, setR2Configured] = useState(false);
 
   useEffect(() => {
     void window.tarot.bootstrap().then((data) => {
@@ -52,6 +65,7 @@ export function App() {
       setFolders(data.folders);
       setSettings(data.settings);
       setAppPreferences(data.appPreferences);
+      setR2Configured(data.r2Configured ?? false);
       setPresetProviders(data.presetProviders);
     }).catch(showError);
   }, []);
@@ -184,6 +198,25 @@ export function App() {
       setApiKey("");
       setError("");
       setSavedNotice(clearApiKey ? "Token 已清除" : "连接设置已保存");
+    } catch (reason) {
+      showError(reason);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveR2Settings(secretAccessKey: string) {
+    setBusy(true);
+    setSavedNotice("");
+    try {
+      const r2Input: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } = settings.r2 ? { ...settings.r2 } : {};
+      if (secretAccessKey.trim()) r2Input.secretAccessKey = secretAccessKey.trim();
+      const saved = await window.tarot.saveSettings({ r2: r2Input });
+      setSettings(saved);
+      const status = await window.tarot.r2Status();
+      setR2Configured(status.configured);
+      setError("");
+      setSavedNotice("R2 配置已保存");
     } catch (reason) {
       showError(reason);
     } finally {
@@ -357,7 +390,7 @@ export function App() {
           {stage === "home" && <motion.section className="home" key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="hero-orbit" aria-hidden="true"><StargateMark /></div>
             <p className="eyebrow">A QUIET SPACE FOR REFLECTION</p>
-            {activeFolder && <div className="active-folder-chip"><span>▱</span><b>{activeFolder.name}</b><small>新问题</small></div>}
+            {activeFolder && <div className="active-folder-chip"><FolderGlyph className="chip-folder" /><b>{activeFolder.name}</b><small>新问题</small></div>}
             <h1>让五张牌，照见此刻的路径</h1>
             <p className="lead"></p>
             <div className="question-panel astryx-surface">
@@ -399,13 +432,14 @@ export function App() {
             <div className="end-actions"><Button label="开始新的探索" variant="secondary" size="lg" onClick={reset} /></div>
           </motion.section>}
 
-          {stage === "settings" && <ModelSettings
+          {stage === "settings" && <SettingsPage
             key="settings"
             settings={settings}
             appPreferences={appPreferences}
             apiKey={apiKey}
             busy={busy}
             savedNotice={savedNotice}
+            r2Configured={r2Configured}
             presetProviders={presetProviders}
             onApiKeyChange={setApiKey}
             onSettingsChange={setSettings}
@@ -413,6 +447,7 @@ export function App() {
             onModelChange={handleModelChange}
             onSave={() => void saveSettings(false)}
             onClear={() => void saveSettings(true)}
+            onSaveR2={(secretAccessKey: string) => void saveR2Settings(secretAccessKey)}
           />}
         </AnimatePresence>
       </main>
@@ -499,7 +534,6 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
 
   return <aside className="sidebar">
     <div className="sidebar-brand"><span className="brand-mark"><StargateMark /></span><div><b>星径</b><small></small></div></div>
-    <button className="new-reading-button" onClick={onNewReading}><span>＋</span><b>新解读</b><kbd>Ctrl N</kbd></button>
     <nav className="sidebar-nav" aria-label="主导航">
       <button data-active={stage !== "settings"} onClick={onNewReading}><span>✧</span><b>探索</b></button>
       {!hideModelUi && (
@@ -508,7 +542,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
     </nav>
     <section className="sidebar-history folder-tree">
       <div className="sidebar-section-title"><span>最近记录</span><button className="add-folder-button" onClick={() => setCreatingFolder(true)} title="新建 Folder" aria-label="新建 Folder">＋</button></div>
-      {creatingFolder && <div className="folder-create-row"><span>▱</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitFolder(); if (event.key === "Escape") setCreatingFolder(false); }} onBlur={() => { if (!folderName.trim()) setCreatingFolder(false); }} placeholder="Folder 名称" /><button onMouseDown={(event) => event.preventDefault()} onClick={() => void submitFolder()}>确认</button></div>}
+      {creatingFolder && <div className="folder-create-row"><FolderGlyph className="create-folder-icon" /><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitFolder(); if (event.key === "Escape") setCreatingFolder(false); }} onBlur={() => { if (!folderName.trim()) setCreatingFolder(false); }} placeholder="Folder 名称" /><button onMouseDown={(event) => event.preventDefault()} onClick={() => void submitFolder()}>确认</button></div>}
       <div className="folder-list">
         {folders.map((folder) => {
           const items = visibleHistory.filter((item) => item.folderId === folder.id);
@@ -525,7 +559,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
           >
             <div className="folder-row">
               <button className="folder-toggle" data-collapsed={isCollapsed} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: !isCollapsed }))} aria-label={isCollapsed ? "展开" : "折叠"}>›</button>
-              <span className="folder-icon">▱</span>
+              <span className="folder-icon"><FolderGlyph filled={activeFolderId === folder.id} /></span>
               {isRenaming ? <input className="folder-rename-input" autoFocus value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRename(folder.id); if (event.key === "Escape") setRenamingId(undefined); }} onBlur={() => void submitRename(folder.id)} /> : <button className="folder-name" onDoubleClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} onClick={() => setCollapsed((current) => ({ ...current, [folder.id]: false }))}>{folder.name}<small>{items.length}</small></button>}
               <button className="folder-rename" onClick={() => { setRenamingId(folder.id); setRenameValue(folder.name); }} title="重命名 Folder" aria-label={`重命名 ${folder.name}`}>···</button>
               <button className="folder-compose" onClick={() => { setCollapsed((current) => ({ ...current, [folder.id]: false })); onNewReadingInFolder(folder.id); }} title="在此分组下新建对话" aria-label={`在 ${folder.name} 下新建对话`}><NewConversationIcon /></button>
@@ -540,7 +574,7 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
           onDragEnter={() => setDropTarget(canDropInto() ? "ungrouped" : undefined)}
           onDragOver={(event) => { if (canDropInto()) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }}
           onDrop={(event) => { if (canDropInto()) void dropReading(event); }}
-        ><div className="folder-row"><button className="folder-toggle" data-collapsed={collapsed.ungrouped === true} onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))} aria-label={collapsed.ungrouped ? "展开" : "折叠"}>›</button><span className="folder-icon">▱</span><button className="folder-name" onClick={() => setCollapsed((current) => ({ ...current, ungrouped: false }))}>未分组<small>{ungroupedHistory.length}</small></button></div><div className="folder-children-wrap" data-collapsed={collapsed.ungrouped === true}><div className="folder-children">{ungroupedHistory.map(renderConversation)}</div></div></div>}
+        ><div className="folder-row"><button className="folder-toggle" data-collapsed={collapsed.ungrouped === true} onClick={() => setCollapsed((current) => ({ ...current, ungrouped: !current.ungrouped }))} aria-label={collapsed.ungrouped ? "展开" : "折叠"}>›</button><span className="folder-icon"><FolderGlyph /></span><button className="folder-name" onClick={() => setCollapsed((current) => ({ ...current, ungrouped: false }))}>未分组<small>{ungroupedHistory.length}</small></button></div><div className="folder-children-wrap" data-collapsed={collapsed.ungrouped === true}><div className="folder-children">{ungroupedHistory.map(renderConversation)}</div></div></div>}
       </div>
     </section>
     <footer className="sidebar-footer">
@@ -551,12 +585,13 @@ function Sidebar({ stage, history, folders, activeFolderId, settings, hideModelU
   </aside>;
 }
 
-function ModelSettings({ settings, appPreferences, apiKey, busy, savedNotice, presetProviders, onApiKeyChange, onSettingsChange, onProviderChange, onModelChange, onSave, onClear }: {
+function SettingsPage({ settings, appPreferences, apiKey, busy, savedNotice, r2Configured, presetProviders, onApiKeyChange, onSettingsChange, onProviderChange, onModelChange, onSave, onClear, onSaveR2 }: {
   settings: TarotSettings;
   appPreferences: AppPreferences;
   apiKey: string;
   busy: boolean;
   savedNotice: string;
+  r2Configured: boolean;
   presetProviders: PresetProvider[];
   onApiKeyChange(value: string): void;
   onSettingsChange(value: TarotSettings): void;
@@ -564,6 +599,7 @@ function ModelSettings({ settings, appPreferences, apiKey, busy, savedNotice, pr
   onModelChange(model: string): void;
   onSave(): void;
   onClear(): void;
+  onSaveR2(secretAccessKey: string): void;
 }) {
   const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
   const recommendedModels = currentPreset?.recommendedModels ?? [];
@@ -626,7 +662,7 @@ function ModelSettings({ settings, appPreferences, apiKey, busy, savedNotice, pr
   };
 
   return <motion.section className="settings-page" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-    <div className="settings-heading"><p className="eyebrow">SETTINGS · MODELS</p><h1>模型连接</h1><p>选择一个提供商，或使用自定义 API 地址。运行时只把已确认的牌阵交给模型解释。</p></div>
+    <div className="settings-heading"><p className="eyebrow">SETTINGS</p><h1>设置</h1><p>配置模型连接与 Cloudflare R2 云同步。</p></div>
     <div className="settings-card">
       <div className="settings-card-header">
         <div className="provider-logo">
@@ -743,8 +779,111 @@ function ModelSettings({ settings, appPreferences, apiKey, busy, savedNotice, pr
         <Button label={settings.hasApiKey ? "保存并更新连接" : "保存连接"} variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={onSave} />
       </div>
     </div>
+    <R2SyncSettings settings={settings} r2Configured={r2Configured} savedNotice={savedNotice} busy={busy} onSettingsChange={onSettingsChange} onSaveR2={onSaveR2} />
     <div className="security-note"><span>⌁</span><div><b>本地安全边界</b><p>API 地址和模型名保存在本地设置文件；Token 使用 Electron safeStorage 调用 Windows DPAPI 加密。前端只能知道"是否已配置"，无法读取明文。</p></div></div>
   </motion.section>;
+}
+
+function R2SyncSettings({ settings, r2Configured, savedNotice, busy, onSettingsChange, onSaveR2 }: {
+  settings: TarotSettings;
+  r2Configured: boolean;
+  savedNotice: string;
+  busy: boolean;
+  onSettingsChange(value: TarotSettings): void;
+  onSaveR2(secretAccessKey: string): void;
+}) {
+  const r2 = settings.r2 ?? { enabled: false, accountId: "", endpoint: "", accessKeyId: "", bucketName: "", region: "auto" };
+  const [secretAccessKey, setSecretAccessKey] = useState("");
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ pulled: number; pushed: number; errors: string[] } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  function updateR2(partial: Partial<R2Settings>) {
+    onSettingsChange({ ...settings, r2: { ...r2, ...partial } });
+  }
+
+  async function testR2Connection() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await window.tarot.testR2Connection({
+        accountId: r2.accountId ?? undefined,
+        endpoint: r2.endpoint || undefined,
+        accessKeyId: r2.accessKeyId ?? undefined,
+        secretAccessKey,
+        bucketName: r2.bucketName ?? undefined,
+        region: r2.region || undefined,
+      });
+      setTestResult(result);
+    } catch (reason) {
+      setTestResult({ ok: false, message: reason instanceof Error ? reason.message : String(reason) });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  async function syncNow() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const result = await window.tarot.syncNow();
+      setSyncResult(result);
+    } catch (reason) {
+      setSyncResult({ pulled: 0, pushed: 0, errors: [reason instanceof Error ? reason.message : String(reason)] });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  const hasRequiredFields = Boolean(r2.accountId && r2.accessKeyId && secretAccessKey && r2.bucketName);
+
+  return <div className="settings-card r2-sync-card">
+    <div className="settings-card-header">
+      <div className="provider-logo">R2</div>
+      <div>
+        <h2>Cloudflare R2 云同步</h2>
+        <p>每条记录以 JSON 文件同步到 R2，多设备共享</p>
+      </div>
+      <span className="settings-status" data-ready={r2Configured}>{r2Configured ? "已启用" : "未启用"}</span>
+    </div>
+    <div className="settings-fields">
+      <label className="checkbox-label">
+        <input type="checkbox" checked={r2.enabled ?? false} onChange={(event) => updateR2({ enabled: event.target.checked })} />
+        <span>启用 R2 自动同步</span>
+        <small>开启后每次写入会自动推送到 R2，启动 10 秒后自动双向同步</small>
+      </label>
+      <label><span>Account ID</span><input value={r2.accountId ?? ""} onChange={(event) => updateR2({ accountId: event.target.value })} spellCheck={false} placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" /></label>
+      <label><span>Endpoint（可选）</span><small>留空则使用 https://&lt;AccountID&gt;.r2.cloudflarestorage.com</small><input value={r2.endpoint ?? ""} onChange={(event) => updateR2({ endpoint: event.target.value })} spellCheck={false} placeholder="https://...r2.cloudflarestorage.com" /></label>
+      <label><span>Access Key ID</span><small>R2 访问密钥 ID</small><input value={r2.accessKeyId ?? ""} onChange={(event) => updateR2({ accessKeyId: event.target.value })} spellCheck={false} /></label>
+      <label><span>Secret Access Key</span><small>保存后将加密存储，渲染端不再显示明文</small><input type="password" value={secretAccessKey} onChange={(event) => setSecretAccessKey(event.target.value)} placeholder={r2Configured ? "已保存；输入新值以替换" : "..."} autoComplete="off" /></label>
+      <label><span>Bucket 名称</span><small>R2 存储桶名称</small><input value={r2.bucketName ?? ""} onChange={(event) => updateR2({ bucketName: event.target.value })} spellCheck={false} /></label>
+      <label><span>Region</span><small>通常保持 auto 即可</small><input value={r2.region ?? "auto"} onChange={(event) => updateR2({ region: event.target.value })} spellCheck={false} /></label>
+    </div>
+    <div className="settings-actions">
+      <div className="test-connection-group">
+        <button className="test-connection-btn" disabled={testing || !hasRequiredFields} onClick={() => void testR2Connection()}>
+          {testing ? "测试中..." : "测试连接"}
+        </button>
+        {testResult && (
+          <span className={`test-result ${testResult.ok ? "success" : "failure"}`}>
+            {testResult.ok ? "✓" : "✗"} {testResult.message}
+          </span>
+        )}
+      </div>
+      <Button label="保存 R2 配置" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => onSaveR2(secretAccessKey)} />
+      {savedNotice && <span className="test-result success">{savedNotice}</span>}
+      <button className="test-connection-btn sync-now-btn" disabled={syncing || !r2Configured} onClick={() => void syncNow()}>
+        {syncing ? "同步中..." : "立即同步"}
+      </button>
+      {syncResult && (
+        <span className={`test-result ${syncResult.errors.length === 0 ? "success" : "failure"}`}>
+          {syncResult.errors.length === 0 ? "✓" : "✗"} 拉取 {syncResult.pulled}，推送 {syncResult.pushed}
+          {syncResult.errors.length > 0 && <small>{syncResult.errors.join("；")}</small>}
+        </span>
+      )}
+    </div>
+  </div>;
 }
 
 function ReadingContent({ reading }: { reading: ReadingView }) {

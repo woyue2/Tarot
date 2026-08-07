@@ -5,6 +5,8 @@ type ReadingRow = Record<string, unknown>;
 
 export class SqliteReadingRepository implements ReadingRepository, FolderRepository {
   private readonly database: DatabaseSync;
+  onDidSave?: (type: "reading" | "folder", id: string) => void;
+  onDidDelete?: (type: "reading" | "folder", id: string) => void;
 
   constructor(path: string) {
     this.database = new DatabaseSync(path);
@@ -71,6 +73,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       reading.interpretation ? JSON.stringify(reading.interpretation) : null,
       reading.createdAt, reading.updatedAt,
     );
+    this.onDidSave?.("reading", reading.id);
   }
 
   find(id: string): StoredReading | undefined {
@@ -99,6 +102,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       INSERT INTO reading_folders (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at
     `).run(folder.id, folder.name, folder.createdAt, folder.updatedAt);
+    this.onDidSave?.("folder", folder.id);
   }
 
   renameFolder(id: string, name: string): ReadingFolder | undefined {
@@ -109,11 +113,12 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
 
   deleteFolder(id: string): boolean {
     const result = this.database.prepare("DELETE FROM reading_folders WHERE id = ?").run(id);
+    if (result.changes > 0) this.onDidDelete?.("folder", id);
     return result.changes > 0;
   }
-
   deleteReading(id: string): boolean {
     const result = this.database.prepare("DELETE FROM readings WHERE id = ?").run(id);
+    if (result.changes > 0) this.onDidDelete?.("reading", id);
     return result.changes > 0;
   }
 

@@ -3,16 +3,34 @@ import { applyProviderPreset, type ProviderType } from "./provider-registry";
 
 export { type ProviderType };
 
+export interface R2Preferences {
+  enabled: boolean;
+  accountId: string;
+  endpoint: string;
+  accessKeyId: string;
+  bucketName: string;
+  region: string;
+}
+
 export interface ModelPreferences {
   providerType: ProviderType;
   model: string;
   baseUrl: string;
+  r2: R2Preferences;
 }
 
 const defaults: ModelPreferences = {
   providerType: "openai",
   model: "gpt-5-mini",
   baseUrl: "https://api.openai.com/v1",
+  r2: {
+    enabled: false,
+    accountId: "",
+    endpoint: "",
+    accessKeyId: "",
+    bucketName: "",
+    region: "auto",
+  },
 };
 
 // 迁移：只修复真正不存在的假 URL（codex.minimaxi.com 是编造的）
@@ -39,6 +57,7 @@ export class ModelPreferencesStore {
         providerType: (value.providerType as ProviderType) || defaults.providerType,
         model: value.model?.trim() || defaults.model,
         baseUrl,
+        r2: { ...defaults.r2, ...value.r2 },
       };
       // 如果 URL 被迁移了，立即写回磁盘
       if (baseUrl !== rawBaseUrl) this.set(result);
@@ -53,10 +72,11 @@ export class ModelPreferencesStore {
     if (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1", "::1"].includes(url.hostname))) {
       throw new Error("API 地址必须使用 HTTPS；本机模型可使用 localhost HTTP");
     }
-    const next = {
+    const next: ModelPreferences = {
       providerType: value.providerType || defaults.providerType,
       model: value.model.trim(),
       baseUrl: value.baseUrl.trim().replace(/\/$/, ""),
+      r2: { ...defaults.r2, ...value.r2 },
     };
     if (!next.model) throw new Error("模型名称不能为空");
     // 切换 providerType 时自动填充预设值

@@ -9,17 +9,20 @@ import methodology from "../../../../resources/methodology.json";
 import { AppPreferencesStore } from "./app-preferences";
 import { ElectronCredentialStore } from "./credentials";
 import { createModelProvider, fetchProviderModels, type ProviderType } from "./model";
-import { ModelPreferencesStore } from "./preferences";
+import { ModelPreferencesStore, type ModelPreferences } from "./preferences";
 import { SqliteReadingRepository } from "./storage";
 import { PROVIDER_PRESETS, classifyModelError } from "./provider-registry";
+import { R2Client, resolveR2Endpoint } from "./r2-client";
+import { R2SyncService, type SyncReport } from "./r2-sync";
 
 const cards = cardsData.cards as TarotCard[];
 let repository: SqliteReadingRepository;
 let credentials: ElectronCredentialStore;
 let preferences: ModelPreferencesStore;
-let appPreferences: AppPreferencesStore;
-let settings = { providerType: "openai" as ProviderType, model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" };
+let settings: ModelPreferences = { providerType: "openai" as ProviderType, model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1", r2: { enabled: false, accountId: "", endpoint: "", accessKeyId: "", bucketName: "", region: "auto" } };
+let r2Sync: R2SyncService | null = null;
 let appPrefs = { enableStreaming: false, hideModelUi: true };
+let appPreferences: AppPreferencesStore;
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
@@ -91,6 +94,7 @@ function registerIpc(): void {
     history: repository.list().map(publicReading),
     settings: { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) },
     appPreferences: appPrefs,
+    r2Configured: isR2Configured(),
     presetProviders: Object.entries(PROVIDER_PRESETS).map(([type, preset]) => ({
       type,
       label: preset.label,
@@ -147,14 +151,32 @@ function registerIpc(): void {
     if (!repository.deleteReading(id)) throw new Error("删除解读记录失败");
     return { ok: true };
   });
-  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }) => {
+  ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());
     if (input.clearApiKey) credentials.delete("apiKey");
+
+    const nextR2: ModelPreferences["r2"] = input.r2 ? {
+      enabled: input.r2.enabled ?? settings.r2.enabled,
+      accountId: input.r2.accountId?.trim() ?? settings.r2.accountId,
+      endpoint: input.r2.endpoint?.trim() ?? settings.r2.endpoint,
+      accessKeyId: input.r2.accessKeyId?.trim() ?? settings.r2.accessKeyId,
+      bucketName: input.r2.bucketName?.trim() ?? settings.r2.bucketName,
+      region: input.r2.region?.trim() ?? settings.r2.region,
+    } : settings.r2;
+
+    if (input.r2?.secretAccessKey?.trim()) {
+      credentials.set("r2SecretAccessKey", input.r2.secretAccessKey.trim());
+    }
+
     settings = preferences.set({
       providerType: (input.providerType as ProviderType) || settings.providerType,
       model: input.model?.trim() || settings.model,
       baseUrl: input.baseUrl?.trim() || settings.baseUrl,
+      r2: nextR2,
     });
+
+    reinitializeR2Sync();
+
     return { ...settings, hasApiKey: Boolean(credentials.get("apiKey")) };
   });
   ipcMain.handle("tarot:get-app-preferences", () => appPrefs);
@@ -270,6 +292,68 @@ function registerIpc(): void {
     }
   });
   ipcMain.handle("tarot:history", () => repository.list().map(publicReading));
+
+  ipcMain.handle("tarot:test-r2-connection", async (_event, input: { accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string }) => {
+    const endpoint = resolveR2Endpoint({ accountId: input.accountId ?? "", endpoint: input.endpoint });
+    const client = new R2Client({
+      endpoint,
+      accessKeyId: input.accessKeyId ?? "",
+      secretAccessKey: input.secretAccessKey ?? "",
+      bucketName: input.bucketName ?? "",
+      region: input.region ?? "auto",
+    });
+    return await client.testConnection();
+  });
+
+  ipcMain.handle("tarot:sync-now", async () => {
+    if (!r2Sync) throw new Error("R2 同步尚未配置或未启用");
+    return await r2Sync.sync();
+  });
+
+  ipcMain.handle("tarot:r2-status", () => ({
+    configured: isR2Configured(),
+    enabled: Boolean(settings.r2.enabled && credentials.get("r2SecretAccessKey")),
+  }));
+}
+
+function isR2Configured(): boolean {
+  const r2 = settings.r2;
+  const secretAccessKey = credentials.get("r2SecretAccessKey");
+  if (!secretAccessKey || !r2.accessKeyId || !r2.bucketName) return false;
+  if (r2.endpoint?.trim()) return true;
+  return Boolean(r2.accountId?.trim());
+}
+
+function reinitializeR2Sync(): void {
+  r2Sync = null;
+  if (!isR2Configured()) return;
+  const r2 = settings.r2;
+  const secretAccessKey = credentials.get("r2SecretAccessKey")!;
+  try {
+    const endpoint = resolveR2Endpoint({ accountId: r2.accountId, endpoint: r2.endpoint });
+    const client = new R2Client({ endpoint, accessKeyId: r2.accessKeyId, secretAccessKey, bucketName: r2.bucketName, region: r2.region });
+    r2Sync = new R2SyncService(client, repository);
+  } catch (error) {
+    console.error("初始化 R2 同步失败：", error instanceof Error ? error.message : String(error));
+  }
+}
+
+function attachRepositorySyncHooks(): void {
+  repository.onDidSave = (type, id) => {
+    if (!r2Sync || !settings.r2.enabled) return;
+    if (type === "reading") {
+      const reading = repository.find(id);
+      if (reading) r2Sync.pushReading(reading).catch(() => {});
+    } else {
+      const folder = repository.findFolder(id);
+      if (folder) r2Sync.pushFolder(folder).catch(() => {});
+    }
+  };
+  repository.onDidDelete = (type, id) => {
+    if (!r2Sync || !settings.r2.enabled) return;
+    if (type === "reading") r2Sync.deleteReading(id).catch(() => {});
+    else r2Sync.deleteFolder(id).catch(() => {});
+  };
 }
 
 app.whenReady().then(() => {
@@ -279,9 +363,23 @@ app.whenReady().then(() => {
   appPreferences = new AppPreferencesStore(join(app.getPath("userData"), "app-preferences.json"));
   settings = preferences.get();
   appPrefs = appPreferences.get();
+  attachRepositorySyncHooks();
+  reinitializeR2Sync();
   registerIpc();
   createWindow();
   buildAppMenu();
+
+  // 启动 10s 后自动同步一次
+  setTimeout(() => {
+    if (r2Sync && settings.r2.enabled) {
+      r2Sync.sync().then((report: SyncReport) => {
+        console.log(`R2 自动同步完成：拉取 ${report.pulled}，推送 ${report.pushed}，错误 ${report.errors.length}`);
+      }).catch((error: unknown) => {
+        console.error("R2 自动同步失败：", error instanceof Error ? error.message : String(error));
+      });
+    }
+  }, 10_000);
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();

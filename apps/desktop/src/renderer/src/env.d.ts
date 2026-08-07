@@ -9,7 +9,8 @@ interface PresetProvider {
   signupUrl?: string;
 }
 
-interface TarotSettings { providerType: string; model: string; baseUrl: string; hasApiKey: boolean }
+interface R2Settings { enabled: boolean; accountId: string; endpoint: string; accessKeyId: string; bucketName: string; region: string }
+interface TarotSettings { providerType: string; model: string; baseUrl: string; hasApiKey: boolean; r2?: R2Settings }
 interface AppPreferences { enableStreaming: boolean; hideModelUi: boolean }
 interface ReadingFolder { id: string; name: string; createdAt: string; updatedAt: string }
 interface RevealedCard {
@@ -45,15 +46,18 @@ interface ReadingView {
 
 interface Window {
   tarot: {
-    bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; appPreferences: AppPreferences; presetProviders: PresetProvider[] }>;
+    bootstrap(): Promise<{ folders: ReadingFolder[]; history: ReadingView[]; settings: TarotSettings; appPreferences: AppPreferences; r2Configured?: boolean; presetProviders: PresetProvider[] }>;
     createFolder(name: string): Promise<ReadingFolder>;
     renameFolder(input: { id: string; name: string }): Promise<ReadingFolder>;
     deleteFolder(id: string): Promise<{ ok: boolean }>;
     moveReading(input: { id: string; folderId: string | null }): Promise<ReadingView>;
     deleteReading(id: string): Promise<{ ok: boolean }>;
-    saveSettings(input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string }): Promise<TarotSettings>;
+    saveSettings(input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } | undefined }): Promise<TarotSettings>;
     getAppPreferences(): Promise<AppPreferences>;
     setAppPreferences(value: { enableStreaming?: boolean; hideModelUi?: boolean }): Promise<AppPreferences>;
+    testR2Connection(input: { accountId?: string | undefined; endpoint?: string | undefined; accessKeyId?: string | undefined; secretAccessKey: string; bucketName?: string | undefined; region?: string | undefined }): Promise<{ ok: boolean; message: string }>;
+    syncNow(): Promise<{ pulled: number; pushed: number; errors: string[] }>;
+    r2Status(): Promise<{ configured: boolean; enabled: boolean }>;
     createReading(input: { question: string; mode: "manual" | "random"; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;
     interpret(id: string): Promise<ReadingView>;
