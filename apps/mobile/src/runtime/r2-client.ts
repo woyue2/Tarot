@@ -1,85 +1,283 @@
 /**
- * 手机端 R2 客户端：浏览器侧通过 fetch 调用 Cloudflare Worker 代理，
- * 而非直连 R2 —— 这样 Secret 永远不进前端。
+ * 手机端 R2 客户端：直连 R2（与桌面端架构一致），用 fetch + WebCrypto 计算
+ * AWS SigV4 签名，避免引入 @aws-sdk/client-s3 的 node 依赖与 polyfill。
  *
  * API 表面刻意对齐桌面端 r2-client.ts（putJson / getJson / list / delete /
- * testConnection），方便后续把同步逻辑在两端共享。
+ * testConnection），r2-sync.ts 因此可以在两端共享相同逻辑。
+ *
+ * ⚠️ 安全提示：浏览器/PWA 没有系统级安全存储，Secret Access Key 暂存
+ * localStorage，明文可被同源脚本读取。仅适合个人/可信设备使用；走 Capacitor
+ * 原生包装后应改用系统钥匙串（Keychain / Keystore）。
  */
 
-export interface WorkerR2ClientConfig {
-  workerUrl: string;
-  syncToken: string;
+export interface R2ClientConfig {
+  endpoint: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  bucketName: string;
+  region?: string;
 }
 
-function buildObjectsUrl(workerUrl: string, params: Record<string, string>): string {
-  const base = workerUrl.replace(/\/+$/, "");
-  const url = new URL(`${base}/objects`);
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
+function buildEndpoint(accountId: string): string {
+  const id = accountId.trim();
+  if (!id) throw new Error("Account ID 不能为空");
+  return `https://${id}.r2.cloudflarestorage.com`;
+}
+
+export function resolveR2Endpoint(input: {
+  accountId?: string | undefined;
+  endpoint?: string | undefined;
+}): string {
+  if (input.endpoint?.trim()) return input.endpoint.trim();
+  return buildEndpoint(input.accountId ?? "");
+}
+
+const encoder = new TextEncoder();
+
+async function hmac(key: BufferSource, message: string): Promise<ArrayBuffer> {
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    key,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(message));
+}
+
+async function sha256Hex(message: string): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", encoder.encode(message));
+  return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function bufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** RFC 3986 编码（query 值里 / 也要编码，path 里 / 不编码）。 */
+function uriEncode(value: string, encodeSlash: boolean): string {
+  let result = "";
+  for (const char of value) {
+    if (/[A-Za-z0-9_.~-]/.test(char)) {
+      result += char;
+    } else if (char === "/" && !encodeSlash) {
+      result += char;
+    } else {
+      const bytes = encoder.encode(char);
+      for (const b of bytes) result += "%" + b.toString(16).toUpperCase().padStart(2, "0");
+    }
   }
-  return url.toString();
+  return result;
 }
 
-export class WorkerR2Client {
-  constructor(private readonly config: WorkerR2ClientConfig) {}
+async function signRequest(opts: {
+  method: string;
+  url: URL;
+  headers: Record<string, string>;
+  body: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+}): Promise<Record<string, string>> {
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const dateStamp = amzDate.slice(0, 8);
 
-  private headers(): Record<string, string> {
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.config.syncToken}`,
-    };
+  const bodyHash = await sha256Hex(opts.body);
+  const host = opts.url.host;
+
+  // 合并并小写所有头
+  const baseHeaders: Record<string, string> = {
+    host,
+    "x-amz-content-sha256": bodyHash,
+    "x-amz-date": amzDate,
+  };
+  for (const [k, v] of Object.entries(opts.headers)) baseHeaders[k.toLowerCase()] = v;
+  const sortedHeaderKeys = Object.keys(baseHeaders).sort();
+  const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${baseHeaders[k]}\n`).join("");
+  const signedHeaders = sortedHeaderKeys.join(";");
+
+  // 规范化查询串
+  const sortedParams = Array.from(opts.url.searchParams.entries()).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  const canonicalQueryString = sortedParams
+    .map(([k, v]) => `${uriEncode(k, true)}=${uriEncode(v, true)}`)
+    .join("&");
+
+  // path：R2 用 path-style（host/bucket/key），pathname 已经包含 bucket 与 key
+  const canonicalRequest = [
+    opts.method,
+    opts.url.pathname,
+    canonicalQueryString,
+    canonicalHeaders,
+    signedHeaders,
+    bodyHash,
+  ].join("\n");
+
+  const credentialScope = `${dateStamp}/${opts.region}/s3/aws4_request`;
+
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join("\n");
+
+  // 派生签名 key
+  const kDate = await hmac(encoder.encode("AWS4" + opts.secretAccessKey), dateStamp);
+  const kRegion = await hmac(kDate, opts.region);
+  const kService = await hmac(kRegion, "s3");
+  const kSigning = await hmac(kService, "aws4_request");
+
+  const signature = bufferToHex(await hmac(kSigning, stringToSign));
+
+  const authorization = `AWS4-HMAC-SHA256 Credential=${opts.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  return {
+    ...baseHeaders,
+    Authorization: authorization,
+  };
+}
+
+interface ListContents {
+  key: string;
+  lastModified: string;
+}
+
+function parseListResponse(xml: string): {
+  contents: ListContents[];
+  nextContinuationToken?: string;
+} {
+  const contents: ListContents[] = [];
+  const contentsRegex = /<Contents>([\s\S]*?)<\/Contents>/g;
+  let match: RegExpExecArray | null;
+  while ((match = contentsRegex.exec(xml)) !== null) {
+    const block = match[1];
+    if (!block) continue;
+    const key = block.match(/<Key>([\s\S]*?)<\/Key>/)?.[1];
+    const lastModified = block.match(/<LastModified>([^<]*)<\/LastModified>/)?.[1];
+    if (key && lastModified) contents.push({ key, lastModified });
+  }
+  const nextToken = xml.match(/<NextContinuationToken>([^<]*)<\/NextContinuationToken>/)?.[1];
+  return nextToken ? { contents, nextContinuationToken: nextToken } : { contents };
+}
+
+export class R2Client {
+  private readonly endpoint: string;
+  private readonly accessKeyId: string;
+  private readonly secretAccessKey: string;
+  private readonly bucket: string;
+  private readonly region: string;
+
+  constructor(config: R2ClientConfig) {
+    this.endpoint = config.endpoint.replace(/\/+$/, "");
+    this.accessKeyId = config.accessKeyId;
+    this.secretAccessKey = config.secretAccessKey;
+    this.bucket = config.bucketName;
+    this.region = config.region ?? "auto";
+  }
+
+  private buildUrl(key: string, params?: Record<string, string>): URL {
+    // path-style：endpoint/bucket/key
+    const url = new URL(`${this.endpoint}/${this.bucket}/${key}`);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    }
+    return url;
+  }
+
+  private async signedFetch(
+    url: URL,
+    method: string,
+    extraHeaders: Record<string, string>,
+    body: string,
+  ): Promise<Response> {
+    const headers = await signRequest({
+      method,
+      url,
+      headers: extraHeaders,
+      body,
+      accessKeyId: this.accessKeyId,
+      secretAccessKey: this.secretAccessKey,
+      region: this.region,
+    });
+    return fetch(url.toString(), { method, headers, body: body || null });
   }
 
   async putJson(key: string, data: unknown): Promise<void> {
-    const res = await fetch(buildObjectsUrl(this.config.workerUrl, { key }), {
-      method: "PUT",
-      headers: this.headers(),
-      body: JSON.stringify(data, null, 2),
-    });
-    if (!res.ok) throw new Error(`推送到 R2 失败（${res.status}）`);
+    const body = JSON.stringify(data, null, 2);
+    const url = this.buildUrl(key);
+    const res = await this.signedFetch(url, "PUT", { "Content-Type": "application/json" }, body);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`PUT ${key} 失败（${res.status}）：${text}`);
+    }
   }
 
   async getJson<T>(key: string): Promise<T | undefined> {
-    const res = await fetch(buildObjectsUrl(this.config.workerUrl, { key }), {
-      headers: this.headers(),
-    });
+    const url = this.buildUrl(key);
+    const res = await this.signedFetch(url, "GET", {}, "");
     if (res.status === 404) return undefined;
-    if (!res.ok) throw new Error(`从 R2 读取失败（${res.status}）`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`GET ${key} 失败（${res.status}）：${text}`);
+    }
     return (await res.json()) as T;
   }
 
   async list(prefix: string): Promise<Array<{ key: string; lastModified: Date }>> {
-    const res = await fetch(buildObjectsUrl(this.config.workerUrl, { prefix }), {
-      headers: this.headers(),
-    });
-    if (!res.ok) throw new Error(`列出 R2 对象失败（${res.status}）`);
-    const data = (await res.json()) as Array<{ key: string; lastModified: string }>;
-    return data.map((item) => ({ key: item.key, lastModified: new Date(item.lastModified) }));
+    const result: Array<{ key: string; lastModified: Date }> = [];
+    let continuationToken: string | undefined;
+    do {
+      const params: Record<string, string> = { "list-type": "2", prefix };
+      if (continuationToken) params["continuation-token"] = continuationToken;
+      const url = this.buildUrl("", params);
+      const res = await this.signedFetch(url, "GET", {}, "");
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`LIST ${prefix} 失败（${res.status}）：${text}`);
+      }
+      const xml = await res.text();
+      const parsed = parseListResponse(xml);
+      for (const obj of parsed.contents) {
+        result.push({ key: obj.key, lastModified: new Date(obj.lastModified) });
+      }
+      continuationToken = parsed.nextContinuationToken;
+    } while (continuationToken);
+    return result;
   }
 
   async delete(key: string): Promise<void> {
-    const res = await fetch(buildObjectsUrl(this.config.workerUrl, { key }), {
-      method: "DELETE",
-      headers: this.headers(),
-    });
-    if (!res.ok && res.status !== 404) throw new Error(`删除 R2 对象失败（${res.status}）`);
+    const url = this.buildUrl(key);
+    const res = await this.signedFetch(url, "DELETE", {}, "");
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`DELETE ${key} 失败（${res.status}）：${text}`);
+    }
   }
 
   async testConnection(): Promise<{ ok: boolean; message: string }> {
     try {
-      const res = await fetch(buildObjectsUrl(this.config.workerUrl, { prefix: "readings/" }), {
-        headers: this.headers(),
-        signal: AbortSignal.timeout(20000),
+      // R2 的 Object Read & Write access key 不支持 HeadBucket，用 ListObjects 测试
+      const url = this.buildUrl("", {
+        "list-type": "2",
+        "max-keys": "1",
+        prefix: "_sync/",
       });
-      if (res.status === 401) return { ok: false, message: "授权失败：请检查同步令牌" };
-      if (res.status === 404) {
-        // Worker 存在但桶里还没有 readings/ 前缀，也算连通
-        return { ok: true, message: "连接成功 ✅" };
-      }
-      if (!res.ok) return { ok: false, message: `连接失败（${res.status}）` };
-      return { ok: true, message: "连接成功 ✅" };
+      const res = await this.signedFetch(url, "GET", {}, "");
+      if (res.ok) return { ok: true, message: "连接成功 ✅" };
+      const text = await res.text().catch(() => "");
+      if (res.status === 403)
+        return { ok: false, message: "Access Key 或 Secret Key 不正确" };
+      if (res.status === 404) return { ok: false, message: "Bucket 不存在" };
+      return { ok: false, message: `连接失败（${res.status}）：${text}` };
     } catch (error) {
-      return { ok: false, message: error instanceof Error ? error.message : "连接失败" };
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+        return { ok: false, message: "无法连接 R2 端点，请检查 Account ID 或 Endpoint" };
+      }
+      return { ok: false, message: `连接失败：${message}` };
     }
   }
 }

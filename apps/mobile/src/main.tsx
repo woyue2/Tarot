@@ -3,12 +3,12 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./styles.css";
 
-// 主题初始化：优先上次选择，其次跟随系统
+// 主题初始化：优先上次选择，否则默认浅色（不跟随系统）
 const savedTheme = localStorage.getItem("tarot.mobile.theme");
 if (savedTheme === "dark" || savedTheme === "light") {
   document.documentElement.dataset.theme = savedTheme;
-} else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-  document.documentElement.dataset.theme = "dark";
+} else {
+  document.documentElement.dataset.theme = "light";
 }
 
 const container = document.getElementById("root");

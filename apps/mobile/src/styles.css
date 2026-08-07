@@ -464,21 +464,16 @@ h1.view-title {
 /* ===== 结果 ===== */
 .revealed-row {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: clamp(116px, 40vw, 168px); /* 响应式揭牌牌宽，窄屏不溢出、宽屏不过大 */
-  gap: 12px;
-  min-width: 0; /* 允许收缩，自身 overflow-x:auto 内部滚动 */
-  justify-content: center; /* 牌数较少/宽屏时整组居中；溢出时无副作用 */
-  overflow-x: auto;
-  padding-bottom: 12px;
-  touch-action: pan-x;
-  scroll-snap-type: x mandatory;
+  /* 五张牌等比均分容器宽度，间距也用 vw 相对化 —— 不再横向滚动，五张完整可见 */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  column-gap: clamp(4px, 1.6vw, 12px);
+  row-gap: 12px;
   margin: 0 0 16px;
 }
 
 .revealed-card {
-  scroll-snap-align: center;
   text-align: center;
+  min-width: 0;
 }
 
 .revealed-card .card-image {

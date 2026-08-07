@@ -170,19 +170,150 @@ export async function testConnection(settings: MobileSettings, apiKey: string): 
   }
 }
 
-/** 手机端内置的少量 Provider 预设（可在设置里快速切换 baseUrl + 默认模型）。 */
+/** 手机端内置的 Provider 预设（与桌面端 provider-registry.ts 的 PROVIDER_PRESETS 完全一致，只是字段名做了浏览器端适配）。
+ *  直接复刻桌面，不裁剪。 */
+export type MobileProviderCategory = "domestic" | "overseas" | "local" | "custom";
+
 export interface MobilePreset {
   type: string;
   label: string;
+  description: string;
+  category: MobileProviderCategory;
   baseUrl: string;
   defaultModel: string;
+  /** 与桌面 recommendedModels 对齐 */
   models: string[];
+  signupUrl?: string;
 }
 
 export const MOBILE_PRESETS: MobilePreset[] = [
-  { type: "openai", label: "OpenAI", baseUrl: "https://api.openai.com/v1", defaultModel: "gpt-4o-mini", models: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"] },
-  { type: "deepseek", label: "DeepSeek", baseUrl: "https://api.deepseek.com/v1", defaultModel: "deepseek-chat", models: ["deepseek-chat", "deepseek-reasoner"] },
-  { type: "kimi", label: "Kimi (Moonshot)", baseUrl: "https://api.moonshot.cn/v1", defaultModel: "moonshot-v1-8k", models: ["moonshot-v1-8k", "moonshot-v1-32k"] },
-  { type: "qwen", label: "通义千问", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", defaultModel: "qwen-plus", models: ["qwen-plus", "qwen-turbo", "qwen-max"] },
-  { type: "custom", label: "自定义 API", baseUrl: "", defaultModel: "", models: [] },
+  {
+    type: "openai",
+    label: "OpenAI",
+    description: "OpenAI 官方 API",
+    category: "overseas",
+    baseUrl: "https://api.openai.com/v1",
+    defaultModel: "gpt-5-mini",
+    models: ["gpt-5-mini", "gpt-5", "gpt-4.1-mini", "gpt-4.1-nano"],
+    signupUrl: "https://platform.openai.com",
+  },
+  {
+    type: "minimax",
+    label: "MiniMax（国际平台）",
+    description: "api.minimax.io，需在 platform.minimax.io 注册的 Key",
+    category: "domestic",
+    baseUrl: "https://api.minimax.io/v1",
+    defaultModel: "MiniMax-M3",
+    models: ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed", "MiniMax-M2.5", "MiniMax-M2.5-highspeed", "MiniMax-M2.1"],
+    signupUrl: "https://platform.minimax.io",
+  },
+  {
+    type: "minimax-cn",
+    label: "MiniMax（国内平台）",
+    description: "api.minimaxi.com，需在 platform.minimaxi.com 注册的 Key",
+    category: "domestic",
+    baseUrl: "https://api.minimaxi.com/v1",
+    defaultModel: "MiniMax-M3",
+    models: ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1"],
+    signupUrl: "https://platform.minimaxi.com",
+  },
+  {
+    type: "minimax-coding-plan",
+    label: "MiniMax Coding Plan",
+    description: "Coding Plan 订阅用户，使用 sk-cp- 开头的 Subscription Key（与标准 MiniMax 同一端点）",
+    category: "domestic",
+    baseUrl: "https://api.minimax.io/v1",
+    defaultModel: "MiniMax-M3",
+    models: ["MiniMax-M3", "MiniMax-M2.7"],
+    signupUrl: "https://platform.minimax.io/subscribe/coding-plan",
+  },
+  {
+    type: "deepseek",
+    label: "DeepSeek",
+    description: "DeepSeek 官方 API，支持 V3/R1 等模型",
+    category: "domestic",
+    baseUrl: "https://api.deepseek.com/v1",
+    defaultModel: "deepseek-chat",
+    models: ["deepseek-chat", "deepseek-reasoner"],
+    signupUrl: "https://platform.deepseek.com",
+  },
+  {
+    type: "siliconflow",
+    label: "硅基流动 SiliconFlow",
+    description: "聚合平台，可调用 MiniMax/Kimi/Qwen 等 100+ 模型",
+    category: "domestic",
+    baseUrl: "https://api.siliconflow.cn/v1",
+    defaultModel: "MiniMaxAI/MiniMax-M3",
+    models: ["MiniMaxAI/MiniMax-M3", "moonshotai/Kimi-K2.6", "Qwen/Qwen2.5-72B-Instruct", "deepseek-ai/DeepSeek-V3"],
+    signupUrl: "https://siliconflow.cn",
+  },
+  {
+    type: "qwen",
+    label: "阿里百炼（通义千问）",
+    description: "阿里云百炼平台，支持 Qwen 系列模型",
+    category: "domestic",
+    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    defaultModel: "qwen-plus",
+    models: ["qwen-plus", "qwen-max", "qwen-turbo"],
+    signupUrl: "https://bailian.console.aliyun.com",
+  },
+  {
+    type: "kimi",
+    label: "月之暗面 Kimi",
+    description: "Kimi 官方 API，支持 k2.6/k3 等模型",
+    category: "domestic",
+    baseUrl: "https://api.moonshot.cn/v1",
+    defaultModel: "kimi-k2.6",
+    models: ["kimi-k2.6", "kimi-k3", "kimi-latest"],
+    signupUrl: "https://platform.moonshot.cn",
+  },
+  {
+    type: "tencent",
+    label: "腾讯混元 HunYuan",
+    description: "腾讯混元大模型 API",
+    category: "domestic",
+    baseUrl: "https://api.hunyuan.cloud.tencent.com/v1",
+    defaultModel: "hunyuan-turbo",
+    models: ["hunyuan-turbo", "hunyuan-pro", "hunyuan-standard"],
+    signupUrl: "https://console.cloud.tencent.com/hunyuan",
+  },
+  {
+    type: "volcengine",
+    label: "火山引擎",
+    description: "火山引擎方舟平台，支持豆包/DeepSeek/MiniMax 等",
+    category: "domestic",
+    baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+    defaultModel: "doubao-seed-2.0-pro",
+    models: ["doubao-seed-2.0-pro", "doubao-seed-2.0-lite", "deepseek-v4-flash", "minimax-m2.7"],
+    signupUrl: "https://console.volcengine.com/ark",
+  },
+  {
+    type: "stepfun",
+    label: "阶跃星辰 StepFun",
+    description: "阶跃星辰 Step 系列模型 API",
+    category: "domestic",
+    baseUrl: "https://api.stepfun.com/v1",
+    defaultModel: "step-3.7-flash",
+    models: ["step-3.7-flash", "step-3.5-flash"],
+    signupUrl: "https://platform.stepfun.com",
+  },
+  {
+    type: "ollama",
+    label: "Ollama（本地）",
+    description: "本地运行的开源模型，需本地部署 Ollama 服务",
+    category: "local",
+    baseUrl: "http://127.0.0.1:11434/v1",
+    defaultModel: "qwen2.5:7b",
+    models: ["qwen2.5:7b", "qwen2.5:14b", "llama3.2:3b", "deepseek-r1:7b"],
+    signupUrl: "https://ollama.ai",
+  },
+  {
+    type: "custom",
+    label: "自定义 API",
+    description: "填入任意 OpenAI 兼容端点的 Base URL 与模型名",
+    category: "custom",
+    baseUrl: "",
+    defaultModel: "",
+    models: [],
+  },
 ];

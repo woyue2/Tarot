@@ -3,12 +3,12 @@
  *
  * 逻辑平移自桌面端 r2-sync.ts（相同的后写覆盖 last-write-wins 策略、
  * 相同的对象键布局 readings/<id>.json、folders/<id>.json），只是把
- * R2Client 换成 WorkerR2Client，把仓储换成浏览器的 WebReadingRepository。
+ * R2Client（直连 R2）换成浏览器侧的实现，仓储换成浏览器的 WebReadingRepository。
  *
  * 这样手机端与桌面端可以向同一个 R2 桶读写，互不冲突。
  */
 import type { ReadingFolder, ReadingRepository, StoredReading } from "@tarot/runtime";
-import type { WorkerR2Client } from "./r2-client";
+import type { R2Client } from "./r2-client";
 
 export interface SyncReport {
   pulled: number;
@@ -23,11 +23,11 @@ type SyncRepository = ReadingRepository & {
 };
 
 export class MobileR2SyncService {
-  private readonly client: WorkerR2Client;
+  private readonly client: R2Client;
   private readonly repository: SyncRepository;
   private busy = false;
 
-  constructor(client: WorkerR2Client, repository: SyncRepository) {
+  constructor(client: R2Client, repository: SyncRepository) {
     this.client = client;
     this.repository = repository;
   }

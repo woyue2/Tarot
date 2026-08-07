@@ -15,15 +15,15 @@ import {
   defaultSettings,
   loadR2Settings,
   saveR2Settings,
-  getSyncToken,
-  setSyncToken,
-  clearSyncToken,
+  getSecretAccessKey,
+  setSecretAccessKey,
+  clearSecretAccessKey,
   isR2Configured,
   defaultR2Settings,
   type MobileSettings,
   type R2Settings,
 } from "./runtime/credentials";
-import { WorkerR2Client } from "./runtime/r2-client";
+import { R2Client, resolveR2Endpoint } from "./runtime/r2-client";
 import { MobileR2SyncService } from "./runtime/r2-sync";
 import {
   createProvider,
@@ -260,7 +260,7 @@ export function App() {
     setStreamText("");
     try {
       const result = await readingService.interpret(reading.id, provider, {
-        stream: true,
+        stream: settings.streaming,
         onProgress: (delta) => {
           if (delta) setStreamText((prev) => prev + delta);
         },
@@ -782,21 +782,6 @@ function ResultView(props: {
     return map;
   }, [revealed]);
 
-  // 揭牌横条：进入结果页 / 换牌时，把中间那张（时间流第 3 张「此刻」）滚到视口正中
-  const revealedRowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const row = revealedRowRef.current;
-    if (!row) return;
-    const kids = row.children;
-    if (kids.length === 0) return;
-    const mid = kids[Math.floor(kids.length / 2)];
-    if (!(mid instanceof HTMLElement)) return;
-    const id = requestAnimationFrame(() => {
-      mid.scrollIntoView({ inline: "center", block: "nearest" });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [reading.id, revealed]);
-
   const needsInterpret = !interpretation || reading.status === "failed";
 
   return (
@@ -805,7 +790,7 @@ function ResultView(props: {
       <h1 className="view-title">你的牌阵</h1>
 
       {revealed && (
-        <div className="revealed-row" ref={revealedRowRef}>
+        <div className="revealed-row">
           {revealed.map((card) => (
             <div className="revealed-card" key={card.position}>
               <div className="card-image">
@@ -1012,13 +997,18 @@ function SettingsView(props: {
 
   // ---- R2 云同步状态 ----
   const [r2, setR2] = useState<R2Settings>(loadR2Settings());
-  const [syncTokenLocal, setSyncTokenLocal] = useState(getSyncToken() ?? "");
+  const [secretAccessKeyLocal, setSecretAccessKeyLocal] = useState(getSecretAccessKey() ?? "");
   const [r2Test, setR2Test] = useState<{ ok: boolean; message: string } | null>(null);
   const [r2Testing, setR2Testing] = useState(false);
   const [r2Result, setR2Result] = useState<{ pulled: number; pushed: number; errors: string[] } | null>(null);
   const [r2Syncing, setR2Syncing] = useState(false);
 
-  const r2Ready = Boolean(r2.workerUrl.trim() && r2.bucketName.trim() && syncTokenLocal.trim());
+  const r2Ready = Boolean(
+    r2.accountId.trim() &&
+      r2.accessKeyId.trim() &&
+      r2.bucketName.trim() &&
+      secretAccessKeyLocal.trim(),
+  );
 
   // 进入设置页且已启用并已配置时，后台自动做一次双向同步
   useEffect(() => {
@@ -1030,6 +1020,7 @@ function SettingsView(props: {
     const preset = MOBILE_PRESETS.find((p) => p.type === type);
     if (!preset) return;
     setSettings({
+      ...settings,
       providerType: preset.type,
       baseUrl: preset.baseUrl,
       model: preset.defaultModel,
@@ -1053,15 +1044,36 @@ function SettingsView(props: {
   }
 
   // ---- R2 辅助 ----
-  function buildClient(): WorkerR2Client | null {
-    if (!r2.workerUrl.trim() || !syncTokenLocal.trim()) return null;
-    return new WorkerR2Client({ workerUrl: r2.workerUrl.trim(), syncToken: syncTokenLocal.trim() });
+  function buildClient(): R2Client | null {
+    if (
+      !r2.accountId.trim() ||
+      !r2.accessKeyId.trim() ||
+      !r2.bucketName.trim() ||
+      !secretAccessKeyLocal.trim()
+    ) {
+      return null;
+    }
+    try {
+      const endpoint = resolveR2Endpoint({
+        accountId: r2.accountId.trim(),
+        endpoint: r2.endpoint.trim(),
+      });
+      return new R2Client({
+        endpoint,
+        accessKeyId: r2.accessKeyId.trim(),
+        secretAccessKey: secretAccessKeyLocal.trim(),
+        bucketName: r2.bucketName.trim(),
+        region: r2.region.trim() || "auto",
+      });
+    } catch {
+      return null;
+    }
   }
 
   async function testR2() {
     const client = buildClient();
     if (!client) {
-      setR2Test({ ok: false, message: "请先填写 Worker URL 与同步令牌" });
+      setR2Test({ ok: false, message: "请先填写 Account ID / Access Key / Secret / Bucket" });
       return;
     }
     setR2Testing(true);
@@ -1074,20 +1086,23 @@ function SettingsView(props: {
   function saveR2() {
     const next: R2Settings = {
       enabled: r2.enabled,
-      workerUrl: r2.workerUrl.trim(),
+      accountId: r2.accountId.trim(),
+      endpoint: r2.endpoint.trim(),
+      accessKeyId: r2.accessKeyId.trim(),
       bucketName: r2.bucketName.trim(),
+      region: r2.region.trim() || "auto",
     };
     saveR2Settings(next);
     setR2(next);
-    if (syncTokenLocal.trim()) setSyncToken(syncTokenLocal.trim());
-    else clearSyncToken();
+    if (secretAccessKeyLocal.trim()) setSecretAccessKey(secretAccessKeyLocal.trim());
+    else clearSecretAccessKey();
     props.onNotify("R2 配置已保存");
   }
 
   async function runSyncNow(silent = false) {
     const client = buildClient();
     if (!client) {
-      if (!silent) setR2Result({ pulled: 0, pushed: 0, errors: ["请先保存 Worker URL / Bucket / 同步令牌"] });
+      if (!silent) setR2Result({ pulled: 0, pushed: 0, errors: ["请先保存 Account ID / Access Key / Secret / Bucket"] });
       return;
     }
     const sync = new MobileR2SyncService(client, repository);
@@ -1125,6 +1140,9 @@ function SettingsView(props: {
               </option>
             ))}
           </select>
+          {MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.description && (
+            <small>{MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.description}</small>
+          )}
         </label>
 
         <label className="field">
@@ -1141,9 +1159,15 @@ function SettingsView(props: {
           <span>模型</span>
           <input
             value={settings.model}
-            placeholder="gpt-4o-mini"
+            placeholder="如 gpt-5-mini / MiniMax-M3"
+            list="model-suggestions"
             onChange={(e) => setSettings({ ...settings, model: e.target.value })}
           />
+          <datalist id="model-suggestions">
+            {(MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.models ?? []).map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
         </label>
 
         <label className="field">
@@ -1156,6 +1180,18 @@ function SettingsView(props: {
             onChange={(e) => setApiKeyLocal(e.target.value)}
           />
           <small>本地仅明文存于浏览器，建议仅在可信设备上使用</small>
+        </label>
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={settings.streaming}
+            onChange={(e) => setSettings({ ...settings, streaming: e.target.checked })}
+          />
+          <span>
+            流式输出
+            <small>开启后用打字机效果渐进显示解读（SSE），关闭则等待完整结果一次返回</small>
+          </span>
         </label>
 
         <div className="settings-actions">
@@ -1182,7 +1218,7 @@ function SettingsView(props: {
           <div className="provider-logo">R2</div>
           <div>
             <h2>Cloudflare R2 云同步</h2>
-            <p className="hint">每条记录以 JSON 存到 R2，手机与桌面共用一个桶即可互相同步。</p>
+            <p className="hint">每条记录以 JSON 文件同步到 R2，手机与桌面共用同一个桶即可互相同步。</p>
           </div>
           <span className="settings-status" data-ready={r2Ready}>
             {r2Ready ? "已配置" : "未配置"}
@@ -1202,14 +1238,48 @@ function SettingsView(props: {
         </label>
 
         <label className="field">
-          <span>Worker URL</span>
+          <span>Account ID</span>
           <input
-            value={r2.workerUrl}
-            placeholder="https://tarot-r2-sync.xxx.workers.dev"
+            value={r2.accountId}
+            placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             spellCheck={false}
-            onChange={(e) => setR2({ ...r2, workerUrl: e.target.value })}
+            onChange={(e) => setR2({ ...r2, accountId: e.target.value })}
           />
-          <small>你部署的 Cloudflare Worker 地址（见 cloudflare-worker/README）</small>
+          <small>Cloudflare 账户 ID，用于构造 R2 端点</small>
+        </label>
+
+        <label className="field">
+          <span>Endpoint（可选）</span>
+          <input
+            value={r2.endpoint}
+            placeholder="留空则用 https://&lt;AccountID&gt;.r2.cloudflarestorage.com"
+            spellCheck={false}
+            onChange={(e) => setR2({ ...r2, endpoint: e.target.value })}
+          />
+          <small>自定义端点，留空自动按 Account ID 派生</small>
+        </label>
+
+        <label className="field">
+          <span>Access Key ID</span>
+          <input
+            value={r2.accessKeyId}
+            placeholder="R2 访问密钥 ID"
+            spellCheck={false}
+            onChange={(e) => setR2({ ...r2, accessKeyId: e.target.value })}
+          />
+          <small>R2 Object Read &amp; Write 令牌的 Access Key ID</small>
+        </label>
+
+        <label className="field">
+          <span>Secret Access Key</span>
+          <input
+            type="password"
+            value={secretAccessKeyLocal}
+            placeholder={getSecretAccessKey() ? "已保存；输入新值以替换" : "与 Access Key ID 配对的密钥"}
+            autoComplete="off"
+            onChange={(e) => setSecretAccessKeyLocal(e.target.value)}
+          />
+          <small>保存在浏览器 localStorage（仅本机）；走 Capacitor 后将迁至系统钥匙串</small>
         </label>
 
         <label className="field">
@@ -1220,18 +1290,18 @@ function SettingsView(props: {
             spellCheck={false}
             onChange={(e) => setR2({ ...r2, bucketName: e.target.value })}
           />
+          <small>R2 存储桶名称，需与桌面端一致才能互相同步</small>
         </label>
 
         <label className="field">
-          <span>同步令牌 (Sync Token)</span>
+          <span>Region</span>
           <input
-            type="password"
-            value={syncTokenLocal}
-            placeholder={getSyncToken() ? "已保存；输入新值以替换" : "与 Worker 的 SYNC_TOKEN 一致"}
-            autoComplete="off"
-            onChange={(e) => setSyncTokenLocal(e.target.value)}
+            value={r2.region}
+            placeholder="auto"
+            spellCheck={false}
+            onChange={(e) => setR2({ ...r2, region: e.target.value })}
           />
-          <small>保存在 Worker 端的环境变量里，不会进前端代码</small>
+          <small>R2 通常保持 auto 即可</small>
         </label>
 
         <div className="settings-actions">
@@ -1289,8 +1359,8 @@ function SettingsView(props: {
         <div>
           <b>关于安全</b>
           <br />
-          当前为 Web/PWA 预览版，API Token 与同步令牌明文存于浏览器 localStorage，同源脚本可读。Worker 方案已避免把 R2
-          Access Key 暴露在前端，但令牌本身仍建议仅在可信设备使用；走 Capacitor 原生包装后应改用系统钥匙串（Keychain / Keystore）。
+          当前为 Web/PWA 预览版，API Token 与 R2 Secret Access Key 明文存于浏览器 localStorage，同源脚本可读。直连
+          R2 方案与桌面端架构一致，但浏览器无安全密钥存储；建议仅在可信设备使用，走 Capacitor 原生包装后应改用系统钥匙串（Keychain / Keystore）。
         </div>
       </div>
     </section>
