@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">星径 · 塔罗</string>
+    <string name="title_activity_main">星径 · 塔罗</string>
+    <string name="package_name">com.astryx.tarot</string>
+    <string name="custom_url_scheme">com.astryx.tarot</string>
+</resources>

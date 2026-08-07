@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import { App } from "./App";
 import "./styles.css";
 
@@ -20,8 +21,9 @@ createRoot(container).render(
   </StrictMode>,
 );
 
-// PWA 离线：仅在构建产物（preview/build）注册，避免污染 vite dev
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+// PWA 离线：仅在浏览器环境（非 Capacitor 原生壳）注册 Service Worker。
+// Capacitor WebView 运行在 https://localhost，SW 会干扰外部 API fetch，不注册。
+if ("serviceWorker" in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {
       /* 注册失败不影响主流程 */

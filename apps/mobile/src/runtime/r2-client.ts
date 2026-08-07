@@ -10,6 +10,8 @@
  * 原生包装后应改用系统钥匙串（Keychain / Keystore）。
  */
 
+import { Capacitor, CapacitorHttp, type HttpOptions } from "@capacitor/core";
+
 export interface R2ClientConfig {
   endpoint: string;
   accessKeyId: string;
@@ -322,13 +324,61 @@ export class WorkerR2Client implements R2ClientLike {
     method: string,
     params: Record<string, string>,
     body?: string,
+    signal?: AbortSignal,
   ): Promise<Response> {
     const url = this.buildUrl(path, params);
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.syncToken}`,
     };
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    return fetch(url, { method, headers, body: body ?? null });
+
+    // Capacitor 原生环境下绕过 WebView fetch 的 localhost proxy，
+    // 直接走 CapacitorHttp 原生 HTTP 层，避免真机上 proxy 拦截卡住导致超时。
+    if (Capacitor.isNativePlatform()) {
+      return this.nativeRequest(url, method, headers, body, signal);
+    }
+
+    const init: RequestInit = { method, headers, body: body ?? null };
+    if (signal) init.signal = signal;
+    return fetch(url, init);
+  }
+
+  private async nativeRequest(
+    url: string,
+    method: string,
+    headers: Record<string, string>,
+    body?: string,
+    signal?: AbortSignal,
+  ): Promise<Response> {
+    if (signal?.aborted) {
+      throw new Error("aborted");
+    }
+
+    const options: HttpOptions = {
+      url,
+      method,
+      headers,
+      connectTimeout: 8000,
+      readTimeout: 8000,
+    };
+    if (body !== undefined) {
+      options.data = body;
+    }
+
+    const res = await CapacitorHttp.request(options);
+
+    // CapacitorHttp 会自动把 JSON 响应解析成对象，这里还原成字符串流供 Response 消费。
+    const responseBody =
+      res.data === undefined || res.data === null
+        ? ""
+        : typeof res.data === "string"
+          ? res.data
+          : JSON.stringify(res.data);
+
+    return new Response(responseBody, {
+      status: res.status,
+      headers: res.headers,
+    });
   }
 
   async putJson(key: string, data: unknown): Promise<void> {
@@ -372,23 +422,32 @@ export class WorkerR2Client implements R2ClientLike {
   }
 
   async testConnection(): Promise<{ ok: boolean; message: string }> {
+    // 8 秒超时：避免 Android WebView 网络问题导致长时间"测试中"
+    const timeoutMs = 8000;
     try {
-      // 先打 /health 确认 Worker 在线
-      const healthRes = await fetch(`${this.baseUrl}/health`);
+      // 先打 /health 确认 Worker 在线（走 request 以在 Capacitor 原生环境下绕过 WebView proxy）
+      const healthController = new AbortController();
+      const healthTimer = setTimeout(() => healthController.abort(), timeoutMs);
+      const healthRes = await this.request("/health", "GET", {}, undefined, healthController.signal);
+      clearTimeout(healthTimer);
       if (!healthRes.ok) {
         return { ok: false, message: `Worker 不可达（${healthRes.status}）` };
       }
       // 再打 /objects 验证 Sync Token
-      const res = await this.request("/objects", "GET", { prefix: "_sync/" });
+      const authController = new AbortController();
+      const authTimer = setTimeout(() => authController.abort(), timeoutMs);
+      const res = await this.request("/objects", "GET", { prefix: "_sync/" }, undefined, authController.signal);
+      clearTimeout(authTimer);
       if (res.ok) return { ok: true, message: "连接成功 ✅" };
       if (res.status === 401) return { ok: false, message: "Sync Token 不正确" };
       const text = await res.text().catch(() => "");
       return { ok: false, message: `连接失败（${res.status}）：${text}` };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
-        return { ok: false, message: "无法连接 Worker，请检查 Worker URL" };
+      if (message.includes("aborted") || message.includes("AbortError") || message.includes("timeout")) {
+        return { ok: false, message: `连接超时（${timeoutMs / 1000}s），可能网络不通或 URL 错误` };
       }
+      // 显示原始错误信息便于诊断（不再掩盖为泛化提示）
       return { ok: false, message: `连接失败：${message}` };
     }
   }

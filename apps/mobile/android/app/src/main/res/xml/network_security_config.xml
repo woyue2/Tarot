@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 网络安全配置。
+  Capacitor WebView 运行在 https://localhost，Android 9+ (API 28+) 的安全策略
+  可能阻止从 localhost origin 发起的外部请求。这里完全放开以排除安全策略干扰。
+-->
+<network-security-config>
+    <!-- 完全放开：允许所有明文与加密流量 -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
