@@ -736,7 +736,7 @@ function SelectView(props: {
               onPointerCancel={endGesture}
               onClick={onClickCard}
             >
-              <img src={props.cardBackSrc} alt="" loading="lazy" />
+              <img src={props.cardBackSrc} alt="" loading="lazy" decoding="async" />
               {selected && <span className="order">{order + 1}</span>}
             </button>
           );
@@ -813,6 +813,8 @@ function ResultView(props: {
                   src={imageOf(card.card.image)}
                   className={card.orientation === "reversed" ? "reversed" : ""}
                   alt={card.card.name}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <span className="pos">{card.positionName}</span>
