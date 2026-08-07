@@ -162,6 +162,71 @@ select {
   color: var(--muted-foreground);
 }
 
+.result-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.result-head .eyebrow {
+  margin-bottom: 4px;
+}
+
+.notes-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--foreground-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.notes-trigger[data-active="true"] {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+  background: var(--accent-wash);
+}
+
+.notes-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.notes-editor {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-subtle);
+}
+
+.notes-editor textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.notes-editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 h1.view-title {
   margin: 0 0 8px;
   font-size: 23px;

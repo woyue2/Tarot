@@ -7,6 +7,7 @@ const api = {
   renameFolder: (input: { id: string; name: string }) => ipcRenderer.invoke("tarot:rename-folder", input),
   deleteFolder: (id: string) => ipcRenderer.invoke("tarot:delete-folder", id),
   moveReading: (input: { id: string; folderId: string | null }) => ipcRenderer.invoke("tarot:move-reading", input),
+  updateNotes: (input: { id: string; notes: string }) => ipcRenderer.invoke("tarot:update-notes", input),
   deleteReading: (id: string) => ipcRenderer.invoke("tarot:delete-reading", id),
   saveSettings: (input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } }) => ipcRenderer.invoke("tarot:save-settings", input),
   getAppPreferences: () => ipcRenderer.invoke("tarot:get-app-preferences"),

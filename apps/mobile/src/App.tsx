@@ -406,6 +406,10 @@ export function App() {
             streaming={streaming}
             streamText={streamText}
             onInterpret={() => runInterpret(currentReading)}
+            onNotesChange={(updated) => {
+              setCurrentReading(updated);
+              refreshHistory();
+            }}
             {...(draftMode === "random" ? { onRedraw: redrawRandom } : {})}
           />
         )}
@@ -774,12 +778,16 @@ function ResultView(props: {
   streamText: string;
   onInterpret: () => void;
   onRedraw?: () => void;
+  onNotesChange?: (reading: PublicReading) => void;
 }) {
-  const { reading } = props;
+  const { reading, onNotesChange } = props;
   const revealed = reading.revealed;
   const calculation = reading.calculation;
   const interpretation = reading.interpretation;
   const [zoomedCard, setZoomedCard] = useState<RevealedCard | null>(null);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState(reading.notes ?? "");
+  const [savingNotes, setSavingNotes] = useState(false);
 
   const revealedByPos = useMemo(() => {
     const map = new Map<number, RevealedCard>();
@@ -798,10 +806,55 @@ function ResultView(props: {
       })
     : null;
 
+  async function saveNotes() {
+    setSavingNotes(true);
+    try {
+      const updated = readingService.updateNotes(reading.id, notesDraft);
+      onNotesChange?.(updated);
+      setEditingNotes(false);
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
   return (
     <section>
-      <p className="eyebrow">{reading.question}</p>
-      {drawnAtText && <p className="drawn-at">抽卡于 {drawnAtText}</p>}
+      <div className="result-head">
+        <div>
+          <p className="eyebrow">{reading.question}</p>
+          {drawnAtText && <p className="drawn-at">抽卡于 {drawnAtText}</p>}
+        </div>
+        <button
+          className="notes-trigger"
+          data-active={editingNotes}
+          onClick={() => {
+            setNotesDraft(reading.notes ?? "");
+            setEditingNotes((prev) => !prev);
+          }}
+        >
+          {reading.notes ? "笔记" : "记笔记"}
+          {reading.notes && <span className="notes-dot" />}
+        </button>
+      </div>
+      {editingNotes && (
+        <div className="notes-editor">
+          <textarea
+            value={notesDraft}
+            onChange={(event) => setNotesDraft(event.target.value)}
+            placeholder="记录后续发生的事情，或此刻的感受…"
+            rows={4}
+            maxLength={2000}
+          />
+          <div className="notes-editor-actions">
+            <button className="btn primary" disabled={savingNotes} onClick={() => void saveNotes()}>
+              {savingNotes ? "保存中…" : "保存"}
+            </button>
+            <button className="btn ghost" disabled={savingNotes} onClick={() => setEditingNotes(false)}>
+              取消
+            </button>
+          </div>
+        </div>
+      )}
       <h1 className="view-title">你的牌阵</h1>
 
       {revealed && (

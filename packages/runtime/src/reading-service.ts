@@ -79,6 +79,7 @@ export interface PublicReading {
   calculation?: ReadingCalculation | undefined;
   interpretation?: TarotInterpretation | undefined;
   drawnAt?: string | undefined;
+  notes?: string | undefined;
   createdAt: string;
   updatedAt: string;
 }
@@ -294,6 +295,19 @@ export class ReadingService {
     return this.toPublic(updated);
   }
 
+  updateNotes(id: string, rawNotes: string): PublicReading {
+    const reading = this.repo.find(id);
+    if (!reading) throw new Error("没有找到这次解读");
+    const notes = rawNotes.trim();
+    const updated: StoredReading = {
+      ...reading,
+      notes: notes.length > 0 ? notes : undefined,
+      updatedAt: this.env.now(),
+    };
+    this.repo.save(updated);
+    return this.toPublic(updated);
+  }
+
   deleteReading(id: string): { ok: true } {
     if (!this.repo.deleteReading(id)) throw new Error("删除解读记录失败");
     return { ok: true };
@@ -313,6 +327,7 @@ export class ReadingService {
       calculation: reading.calculation as ReadingCalculation | undefined,
       interpretation: reading.interpretation,
       drawnAt: reading.drawnAt,
+      notes: reading.notes,
       createdAt: reading.createdAt,
       updatedAt: reading.updatedAt,
     };

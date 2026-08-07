@@ -133,6 +133,8 @@ export function App() {
   const [savedNotice, setSavedNotice] = useState("");
   const [interpretProgress, setInterpretProgress] = useState(""); // 流式解读进度文本
   const [r2Configured, setR2Configured] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
 
   useEffect(() => {
     void window.tarot.bootstrap().then((data) => {
@@ -302,6 +304,22 @@ export function App() {
       setHistory(await window.tarot.history());
     } catch (reason) {
       setReading(reading); // 出错时恢复到解读前的状态
+      showError(reason);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveNotes() {
+    if (!reading) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await window.tarot.updateNotes({ id: reading.id, notes: notesDraft });
+      setReading(updated);
+      setHistory(await window.tarot.history());
+      setEditingNotes(false);
+    } catch (reason) {
       showError(reason);
     } finally {
       setBusy(false);
@@ -573,6 +591,34 @@ export function App() {
 
           {stage === "result" && reading && <motion.section className="result-view" key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <p className="eyebrow">YOUR FIVE-CARD TIMELINE</p>
+            <div className="result-actions">
+              <button
+                className="notes-trigger"
+                data-active={editingNotes}
+                onClick={() => {
+                  setNotesDraft(reading.notes ?? "");
+                  setEditingNotes((prev) => !prev);
+                }}
+              >
+                {reading.notes ? "查看笔记" : "添加笔记"}
+                {reading.notes && <span className="notes-dot" />}
+              </button>
+            </div>
+            {editingNotes && (
+              <div className="notes-editor">
+                <textarea
+                  value={notesDraft}
+                  onChange={(event) => setNotesDraft(event.target.value)}
+                  placeholder="记录后续发生的事情，或此刻的感受…"
+                  rows={5}
+                  maxLength={2000}
+                />
+                <div className="notes-editor-actions">
+                  <Button label="保存笔记" variant="primary" size="sm" isLoading={busy} isDisabled={busy} onClick={() => void saveNotes()} />
+                  <Button label="取消" variant="ghost" size="sm" isDisabled={busy} onClick={() => setEditingNotes(false)} />
+                </div>
+              </div>
+            )}
             <h1>{reading.interpretation?.headline ?? "牌阵已保存，等待解读"}</h1>
             <p className="lead compact">{reading.question}</p>
             {reading.drawnAt && <p className="drawn-at">抽卡于 {new Date(reading.drawnAt).toLocaleString("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>}

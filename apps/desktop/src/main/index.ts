@@ -152,6 +152,9 @@ function registerIpc(): void {
   ipcMain.handle("tarot:move-reading", (_event, input: { id: string; folderId: string | null }) => {
     return readingService.moveReading(input.id, input.folderId);
   });
+  ipcMain.handle("tarot:update-notes", (_event, input: { id: string; notes: string }) => {
+    return readingService.updateNotes(input.id, input.notes);
+  });
   ipcMain.handle("tarot:delete-folder", (_event, id: string) => {
     if (!repository.deleteFolder(id)) throw new Error("删除分组失败");
     return { ok: true };

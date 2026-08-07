@@ -118,6 +118,15 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .lead { max-width: 650px; margin: 20px auto 32px; color: var(--foreground-secondary); font-size: 14px; line-height: 1.8; }
 .lead.compact { margin-bottom: 8px; }
 .drawn-at { margin: 0 auto 28px; color: var(--muted-foreground); font-size: 12px; letter-spacing: .02em; }
+.result-actions { display: flex; justify-content: center; margin: 0 0 18px; }
+.notes-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--background); color: var(--foreground-secondary); font-size: 12px; cursor: pointer; transition: border-color .16s ease, background .16s ease, color .16s ease; }
+.notes-trigger:hover { border-color: var(--accent); color: var(--foreground); background: var(--surface-subtle); }
+.notes-trigger[data-active="true"] { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-wash); }
+.notes-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.notes-editor { max-width: 650px; margin: 0 auto 28px; padding: 16px; text-align: left; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-subtle); }
+.notes-editor textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--background); color: var(--foreground); font-size: 13px; line-height: 1.65; resize: vertical; }
+.notes-editor textarea:focus { outline: none; border-color: var(--accent); }
+.notes-editor-actions { display: flex; gap: 10px; margin-top: 12px; }
 .question-panel { width: min(720px, 100%); margin: 0 auto; padding: 22px; text-align: left; border: 1px solid var(--border); border-radius: 14px; background: var(--background); box-shadow: 0 10px 35px rgba(28, 36, 48, .055); }
 .question-footer { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted-foreground); font-size: 10px; }
 .mode-actions { width: min(720px, 100%); margin: 14px auto 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }

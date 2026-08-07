@@ -41,6 +41,7 @@ interface ReadingView {
     disclaimer: string;
   };
   drawnAt?: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +54,7 @@ interface Window {
     renameFolder(input: { id: string; name: string }): Promise<ReadingFolder>;
     deleteFolder(id: string): Promise<{ ok: boolean }>;
     moveReading(input: { id: string; folderId: string | null }): Promise<ReadingView>;
+    updateNotes(input: { id: string; notes: string }): Promise<ReadingView>;
     deleteReading(id: string): Promise<{ ok: boolean }>;
     saveSettings(input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } | undefined }): Promise<TarotSettings>;
     getAppPreferences(): Promise<AppPreferences>;
