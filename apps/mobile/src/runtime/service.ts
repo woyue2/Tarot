@@ -2,10 +2,11 @@ import { ReadingService } from "@tarot/runtime";
 import { contentBundle } from "./content";
 import { browserEnv } from "./environment";
 import { WebReadingRepository } from "./repository";
-import { R2Client, resolveR2Endpoint } from "./r2-client";
+import { R2Client, WorkerR2Client, resolveR2Endpoint, type R2ClientLike } from "./r2-client";
 import { MobileR2SyncService } from "./r2-sync";
 import {
   getSecretAccessKey,
+  getSyncToken,
   isR2Configured,
   loadR2Settings,
 } from "./credentials";
@@ -16,54 +17,69 @@ export const repository = new WebReadingRepository();
 export const readingService = new ReadingService(repository, contentBundle, browserEnv);
 
 /**
- * 按需构建 R2 同步服务（直连 R2 版）。未配置则返回 null。
- * 每次调用都新建，开销极小；配置变化时能自动拿到最新设置。
+ * 按当前已保存的设置构建 R2 客户端（直连或 Worker 代理）。
+ * 未配置或配置不全返回 null。
  */
-export function createR2Sync(): MobileR2SyncService | null {
-  if (!isR2Configured()) return null;
+function buildR2Client(): R2ClientLike | null {
   const settings = loadR2Settings();
+  if (settings.mode === "worker") {
+    const token = getSyncToken();
+    if (!settings.workerUrl.trim() || !token) return null;
+    return new WorkerR2Client({
+      workerUrl: settings.workerUrl.trim(),
+      syncToken: token,
+    });
+  }
+  // direct
   const secret = getSecretAccessKey();
-  if (!secret) return null;
+  if (
+    !settings.accountId.trim() ||
+    !settings.accessKeyId.trim() ||
+    !settings.bucketName.trim() ||
+    !secret
+  ) {
+    return null;
+  }
   try {
     const endpoint = resolveR2Endpoint({
       accountId: settings.accountId,
       endpoint: settings.endpoint,
     });
-    const client = new R2Client({
+    return new R2Client({
       endpoint,
       accessKeyId: settings.accessKeyId,
       secretAccessKey: secret,
       bucketName: settings.bucketName,
       region: settings.region,
     });
-    return new MobileR2SyncService(client, repository);
   } catch {
     return null;
   }
 }
 
-/** 用当前已保存的设置测试 R2 直连连通性（供「测试连接」按钮调用）。 */
+/**
+ * 按需构建 R2 同步服务。未配置则返回 null。
+ * 每次调用都新建，开销极小；配置变化时能自动拿到最新设置。
+ */
+export function createR2Sync(): MobileR2SyncService | null {
+  if (!isR2Configured()) return null;
+  const client = buildR2Client();
+  if (!client) return null;
+  return new MobileR2SyncService(client, repository);
+}
+
+/** 用当前已保存的设置测试 R2 连通性（直连或 Worker 代理，供「测试连接」按钮调用）。 */
 export async function testR2Connection(): Promise<{ ok: boolean; message: string }> {
   if (!isR2Configured()) {
+    const settings = loadR2Settings();
+    if (settings.mode === "worker") {
+      return { ok: false, message: "尚未配置 Worker URL / Sync Token" };
+    }
     return { ok: false, message: "尚未配置 Account ID / Access Key / Secret / Bucket" };
   }
-  const settings = loadR2Settings();
-  const secret = getSecretAccessKey();
-  if (!secret) return { ok: false, message: "尚未配置 Secret Access Key" };
-  try {
-    const endpoint = resolveR2Endpoint({
-      accountId: settings.accountId,
-      endpoint: settings.endpoint,
-    });
-    const client = new R2Client({
-      endpoint,
-      accessKeyId: settings.accessKeyId,
-      secretAccessKey: secret,
-      bucketName: settings.bucketName,
-      region: settings.region,
-    });
-    return client.testConnection();
-  } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "连接失败" };
+  const client = buildR2Client();
+  if (!client) {
+    return { ok: false, message: "配置不完整，请检查 R2 设置" };
   }
+  return client.testConnection();
 }

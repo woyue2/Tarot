@@ -281,3 +281,115 @@ export class R2Client {
     }
   }
 }
+
+// ---- 公共接口：直连 / Worker 两种实现都满足它 ----
+
+/** R2 客户端抽象，R2Client（直连）和 WorkerR2Client（代理）都实现此接口。 */
+export interface R2ClientLike {
+  putJson(key: string, data: unknown): Promise<void>;
+  getJson<T>(key: string): Promise<T | undefined>;
+  list(prefix: string): Promise<Array<{ key: string; lastModified: Date }>>;
+  delete(key: string): Promise<void>;
+  testConnection(): Promise<{ ok: boolean; message: string }>;
+}
+
+// ---- Worker 代理客户端 ----
+
+/**
+ * 走 Cloudflare Worker 代理的 R2 客户端。
+ * 前端只持 Worker URL + Sync Token（Bearer 鉴权），R2 密钥由 Worker 服务端持有。
+ * API 表面与直连 R2Client 一致，r2-sync.ts 可无差别复用。
+ */
+export class WorkerR2Client implements R2ClientLike {
+  private readonly baseUrl: string;
+  private readonly syncToken: string;
+
+  constructor(config: { workerUrl: string; syncToken: string }) {
+    this.baseUrl = config.workerUrl.replace(/\/+$/, "");
+    this.syncToken = config.syncToken;
+  }
+
+  private buildUrl(path: string, params?: Record<string, string>): string {
+    const url = new URL(`${this.baseUrl}${path}`);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    }
+    return url.toString();
+  }
+
+  private async request(
+    path: string,
+    method: string,
+    params: Record<string, string>,
+    body?: string,
+  ): Promise<Response> {
+    const url = this.buildUrl(path, params);
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.syncToken}`,
+    };
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    return fetch(url, { method, headers, body: body ?? null });
+  }
+
+  async putJson(key: string, data: unknown): Promise<void> {
+    const body = JSON.stringify(data, null, 2);
+    const res = await this.request("/objects", "PUT", { key }, body);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`PUT ${key} 失败（${res.status}）：${text}`);
+    }
+  }
+
+  async getJson<T>(key: string): Promise<T | undefined> {
+    const res = await this.request("/objects", "GET", { key });
+    if (res.status === 404) return undefined;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`GET ${key} 失败（${res.status}）：${text}`);
+    }
+    return (await res.json()) as T;
+  }
+
+  async list(prefix: string): Promise<Array<{ key: string; lastModified: Date }>> {
+    const res = await this.request("/objects", "GET", { prefix });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`LIST ${prefix} 失败（${res.status}）：${text}`);
+    }
+    const items = (await res.json()) as Array<{ key: string; lastModified: string }>;
+    return items.map((item) => ({
+      key: item.key,
+      lastModified: new Date(item.lastModified),
+    }));
+  }
+
+  async delete(key: string): Promise<void> {
+    const res = await this.request("/objects", "DELETE", { key });
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`DELETE ${key} 失败（${res.status}）：${text}`);
+    }
+  }
+
+  async testConnection(): Promise<{ ok: boolean; message: string }> {
+    try {
+      // 先打 /health 确认 Worker 在线
+      const healthRes = await fetch(`${this.baseUrl}/health`);
+      if (!healthRes.ok) {
+        return { ok: false, message: `Worker 不可达（${healthRes.status}）` };
+      }
+      // 再打 /objects 验证 Sync Token
+      const res = await this.request("/objects", "GET", { prefix: "_sync/" });
+      if (res.ok) return { ok: true, message: "连接成功 ✅" };
+      if (res.status === 401) return { ok: false, message: "Sync Token 不正确" };
+      const text = await res.text().catch(() => "");
+      return { ok: false, message: `连接失败（${res.status}）：${text}` };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+        return { ok: false, message: "无法连接 Worker，请检查 Worker URL" };
+      }
+      return { ok: false, message: `连接失败：${message}` };
+    }
+  }
+}

@@ -6,6 +6,7 @@
  *   - 持有 R2_BUCKET 绑定（原生访问，无需 AWS SDK）
  *   - 持有 SYNC_TOKEN 密钥（secret，不进代码仓库）
  *   - 浏览器端只调你自己的 Worker 域名，用 Bearer 令牌鉴权
+ *   - 所有响应带 CORS 头，允许浏览器跨域 fetch
  *
  * 对象键布局与桌面端完全一致（共用一个桶即可互相识别）：
  *   readings/<id>.json
@@ -14,16 +15,38 @@
  * 部署：见同目录 README.md
  */
 
+// CORS 头：允许任意来源（个人同步用，可按需收紧为具体域名）
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+function corsify(response) {
+  for (const [k, v] of Object.entries(CORS_HEADERS)) {
+    response.headers.set(k, v);
+  }
+  return response;
+}
+
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
+  return corsify(
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // CORS 预检请求：直接放行
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
 
     // 健康检查 / 连接测试
     if (url.pathname === "/health") {
@@ -66,11 +89,13 @@ export default {
     if (request.method === "GET") {
       if (key) {
         const obj = await env.R2_BUCKET.get(key);
-        if (!obj) return new Response("Not Found", { status: 404 });
+        if (!obj) return new Response("Not Found", { status: 404, headers: { ...CORS_HEADERS } });
         const text = await obj.text();
-        return new Response(text, {
-          headers: { "Content-Type": "application/json" },
-        });
+        return corsify(
+          new Response(text, {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
       }
       const listPrefix = prefix || "";
       const listed = await env.R2_BUCKET.list(

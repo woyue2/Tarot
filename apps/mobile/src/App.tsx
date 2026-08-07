@@ -18,12 +18,16 @@ import {
   getSecretAccessKey,
   setSecretAccessKey,
   clearSecretAccessKey,
+  getSyncToken,
+  setSyncToken,
+  clearSyncToken,
   isR2Configured,
   defaultR2Settings,
   type MobileSettings,
   type R2Settings,
+  type R2Mode,
 } from "./runtime/credentials";
-import { R2Client, resolveR2Endpoint } from "./runtime/r2-client";
+import { R2Client, WorkerR2Client, resolveR2Endpoint } from "./runtime/r2-client";
 import { MobileR2SyncService } from "./runtime/r2-sync";
 import {
   createProvider,
@@ -998,17 +1002,21 @@ function SettingsView(props: {
   // ---- R2 云同步状态 ----
   const [r2, setR2] = useState<R2Settings>(loadR2Settings());
   const [secretAccessKeyLocal, setSecretAccessKeyLocal] = useState(getSecretAccessKey() ?? "");
+  const [syncTokenLocal, setSyncTokenLocal] = useState(getSyncToken() ?? "");
   const [r2Test, setR2Test] = useState<{ ok: boolean; message: string } | null>(null);
   const [r2Testing, setR2Testing] = useState(false);
   const [r2Result, setR2Result] = useState<{ pulled: number; pushed: number; errors: string[] } | null>(null);
   const [r2Syncing, setR2Syncing] = useState(false);
 
-  const r2Ready = Boolean(
-    r2.accountId.trim() &&
-      r2.accessKeyId.trim() &&
-      r2.bucketName.trim() &&
-      secretAccessKeyLocal.trim(),
-  );
+  const r2Ready =
+    r2.mode === "worker"
+      ? Boolean(r2.workerUrl.trim() && syncTokenLocal.trim())
+      : Boolean(
+          r2.accountId.trim() &&
+            r2.accessKeyId.trim() &&
+            r2.bucketName.trim() &&
+            secretAccessKeyLocal.trim(),
+        );
 
   // 进入设置页且已启用并已配置时，后台自动做一次双向同步
   useEffect(() => {
@@ -1044,7 +1052,14 @@ function SettingsView(props: {
   }
 
   // ---- R2 辅助 ----
-  function buildClient(): R2Client | null {
+  function buildClient(): R2Client | WorkerR2Client | null {
+    if (r2.mode === "worker") {
+      if (!r2.workerUrl.trim() || !syncTokenLocal.trim()) return null;
+      return new WorkerR2Client({
+        workerUrl: r2.workerUrl.trim(),
+        syncToken: syncTokenLocal.trim(),
+      });
+    }
     if (
       !r2.accountId.trim() ||
       !r2.accessKeyId.trim() ||
@@ -1073,7 +1088,8 @@ function SettingsView(props: {
   async function testR2() {
     const client = buildClient();
     if (!client) {
-      setR2Test({ ok: false, message: "请先填写 Account ID / Access Key / Secret / Bucket" });
+      const msg = r2.mode === "worker" ? "请先填写 Worker URL / Sync Token" : "请先填写 Account ID / Access Key / Secret / Bucket";
+      setR2Test({ ok: false, message: msg });
       return;
     }
     setR2Testing(true);
@@ -1086,23 +1102,31 @@ function SettingsView(props: {
   function saveR2() {
     const next: R2Settings = {
       enabled: r2.enabled,
+      mode: r2.mode,
       accountId: r2.accountId.trim(),
       endpoint: r2.endpoint.trim(),
       accessKeyId: r2.accessKeyId.trim(),
       bucketName: r2.bucketName.trim(),
       region: r2.region.trim() || "auto",
+      workerUrl: r2.workerUrl.trim(),
     };
     saveR2Settings(next);
     setR2(next);
-    if (secretAccessKeyLocal.trim()) setSecretAccessKey(secretAccessKeyLocal.trim());
-    else clearSecretAccessKey();
+    if (r2.mode === "worker") {
+      if (syncTokenLocal.trim()) setSyncToken(syncTokenLocal.trim());
+      else clearSyncToken();
+    } else {
+      if (secretAccessKeyLocal.trim()) setSecretAccessKey(secretAccessKeyLocal.trim());
+      else clearSecretAccessKey();
+    }
     props.onNotify("R2 配置已保存");
   }
 
   async function runSyncNow(silent = false) {
     const client = buildClient();
     if (!client) {
-      if (!silent) setR2Result({ pulled: 0, pushed: 0, errors: ["请先保存 Account ID / Access Key / Secret / Bucket"] });
+      const msg = r2.mode === "worker" ? "请先保存 Worker URL / Sync Token" : "请先保存 Account ID / Access Key / Secret / Bucket";
+      if (!silent) setR2Result({ pulled: 0, pushed: 0, errors: [msg] });
       return;
     }
     const sync = new MobileR2SyncService(client, repository);
@@ -1238,71 +1262,116 @@ function SettingsView(props: {
         </label>
 
         <label className="field">
-          <span>Account ID</span>
-          <input
-            value={r2.accountId}
-            placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            spellCheck={false}
-            onChange={(e) => setR2({ ...r2, accountId: e.target.value })}
-          />
-          <small>Cloudflare 账户 ID，用于构造 R2 端点</small>
+          <span>连接模式</span>
+          <select
+            value={r2.mode}
+            onChange={(e) => setR2({ ...r2, mode: e.target.value as R2Mode })}
+          >
+            <option value="worker">Worker 代理（推荐，密钥不落地前端）</option>
+            <option value="direct">直连 R2（需配 CORS，密钥存浏览器）</option>
+          </select>
+          <small>
+            {r2.mode === "worker"
+              ? "前端只持 Worker URL + Sync Token，R2 密钥由 Worker 服务端持有，无 CORS 问题"
+              : "浏览器直接用 SigV4 签名打 R2 端点，需在 R2 控制台配 CORS 策略"}
+          </small>
         </label>
 
-        <label className="field">
-          <span>Endpoint（可选）</span>
-          <input
-            value={r2.endpoint}
-            placeholder="留空则用 https://&lt;AccountID&gt;.r2.cloudflarestorage.com"
-            spellCheck={false}
-            onChange={(e) => setR2({ ...r2, endpoint: e.target.value })}
-          />
-          <small>自定义端点，留空自动按 Account ID 派生</small>
-        </label>
+        {r2.mode === "worker" ? (
+          <>
+            <label className="field">
+              <span>Worker URL</span>
+              <input
+                value={r2.workerUrl}
+                placeholder="https://tarot-r2-sync.xxx.workers.dev"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, workerUrl: e.target.value })}
+              />
+              <small>部署 cloudflare-worker 后得到的 workers.dev 域名</small>
+            </label>
 
-        <label className="field">
-          <span>Access Key ID</span>
-          <input
-            value={r2.accessKeyId}
-            placeholder="R2 访问密钥 ID"
-            spellCheck={false}
-            onChange={(e) => setR2({ ...r2, accessKeyId: e.target.value })}
-          />
-          <small>R2 Object Read &amp; Write 令牌的 Access Key ID</small>
-        </label>
+            <label className="field">
+              <span>Sync Token</span>
+              <input
+                type="password"
+                value={syncTokenLocal}
+                placeholder={getSyncToken() ? "已保存；输入新值以替换" : "wrangler secret put SYNC_TOKEN 时设的值"}
+                autoComplete="off"
+                onChange={(e) => setSyncTokenLocal(e.target.value)}
+              />
+              <small>与 Worker 侧 SYNC_TOKEN 一致即可通过鉴权</small>
+            </label>
+          </>
+        ) : (
+          <>
+            <label className="field">
+              <span>Account ID</span>
+              <input
+                value={r2.accountId}
+                placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, accountId: e.target.value })}
+              />
+              <small>Cloudflare 账户 ID，用于构造 R2 端点</small>
+            </label>
 
-        <label className="field">
-          <span>Secret Access Key</span>
-          <input
-            type="password"
-            value={secretAccessKeyLocal}
-            placeholder={getSecretAccessKey() ? "已保存；输入新值以替换" : "与 Access Key ID 配对的密钥"}
-            autoComplete="off"
-            onChange={(e) => setSecretAccessKeyLocal(e.target.value)}
-          />
-          <small>保存在浏览器 localStorage（仅本机）；走 Capacitor 后将迁至系统钥匙串</small>
-        </label>
+            <label className="field">
+              <span>Endpoint（可选）</span>
+              <input
+                value={r2.endpoint}
+                placeholder="留空则用 https://&lt;AccountID&gt;.r2.cloudflarestorage.com"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, endpoint: e.target.value })}
+              />
+              <small>自定义端点，留空自动按 Account ID 派生</small>
+            </label>
 
-        <label className="field">
-          <span>Bucket 名称</span>
-          <input
-            value={r2.bucketName}
-            placeholder="tarot-sync"
-            spellCheck={false}
-            onChange={(e) => setR2({ ...r2, bucketName: e.target.value })}
-          />
-          <small>R2 存储桶名称，需与桌面端一致才能互相同步</small>
-        </label>
+            <label className="field">
+              <span>Access Key ID</span>
+              <input
+                value={r2.accessKeyId}
+                placeholder="R2 访问密钥 ID"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, accessKeyId: e.target.value })}
+              />
+              <small>R2 Object Read &amp; Write 令牌的 Access Key ID</small>
+            </label>
 
-        <label className="field">
-          <span>Region</span>
-          <input
-            value={r2.region}
-            placeholder="auto"
-            spellCheck={false}
-            onChange={(e) => setR2({ ...r2, region: e.target.value })}
-          />
-          <small>R2 通常保持 auto 即可</small>
-        </label>
+            <label className="field">
+              <span>Secret Access Key</span>
+              <input
+                type="password"
+                value={secretAccessKeyLocal}
+                placeholder={getSecretAccessKey() ? "已保存；输入新值以替换" : "与 Access Key ID 配对的密钥"}
+                autoComplete="off"
+                onChange={(e) => setSecretAccessKeyLocal(e.target.value)}
+              />
+              <small>保存在浏览器 localStorage（仅本机）；走 Capacitor 后将迁至系统钥匙串</small>
+            </label>
+
+            <label className="field">
+              <span>Bucket 名称</span>
+              <input
+                value={r2.bucketName}
+                placeholder="tarot-sync"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, bucketName: e.target.value })}
+              />
+              <small>R2 存储桶名称，需与桌面端一致才能互相同步</small>
+            </label>
+
+            <label className="field">
+              <span>Region</span>
+              <input
+                value={r2.region}
+                placeholder="auto"
+                spellCheck={false}
+                onChange={(e) => setR2({ ...r2, region: e.target.value })}
+              />
+              <small>R2 通常保持 auto 即可</small>
+            </label>
+          </>
+        )}
 
         <div className="settings-actions">
           <button className="btn primary" onClick={saveR2}>
@@ -1359,8 +1428,7 @@ function SettingsView(props: {
         <div>
           <b>关于安全</b>
           <br />
-          当前为 Web/PWA 预览版，API Token 与 R2 Secret Access Key 明文存于浏览器 localStorage，同源脚本可读。直连
-          R2 方案与桌面端架构一致，但浏览器无安全密钥存储；建议仅在可信设备使用，走 Capacitor 原生包装后应改用系统钥匙串（Keychain / Keystore）。
+          当前为 Web/PWA 预览版，API Token 明文存于浏览器 localStorage，同源脚本可读。R2 同步走 Worker 代理模式时，R2 密钥不落地前端（仅 Sync Token 存浏览器）；走直连模式时 Secret Access Key 同样明文存 localStorage。建议仅在可信设备使用，走 Capacitor 原生包装后应改用系统钥匙串（Keychain / Keystore）。
         </div>
       </div>
     </section>

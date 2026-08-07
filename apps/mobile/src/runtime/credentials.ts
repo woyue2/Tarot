@@ -14,22 +14,34 @@ export interface MobileSettings {
   streaming: boolean;
 }
 
-/** R2 直连设置（非机密部分，字段对齐桌面端 R2Preferences）。Secret Access Key 单独用 *SecretAccessKey 函数存储。 */
+/** R2 同步模式：direct = 浏览器直连 R2（SigV4 签名），worker = 走 Cloudflare Worker 代理（Bearer 令牌）。 */
+export type R2Mode = "direct" | "worker";
+
+/**
+ * R2 同步设置（非机密部分）。
+ * - direct 模式字段对齐桌面端 R2Preferences，Secret Access Key 单独用 *SecretAccessKey 函数存储。
+ * - worker 模式用 workerUrl + syncToken（Sync Token 单独用 *SyncToken 函数存储）。
+ */
 export interface R2Settings {
   enabled: boolean;
+  mode: R2Mode;
+  // direct 模式
   accountId: string;
   endpoint: string;
   accessKeyId: string;
   bucketName: string;
   region: string;
+  // worker 模式
+  workerUrl: string;
 }
 
 const SETTINGS_KEY = "tarot.mobile.settings.v1";
 const APIKEY_KEY = "tarot.mobile.apikey.v1";
-// v2：从 Worker 代理（workerUrl/syncToken）改为直连 R2（accountId/accessKeyId/...），
-// 旧 v1 数据无法自动迁移（Worker URL 不能反推 Account ID），直接作废。
-const R2_SETTINGS_KEY = "tarot.mobile.r2.v2";
-const R2_SECRET_KEY = "tarot.mobile.r2.secret.v2";
+// v3：支持 direct / worker 双模式。workerUrl 进 settings，syncToken 单独存。
+// v2 的 direct 字段保留兼容；新增 mode/workerUrl 字段。
+const R2_SETTINGS_KEY = "tarot.mobile.r2.v3";
+const R2_SECRET_KEY = "tarot.mobile.r2.secret.v3";
+const R2_SYNC_TOKEN_KEY = "tarot.mobile.r2.synctoken.v3";
 
 export const defaultSettings: MobileSettings = {
   providerType: "openai",
@@ -40,11 +52,13 @@ export const defaultSettings: MobileSettings = {
 
 export const defaultR2Settings: R2Settings = {
   enabled: false,
+  mode: "direct",
   accountId: "",
   endpoint: "",
   accessKeyId: "",
   bucketName: "",
   region: "auto",
+  workerUrl: "",
 };
 
 export function loadSettings(): MobileSettings {
@@ -93,11 +107,13 @@ export function loadR2Settings(): R2Settings {
     const parsed = JSON.parse(raw) as Partial<R2Settings>;
     return {
       enabled: parsed.enabled ?? defaultR2Settings.enabled,
+      mode: parsed.mode ?? defaultR2Settings.mode,
       accountId: parsed.accountId ?? defaultR2Settings.accountId,
       endpoint: parsed.endpoint ?? defaultR2Settings.endpoint,
       accessKeyId: parsed.accessKeyId ?? defaultR2Settings.accessKeyId,
       bucketName: parsed.bucketName ?? defaultR2Settings.bucketName,
       region: parsed.region ?? defaultR2Settings.region,
+      workerUrl: parsed.workerUrl ?? defaultR2Settings.workerUrl,
     };
   } catch {
     return { ...defaultR2Settings };
@@ -121,8 +137,26 @@ export function clearSecretAccessKey(): void {
   localStorage.removeItem(R2_SECRET_KEY);
 }
 
+// ---- Worker 代理模式的 Sync Token ----
+
+export function getSyncToken(): string | undefined {
+  return localStorage.getItem(R2_SYNC_TOKEN_KEY) ?? undefined;
+}
+
+export function setSyncToken(value: string): void {
+  const trimmed = value.trim();
+  if (trimmed) localStorage.setItem(R2_SYNC_TOKEN_KEY, trimmed);
+}
+
+export function clearSyncToken(): void {
+  localStorage.removeItem(R2_SYNC_TOKEN_KEY);
+}
+
 export function isR2Configured(): boolean {
   const settings = loadR2Settings();
+  if (settings.mode === "worker") {
+    return Boolean(settings.workerUrl.trim() && getSyncToken());
+  }
   return Boolean(
     settings.accountId.trim() &&
       settings.accessKeyId.trim() &&

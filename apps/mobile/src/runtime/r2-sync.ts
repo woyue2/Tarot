@@ -8,7 +8,7 @@
  * 这样手机端与桌面端可以向同一个 R2 桶读写，互不冲突。
  */
 import type { ReadingFolder, ReadingRepository, StoredReading } from "@tarot/runtime";
-import type { R2Client } from "./r2-client";
+import type { R2ClientLike } from "./r2-client";
 
 export interface SyncReport {
   pulled: number;
@@ -23,11 +23,11 @@ type SyncRepository = ReadingRepository & {
 };
 
 export class MobileR2SyncService {
-  private readonly client: R2Client;
+  private readonly client: R2ClientLike;
   private readonly repository: SyncRepository;
   private busy = false;
 
-  constructor(client: R2Client, repository: SyncRepository) {
+  constructor(client: R2ClientLike, repository: SyncRepository) {
     this.client = client;
     this.repository = repository;
   }
