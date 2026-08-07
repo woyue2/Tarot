@@ -29,18 +29,20 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** 根据牌数计算合适的排布参数 */
-function useLayout(n: number) {
+/** 根据牌数与真实视口计算合适的排布参数。
+ *  关键：canvas 是横向宽屏，必须用水平视口宽度约束牌排总宽，
+ *  否则牌只会占水平方向的一小条、显得过小。 */
+function useLayout(n: number, viewportW: number, viewportH: number) {
   return useMemo(() => {
-    // 目标：整排牌占视口宽度的 85% 左右
-    // PerspectiveCamera fov=42, distance=10 时 viewport 宽度≈ 2*10*tan(21°)≈7.7
-    const viewport = 7.7;
-    const desiredTotal = viewport * 0.88;
-    const rawTotal = n * CARD_W + (n - 1) * 0.25; // 默认间距 0.25
-    const scale = Math.min(1, desiredTotal / rawTotal);
-    const step = CARD_W * scale + 0.25 * scale;
+    const gap = 0.06;
+    const rawTotal = n * CARD_W + (n - 1) * gap;
+    // 牌排占水平视口 90%、牌高不超垂直视口 82%，更紧凑、比例更舒展
+    const scaleByW = (viewportW * 0.9) / rawTotal;
+    const scaleByH = (viewportH * 0.82) / CARD_H;
+    const scale = Math.max(0.1, Math.min(scaleByW, scaleByH, 2.16));
+    const step = (CARD_W + gap) * scale;
     return { scale, step };
-  }, [n]);
+  }, [n, viewportW, viewportH]);
 }
 
 interface Rand {
@@ -216,40 +218,22 @@ function CardMesh({
   return (
     <mesh ref={ref} onClick={(e) => { e.stopPropagation(); onToggle?.(); }}>
       <boxGeometry args={BOX_ARGS} />
-      <meshPhysicalMaterial
+      <meshBasicMaterial
         attach="material-4"
         map={backTex ?? null}
         color="#ffffff"
-        roughness={0.24}
-        metalness={0.42}
-        clearcoat={0.6}
-        clearcoatRoughness={0.1}
-        sheen={0.65}
-        sheenColor={new THREE.Color("#ffe9a8")}
-        sheenRoughness={0.45}
-        iridescence={1.0}
-        iridescenceIOR={1.35}
-        iridescenceThicknessRange={[100, 450]}
+        toneMapped={false}
       />
-      <meshPhysicalMaterial
+      <meshBasicMaterial
         attach="material-5"
         map={faceTex ?? null}
         color="#ffffff"
-        roughness={0.46}
-        metalness={0.04}
-        clearcoat={0.22}
-        clearcoatRoughness={0.2}
-        sheen={0.2}
-        sheenColor={new THREE.Color("#fff4d6")}
-        sheenRoughness={0.6}
-        iridescence={0.15}
-        iridescenceIOR={1.2}
-        iridescenceThicknessRange={[200, 350]}
+        toneMapped={false}
       />
-      <meshStandardMaterial attach="material-0" color="#c9a227" roughness={0.25} metalness={0.72} />
-      <meshStandardMaterial attach="material-1" color="#c9a227" roughness={0.25} metalness={0.72} />
-      <meshStandardMaterial attach="material-2" color="#c9a227" roughness={0.25} metalness={0.72} />
-      <meshStandardMaterial attach="material-3" color="#c9a227" roughness={0.25} metalness={0.72} />
+      <meshBasicMaterial attach="material-0" color="#ffffff" />
+      <meshBasicMaterial attach="material-1" color="#ffffff" />
+      <meshBasicMaterial attach="material-2" color="#ffffff" />
+      <meshBasicMaterial attach="material-3" color="#ffffff" />
     </mesh>
   );
 }
@@ -299,7 +283,9 @@ function Scene({
   runId: number;
   onToggle: (index: number) => void;
 }) {
-  const { scale, step } = useLayout(cards.length);
+  const { viewport } = useThree();
+
+  const { scale, step } = useLayout(cards.length, viewport.width, viewport.height);
   const backUrl = "/cards/card-back.webp";
 
   return (
