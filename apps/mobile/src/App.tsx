@@ -177,16 +177,30 @@ export function App() {
     }
   }
 
-  function toggleSelect(index: number) {
+  function addCard(index: number) {
     setSelectedIndexes((prev) => {
-      const at = prev.indexOf(index);
-      if (at >= 0) return prev.filter((i) => i !== index);
-      if (prev.length >= 5) {
-        notify("最多选择五张牌");
-        return prev;
-      }
+      if (prev.includes(index)) return prev;
+      if (prev.length >= 5) return prev;
       return [...prev, index];
     });
+  }
+
+  function removeCard(index: number) {
+    setSelectedIndexes((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : prev,
+    );
+  }
+
+  function toggleSelect(index: number) {
+    if (selectedIndexes.includes(index)) {
+      removeCard(index);
+      return;
+    }
+    if (selectedIndexes.length >= 5) {
+      notify("最多选择五张牌");
+      return;
+    }
+    addCard(index);
   }
 
   function reshuffleDraft() {
@@ -349,6 +363,8 @@ export function App() {
             cardBackSrc={cardBackSrc}
             selectedIndexes={selectedIndexes}
             onToggle={toggleSelect}
+            onAdd={addCard}
+            onRemove={removeCard}
             onReshuffle={reshuffleDraft}
             onClear={() => setSelectedIndexes([])}
             onConfirm={confirmManual}
@@ -549,6 +565,8 @@ function SelectView(props: {
   cardBackSrc: string;
   selectedIndexes: number[];
   onToggle: (index: number) => void;
+  onAdd: (index: number) => void;
+  onRemove: (index: number) => void;
   onReshuffle: () => void;
   onClear: () => void;
   onConfirm: () => void;
@@ -562,25 +580,131 @@ function SelectView(props: {
     );
   });
 
+  // ---- 拖动选牌：Pointer Events 统一鼠标/触摸/触控笔 ----
+  // 触摸/触控笔不捕获指针（保留原生横向滚动）；鼠标捕获指针（拖动可靠涂选）。
+  // 指针下的牌用 elementFromPoint 取（img/.order 已设 pointer-events:none）。
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const gesture = useRef<{
+    active: boolean;
+    moved: boolean;
+    mode: "add" | "remove";
+    start: number;
+    visited: Set<number>;
+    id: number;
+  }>({ active: false, moved: false, mode: "add", start: -1, visited: new Set(), id: -1 });
+  const suppressClick = useRef(false);
+
+  function cardUnder(x: number, y: number): number | null {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    const card = el?.closest("[data-index]") as HTMLElement | null;
+    if (!card) return null;
+    const n = Number(card.dataset.index);
+    return Number.isInteger(n) ? n : null;
+  }
+
+  function applyAt(index: number) {
+    const g = gesture.current;
+    if (index < 0 || index >= props.deckSize) return;
+    if (g.visited.has(index)) return;
+    g.visited.add(index);
+    if (g.mode === "add") props.onAdd(index);
+    else props.onRemove(index);
+  }
+
+  function onDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (gesture.current.active) return; // 忽略第二根手指
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const idx = Number((e.currentTarget as HTMLElement).dataset.index);
+    const selected = props.selectedIndexes.includes(idx);
+    gesture.current = {
+      active: true,
+      moved: false,
+      mode: selected ? "remove" : "add",
+      start: idx,
+      visited: new Set(),
+      id: e.pointerId,
+    };
+    // 鼠标捕获指针，触摸/触控笔交给原生横向滚动
+    if (e.pointerType === "mouse") {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* noop */
+      }
+    }
+  }
+
+  function onMove(e: React.PointerEvent<HTMLButtonElement>) {
+    const g = gesture.current;
+    if (!g.active || e.pointerId !== g.id) return;
+    g.moved = true;
+    const idx = cardUnder(e.clientX, e.clientY);
+    if (idx !== null) applyAt(idx);
+    // 鼠标拖动到边缘时手动滚动牌带
+    const sc = scrollerRef.current;
+    if (sc && e.pointerType === "mouse") {
+      const r = sc.getBoundingClientRect();
+      const EDGE = 56;
+      if (e.clientX < r.left + EDGE) sc.scrollLeft -= 16;
+      else if (e.clientX > r.right - EDGE) sc.scrollLeft += 16;
+    }
+  }
+
+  function endGesture(e: React.PointerEvent<HTMLButtonElement>) {
+    const g = gesture.current;
+    if (!g.active) return;
+    if (!g.moved && g.start >= 0) {
+      // 未移动 = 点按：交给 onToggle（含键盘/单击语义）
+      suppressClick.current = true;
+      props.onToggle(g.start);
+    }
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    gesture.current = { active: false, moved: false, mode: "add", start: -1, visited: new Set(), id: -1 };
+  }
+
+  function onClickCard(e: React.MouseEvent<HTMLButtonElement>) {
+    if (suppressClick.current) {
+      suppressClick.current = false; // 拖动产生的 click 直接吞掉
+      return;
+    }
+    props.onToggle(Number((e.currentTarget as HTMLElement).dataset.index));
+  }
+
   return (
     <section>
       <p className="eyebrow">手写选择</p>
       <h1 className="view-title">选出你的五张牌</h1>
+      <p className="select-hint">轻点选一张，或在牌带上划过连续多选</p>
       <div className="selection-status">
         <span>已选 {props.selectedIndexes.length} / 5</span>
         <span className="pips">{pips}</span>
       </div>
 
-      <div className="deck-scroller" role="listbox" aria-label="78 张塔罗牌" aria-multiselectable="true">
+      <div
+        className="deck-scroller"
+        ref={scrollerRef}
+        role="listbox"
+        aria-label="78 张塔罗牌"
+        aria-multiselectable="true"
+      >
         {Array.from({ length: props.deckSize }, (_, index) => {
           const order = props.selectedIndexes.indexOf(index);
           const selected = order >= 0;
           return (
             <button
               key={index}
+              data-index={index}
               className={`deck-card${selected ? " selected" : ""}`}
               aria-pressed={selected}
-              onClick={() => props.onToggle(index)}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={endGesture}
+              onPointerCancel={endGesture}
+              onClick={onClickCard}
             >
               <img src={props.cardBackSrc} alt="" loading="lazy" />
               {selected && <span className="order">{order + 1}</span>}

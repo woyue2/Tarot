@@ -364,6 +364,9 @@ h1.view-title {
   padding: 0;
   overflow: hidden;
   background: var(--surface-subtle);
+  touch-action: pan-x; /* 横向拖动手势交给原生滚动；纵向留给页面 */
+  user-select: none;
+  -webkit-user-select: none;
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
@@ -374,6 +377,8 @@ h1.view-title {
   display: block;
   pointer-events: none;
   user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 .deck-card.selected {
@@ -395,6 +400,13 @@ h1.view-title {
   display: grid;
   place-items: center;
   padding: 0 4px;
+  pointer-events: none;
+}
+
+.select-hint {
+  margin: -6px 0 10px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .sticky-actions {
