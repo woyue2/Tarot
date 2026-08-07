@@ -88,6 +88,7 @@ select {
   display: flex;
   flex-direction: column;
   background: var(--surface-canvas);
+  overflow-x: hidden; /* 兜底：防止内部宽内容（78 张牌阵）撑出页面横向滚动 */
 }
 
 .app-header {
@@ -141,6 +142,7 @@ select {
 .app-main {
   flex: 1;
   min-height: 0;
+  min-width: 0; /* 关键：flex 子项默认 min-width:auto 会被内部宽内容撑开，导致整页横向溢出 */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 18px 18px calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
@@ -340,9 +342,10 @@ h1.view-title {
 .deck-scroller {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 84px;
+  grid-auto-columns: clamp(70px, 23vw, 92px); /* 响应式牌宽，适配窄屏 */
   grid-template-rows: repeat(2, auto);
   gap: 10px;
+  min-width: 0; /* 允许收缩，自身 overflow-x:auto 才能内部滚动而非撑开父级 */
   overflow-x: auto;
   overflow-y: hidden;
   padding: 4px 2px 14px;
@@ -354,7 +357,7 @@ h1.view-title {
 .deck-card {
   scroll-snap-align: center;
   position: relative;
-  width: 84px;
+  width: 100%; /* 跟随 grid 列宽（clamp），不再写死 84px */
   aspect-ratio: 2 / 3;
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -450,8 +453,9 @@ h1.view-title {
 .revealed-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 40%;
+  grid-auto-columns: clamp(116px, 40vw, 168px); /* 响应式揭牌牌宽，窄屏不溢出、宽屏不过大 */
   gap: 12px;
+  min-width: 0; /* 允许收缩，自身 overflow-x:auto 内部滚动 */
   overflow-x: auto;
   padding-bottom: 12px;
   touch-action: pan-x;
