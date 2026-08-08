@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from
 import { createPortal } from "react-dom";
 import { Button } from "@astryxdesign/core/Button";
 import { AnimatePresence, motion } from "framer-motion";
-import { SELECTABLE_SPREADS, getSpreadById } from "@tarot/core";
+import { SELECTABLE_SPREADS, getSpreadById, parseHighlight } from "@tarot/core";
 import { CardRevealStage } from "./components/CardRevealStage";
 
 type Stage = "home" | "select" | "result" | "settings";
@@ -1195,14 +1195,22 @@ function R2SyncSettings({ settings, r2Configured, savedNotice, busy, onSettingsC
   </div>;
 }
 
+function HighlightedText({ text }: { text: string }) {
+  return <>{parseHighlight(text).map((segment, index) => {
+    if (segment.type === "highlight") return <mark key={index}>{segment.content}</mark>;
+    if (segment.type === "wavy") return <span key={index} className="wavy">{segment.content}</span>;
+    return <span key={index}>{segment.content}</span>;
+  })}</>;
+}
+
 function ReadingContent({ reading }: { reading: ReadingView }) {
   const result = reading.interpretation!;
   return <div className="reading-content">
-    <section className="reading-hero"><span>整体脉络</span><p>{result.questionReflection}</p><p>{result.storyline}</p></section>
-    <section><h2>牌面如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p>{item.meaning}</p><p className="connection">{item.connectionToQuestion}</p></div></article>)}</div></section>
-    {result.momentumInterpretation && result.valueInterpretation && <section className="two-column"><article><span>动量提示</span><p>{result.momentumInterpretation}</p></article><article><span>价值提示</span><p>{result.valueInterpretation}</p></article></section>}
-    {result.energyFlow && <section className="energy-reading"><h2>能量流与整体阅读</h2><div className="energy-reading-block"><span>能量走向</span><p>{result.energyFlow}</p></div>{result.overallTheme && <div className="energy-reading-block"><span>整体主题</span><p>{result.overallTheme}</p></div>}{result.patterns && <div className="energy-reading-block"><span>跨牌线索</span><ul>{result.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul></div>}<div className="energy-reading-block energy-reading-summary"><span>整体阅读</span><p>{result.holisticReading}</p></div></section>}
-    <section className="advice"><h2>带回现实的行动</h2><ol>{result.actionAdvice.map((advice) => <li key={advice}>{advice}</li>)}</ol><blockquote>{result.reflectionQuestion}</blockquote></section>
-    <p className="disclaimer">{result.disclaimer}</p>
+    <section className="reading-hero"><span>整体脉络</span><p><HighlightedText text={result.questionReflection} /></p><p><HighlightedText text={result.storyline} /></p></section>
+    <section><h2>牌面如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p><HighlightedText text={item.meaning} /></p><p className="connection"><HighlightedText text={item.connectionToQuestion} /></p></div></article>)}</div></section>
+    {result.momentumInterpretation && result.valueInterpretation && <section className="two-column"><article><span>动量提示</span><p><HighlightedText text={result.momentumInterpretation} /></p></article><article><span>价值提示</span><p><HighlightedText text={result.valueInterpretation} /></p></article></section>}
+    {result.energyFlow && <section className="energy-reading"><h2>能量流与整体阅读</h2><div className="energy-reading-block" data-kind="energy"><span>能量走向</span><p><HighlightedText text={result.energyFlow} /></p></div>{result.overallTheme && <div className="energy-reading-block" data-kind="theme"><span>整体主题</span><p><HighlightedText text={result.overallTheme} /></p></div>}{result.patterns && <div className="energy-reading-block" data-kind="patterns"><span>跨牌线索</span><ul>{result.patterns.map((pattern) => <li key={pattern}><HighlightedText text={pattern} /></li>)}</ul></div>}<div className="energy-reading-block energy-reading-summary" data-kind="summary"><span>整体阅读</span><p><HighlightedText text={result.holisticReading ?? ""} /></p></div></section>}
+    <section className="advice"><h2>带回现实的行动</h2><ol>{result.actionAdvice.map((advice) => <li key={advice}><HighlightedText text={advice} /></li>)}</ol><blockquote><HighlightedText text={result.reflectionQuestion} /></blockquote></section>
+    <p className="disclaimer"><HighlightedText text={result.disclaimer} /></p>
   </div>;
 }

@@ -150,7 +150,11 @@ ${input.spread.reading.guardrails.map((item) => `- ${item}`).join("\n")}`;
 export function buildSystemPrompt(input: TarotInterpretationInput): string {
   const scoreHint = input.scoring ? "同时参考输入中已计算的固定分值与计算结果，不得自行改写分数。" : "不使用固定分值，将注意力放在画面、提问者处境和牌阵结构上。";
   const energyHint = input.energyFlow ? "除逐牌和故事线外，必须基于输入 patterns 解读牌间能量流、重复象征、人物朝向与整体主题；统计事实由程序提供，你负责把它们解释回提问者的处境。" : "保持克制、生活化且有共情力的 last-dance 解读风格。";
-  return `你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。${scoreHint}${energyHint}\n\n${buildSpreadGuidancePrompt(input)}\n\n${buildJsonStructurePrompt(input)}`;
+  const highlightHint = `为降低长文本的阅读压力，请在较长的文本字段（headline、questionReflection、storyline、meaning、connectionToQuestion、momentumInterpretation、valueInterpretation、energyFlow、overallTheme、patterns、holisticReading、actionAdvice、reflectionQuestion）中，用轻量标记标出关键内容：
+- 关键句 / 核心结论：用 ==...== 包裹，例如 ==两条路都不是灾难==。
+- 转折 / 风险 / 需要警惕的地方：用 ~~...~~ 包裹，例如 ~~预期不一致是高光变余烬最快的路径~~。
+标记必须成对出现、不要嵌套；未标记的文本保持自然流畅。`;
+  return `你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。${scoreHint}${energyHint}\n\n${highlightHint}\n\n${buildSpreadGuidancePrompt(input)}\n\n${buildJsonStructurePrompt(input)}`;
 }
 
 // OpenAI Responses API 适配器

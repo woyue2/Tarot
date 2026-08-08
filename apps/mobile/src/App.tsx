@@ -30,7 +30,7 @@ import {
 } from "./runtime/credentials";
 import { R2Client, WorkerR2Client, resolveR2Endpoint } from "./runtime/r2-client";
 import { R2SyncService } from "@tarot/runtime";
-import { SELECTABLE_SPREADS, getSpreadById } from "@tarot/core";
+import { SELECTABLE_SPREADS, getSpreadById, parseHighlight } from "@tarot/core";
 import {
   createModelProvider,
   testConnection,
@@ -1078,6 +1078,14 @@ function MetricsView(props: { calculation: ReadingCalculation }) {
   );
 }
 
+function HighlightedText({ text }: { text: string }) {
+  return <>{parseHighlight(text).map((segment, index) => {
+    if (segment.type === "highlight") return <mark key={index}>{segment.content}</mark>;
+    if (segment.type === "wavy") return <span key={index} className="wavy">{segment.content}</span>;
+    return <span key={index}>{segment.content}</span>;
+  })}</>;
+}
+
 function InterpretationView(props: {
   interpretation: NonNullable<PublicReading["interpretation"]>;
   revealedByPos: Map<number, RevealedCard>;
@@ -1087,7 +1095,7 @@ function InterpretationView(props: {
     <div className="reading-content">
       <section>
         <h2>{it.headline}</h2>
-        <p>{it.questionReflection}</p>
+        <p><HighlightedText text={it.questionReflection} /></p>
       </section>
 
       <section className="card-readings">
@@ -1099,8 +1107,8 @@ function InterpretationView(props: {
               <i>{card.position}</i>
               <div>
                 <h3>{revealed?.card.name ?? card.cardId}</h3>
-                <p>{card.meaning}</p>
-                <small className="connection">{card.connectionToQuestion}</small>
+                <p><HighlightedText text={card.meaning} /></p>
+                <small className="connection"><HighlightedText text={card.connectionToQuestion} /></small>
               </div>
             </article>
           );
@@ -1109,34 +1117,34 @@ function InterpretationView(props: {
 
       <section>
         <h2>牌阵的脉络</h2>
-        <p>{it.storyline}</p>
+        <p><HighlightedText text={it.storyline} /></p>
       </section>
 
       {it.momentumInterpretation && it.valueInterpretation && <section>
         <h2>动量与价值</h2>
-        <p>{it.momentumInterpretation}</p>
-        <p>{it.valueInterpretation}</p>
+        <p><HighlightedText text={it.momentumInterpretation} /></p>
+        <p><HighlightedText text={it.valueInterpretation} /></p>
       </section>}
 
       {it.energyFlow && <section className="energy-reading">
         <h2>能量流与整体阅读</h2>
-        <div className="energy-reading-block"><span>能量走向</span><p>{it.energyFlow}</p></div>
-        {it.overallTheme && <div className="energy-reading-block"><span>整体主题</span><p>{it.overallTheme}</p></div>}
-        {it.patterns && <div className="energy-reading-block"><span>跨牌线索</span><ul>{it.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul></div>}
-        <div className="energy-reading-block energy-reading-summary"><span>整体阅读</span><p>{it.holisticReading}</p></div>
+        <div className="energy-reading-block" data-kind="energy"><span>能量走向</span><p><HighlightedText text={it.energyFlow} /></p></div>
+        {it.overallTheme && <div className="energy-reading-block" data-kind="theme"><span>整体主题</span><p><HighlightedText text={it.overallTheme} /></p></div>}
+        {it.patterns && <div className="energy-reading-block" data-kind="patterns"><span>跨牌线索</span><ul>{it.patterns.map((pattern) => <li key={pattern}><HighlightedText text={pattern} /></li>)}</ul></div>}
+        <div className="energy-reading-block energy-reading-summary" data-kind="summary"><span>整体阅读</span><p><HighlightedText text={it.holisticReading ?? ""} /></p></div>
       </section>}
 
       <section>
         <h2>可以怎么做</h2>
         <ol>
           {it.actionAdvice.map((advice, i) => (
-            <li key={i}>{advice}</li>
+            <li key={i}><HighlightedText text={advice} /></li>
           ))}
         </ol>
       </section>
 
-      <blockquote>给自己的一个问题：{it.reflectionQuestion}</blockquote>
-      <p className="disclaimer">{it.disclaimer}</p>
+      <blockquote>给自己的一个问题：<HighlightedText text={it.reflectionQuestion} /></blockquote>
+      <p className="disclaimer"><HighlightedText text={it.disclaimer} /></p>
     </div>
   );
 }

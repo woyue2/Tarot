@@ -4,4 +4,5 @@ export * from "./deck";
 export * from "./scoring";
 export * from "./spreads";
 export * from "./patterns";
+export * from "./highlight";
 export * from "./schemas";

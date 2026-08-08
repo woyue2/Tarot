@@ -823,9 +823,17 @@ h1.view-title {
 .energy-reading > h2 { margin-bottom: 14px; }
 .energy-reading-block { padding: 12px 0; border-top: 1px solid var(--border); }
 .energy-reading-block:first-of-type { padding-top: 0; border-top: 0; }
-.energy-reading-block > span { display: block; margin-bottom: 5px; color: var(--accent-deep); font-size: 11px; font-weight: 650; letter-spacing: .08em; }
+.energy-reading-block > span { display: inline-block; margin-bottom: 6px; padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: 650; letter-spacing: .06em; }
 .energy-reading-block p, .energy-reading-block ul { margin-bottom: 0; }
+.energy-reading-block[data-kind="energy"] > span { background: #FBEAF0; color: #72243E; }
+.energy-reading-block[data-kind="theme"] > span { background: #E6F1FB; color: #0C447C; }
+.energy-reading-block[data-kind="patterns"] > span { background: #E1F5EE; color: #085041; }
+.energy-reading-block[data-kind="summary"] > span { background: #EEEDFE; color: #3C3489; }
 .energy-reading-summary { margin: 2px -4px -4px; padding: 12px 10px; border: 0; border-radius: 10px; background: var(--background); }
+
+.reading-content mark,
+.highlight { background: #FAEEDA; color: #633806; padding: 1px 3px; border-radius: 3px; }
+.reading-content .wavy { text-decoration: underline wavy #D85A30; text-underline-offset: 3px; }
 
 .reading-content .card-readings article {
   display: grid;
