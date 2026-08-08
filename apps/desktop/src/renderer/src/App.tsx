@@ -16,6 +16,32 @@ const SPREAD_OPTIONS = [
   { id: "triple", name: "圣三角", count: 3, supportsScoring: false },
 ] as const;
 
+// 笔记草稿缓存：未保存的笔记按 reading id 暂存到 localStorage，
+// 关闭/切走后再回来可恢复；点「保存」才真正落库并清掉缓存。
+const NOTES_DRAFT_PREFIX = "tarot.notes-draft.";
+function loadNotesDraft(id: string, fallback: string): string {
+  try {
+    const raw = localStorage.getItem(NOTES_DRAFT_PREFIX + id);
+    return raw === null ? fallback : raw;
+  } catch {
+    return fallback;
+  }
+}
+function persistNotesDraft(id: string, text: string): void {
+  try {
+    localStorage.setItem(NOTES_DRAFT_PREFIX + id, text);
+  } catch {
+    /* localStorage 不可用时静默降级 */
+  }
+}
+function clearNotesDraft(id: string): void {
+  try {
+    localStorage.removeItem(NOTES_DRAFT_PREFIX + id);
+  } catch {
+    /* localStorage 不可用时静默降级 */
+  }
+}
+
 function ShuffleOverlay() {
   return createPortal(
     <div className="shuffle-overlay" role="status" aria-live="polite" aria-label="正在重新洗牌">
@@ -325,6 +351,7 @@ export function App() {
     setError("");
     try {
       const updated = await window.tarot.updateNotes({ id: reading.id, notes: notesDraft });
+      clearNotesDraft(reading.id);
       setReading(updated);
       setHistory(await window.tarot.history());
       setEditingNotes(false);
@@ -425,6 +452,7 @@ export function App() {
     if (!window.confirm("确定删除这条解读记录？此操作不可恢复。")) return;
     try {
       await window.tarot.deleteReading(id);
+      clearNotesDraft(id);
       setHistory((current) => current.filter((h) => h.id !== id));
       if (reading?.id === id) {
         setReading(undefined);
@@ -614,8 +642,9 @@ export function App() {
                 className="notes-trigger"
                 data-active={editingNotes}
                 onClick={() => {
-                  setNotesDraft(reading.notes ?? "");
-                  setEditingNotes((prev) => !prev);
+                  const next = !editingNotes;
+                  if (next) setNotesDraft(loadNotesDraft(reading.id, reading.notes ?? ""));
+                  setEditingNotes(next);
                 }}
               >
                 {reading.notes ? "查看笔记" : "添加笔记"}
@@ -626,7 +655,11 @@ export function App() {
               <div className="notes-editor">
                 <textarea
                   value={notesDraft}
-                  onChange={(event) => setNotesDraft(event.target.value)}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setNotesDraft(next);
+                    if (reading) persistNotesDraft(reading.id, next);
+                  }}
                   placeholder="记录后续发生的事情，或此刻的感受…"
                   rows={5}
                   maxLength={2000}

@@ -72,6 +72,32 @@ function imageOf(path: string): string {
   return `/${path}`;
 }
 
+// 笔记草稿缓存：未保存的笔记按 reading id 暂存到 localStorage，
+// 关闭/切走后再回来可恢复；点「保存」才真正落库并清掉缓存。
+const NOTES_DRAFT_PREFIX = "tarot.notes-draft.";
+function loadNotesDraft(id: string, fallback: string): string {
+  try {
+    const raw = localStorage.getItem(NOTES_DRAFT_PREFIX + id);
+    return raw === null ? fallback : raw;
+  } catch {
+    return fallback;
+  }
+}
+function persistNotesDraft(id: string, text: string): void {
+  try {
+    localStorage.setItem(NOTES_DRAFT_PREFIX + id, text);
+  } catch {
+    /* localStorage 不可用时静默降级 */
+  }
+}
+function clearNotesDraft(id: string): void {
+  try {
+    localStorage.removeItem(NOTES_DRAFT_PREFIX + id);
+  } catch {
+    /* localStorage 不可用时静默降级 */
+  }
+}
+
 export function App() {
   const [view, setView] = useState<View>("home");
   const [questionText, setQuestionText] = useState("");
@@ -319,6 +345,7 @@ export function App() {
     if (!window.confirm("确定要删除这条记录吗？此操作不可恢复。")) return;
     try {
       readingService.deleteReading(id);
+      clearNotesDraft(id);
       refreshHistory();
       void deleteFromR2({ readingId: id });
       if (currentReading?.id === id) {
@@ -454,6 +481,7 @@ export function App() {
               if (!window.confirm(`确定要清空全部 ${historyList.length} 条记录吗？此操作不可恢复。`)) return;
               historyList.forEach((item) => {
                 readingService.deleteReading(item.id);
+                clearNotesDraft(item.id);
                 void deleteFromR2({ readingId: item.id });
               });
               refreshHistory();
@@ -831,7 +859,7 @@ function ResultView(props: {
   const interpretation = reading.interpretation;
   const [zoomedCard, setZoomedCard] = useState<RevealedCard | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
-  const [notesDraft, setNotesDraft] = useState(reading.notes ?? "");
+  const [notesDraft, setNotesDraft] = useState(() => loadNotesDraft(reading.id, reading.notes ?? ""));
   const [savingNotes, setSavingNotes] = useState(false);
 
   const revealedByPos = useMemo(() => {
@@ -855,6 +883,7 @@ function ResultView(props: {
     setSavingNotes(true);
     try {
       const updated = readingService.updateNotes(reading.id, notesDraft);
+      clearNotesDraft(reading.id);
       onNotesChange?.(updated);
       setEditingNotes(false);
     } finally {
@@ -873,8 +902,9 @@ function ResultView(props: {
           className="notes-trigger"
           data-active={editingNotes}
           onClick={() => {
-            setNotesDraft(reading.notes ?? "");
-            setEditingNotes((prev) => !prev);
+            const next = !editingNotes;
+            if (next) setNotesDraft(loadNotesDraft(reading.id, reading.notes ?? ""));
+            setEditingNotes(next);
           }}
         >
           {reading.notes ? "笔记" : "记笔记"}
@@ -885,7 +915,11 @@ function ResultView(props: {
         <div className="notes-editor">
           <textarea
             value={notesDraft}
-            onChange={(event) => setNotesDraft(event.target.value)}
+            onChange={(event) => {
+              const next = event.target.value;
+              setNotesDraft(next);
+              persistNotesDraft(reading.id, next);
+            }}
             placeholder="记录后续发生的事情，或此刻的感受…"
             rows={4}
             maxLength={2000}
