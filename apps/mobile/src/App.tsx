@@ -53,6 +53,11 @@ import {
 } from "./icons";
 
 const DECK_SIZE = 78;
+const SPREAD_OPTIONS = [
+  { id: "five_card_timeline_v1", name: "五张时间流", count: 5, supportsScoring: true },
+  { id: "single", name: "单张牌", count: 1, supportsScoring: false },
+  { id: "triple", name: "圣三角", count: 3, supportsScoring: false },
+] as const;
 const cardBackSrc = `/${cardBack}`;
 
 type View = "home" | "select" | "result" | "history" | "settings";
@@ -70,6 +75,10 @@ function imageOf(path: string): string {
 export function App() {
   const [view, setView] = useState<View>("home");
   const [questionText, setQuestionText] = useState("");
+  const [advanced, setAdvanced] = useState(false);
+  const [spreadId, setSpreadId] = useState("five_card_timeline_v1");
+  const [scoring, setScoring] = useState(false);
+  const [energyFlow, setEnergyFlow] = useState(true);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<ReadingFolder[]>([]);
 
@@ -161,6 +170,7 @@ export function App() {
       const created = readingService.createReading({
         question,
         mode,
+        ...(advanced ? { spreadId, scoring, energyFlow } : {}),
         ...(activeFolderId ? { folderId: activeFolderId } : {}),
       });
       if (mode === "random") {
@@ -183,7 +193,7 @@ export function App() {
   function addCard(index: number) {
     setSelectedIndexes((prev) => {
       if (prev.includes(index)) return prev;
-      if (prev.length >= 5) return prev;
+      if (prev.length >= (SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5)) return prev;
       return [...prev, index];
     });
   }
@@ -199,8 +209,9 @@ export function App() {
       removeCard(index);
       return;
     }
-    if (selectedIndexes.length >= 5) {
-      notify("最多选择五张牌");
+    const targetCount = SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5;
+    if (selectedIndexes.length >= targetCount) {
+      notify(`最多选择 ${targetCount} 张牌`);
       return;
     }
     addCard(index);
@@ -219,8 +230,9 @@ export function App() {
 
   function confirmManual() {
     if (!draftId) return;
-    if (selectedIndexes.length !== 5) {
-      notify("请选择恰好五张牌");
+    const targetCount = SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5;
+    if (selectedIndexes.length !== targetCount) {
+      notify(`请选择恰好 ${targetCount} 张牌`);
       return;
     }
     try {
@@ -239,6 +251,9 @@ export function App() {
       const created = readingService.createReading({
         question: currentReading.question,
         mode: "random",
+        spreadId: currentReading.spreadId,
+        scoring: currentReading.scoring,
+        energyFlow: currentReading.energyFlow,
         ...(currentReading.folderId ? { folderId: currentReading.folderId } : {}),
       });
       const confirmed = readingService.confirmReading({ id: created.id });
@@ -389,6 +404,14 @@ export function App() {
             activeFolder={activeFolder}
             onOpenFolder={() => setFolderSheetOpen(true)}
             onStart={startReading}
+            advanced={advanced}
+            onAdvanced={() => setAdvanced((value) => !value)}
+            spreadId={spreadId}
+            scoring={scoring}
+            energyFlow={energyFlow}
+            onSpread={(next) => { setSpreadId(next); if (!SPREAD_OPTIONS.find((spread) => spread.id === next)?.supportsScoring) setScoring(false); }}
+            onScoring={setScoring}
+            onEnergyFlow={setEnergyFlow}
           />
         )}
 
@@ -397,6 +420,7 @@ export function App() {
             deckSize={DECK_SIZE}
             cardBackSrc={cardBackSrc}
             selectedIndexes={selectedIndexes}
+            targetCount={SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5}
             onToggle={toggleSelect}
             onAdd={addCard}
             onRemove={removeCard}
@@ -542,12 +566,26 @@ function HomeView(props: {
   activeFolder: ReadingFolder | null;
   onOpenFolder: () => void;
   onStart: (mode: "manual" | "random") => void;
+  advanced: boolean;
+  onAdvanced: () => void;
+  spreadId: string;
+  scoring: boolean;
+  energyFlow: boolean;
+  onSpread: (spreadId: string) => void;
+  onScoring: (value: boolean) => void;
+  onEnergyFlow: (value: boolean) => void;
 }) {
   return (
     <section className="home">
       <div className="hero-orbit">
         <StargateMark />
       </div>
+      <button className="btn ghost block" onClick={props.onAdvanced}>{props.advanced ? "收起高级解读" : "高级解读设置"}</button>
+      {props.advanced && <div className="astryx-surface question-panel">
+        <label>牌阵<select value={props.spreadId} onChange={(event) => props.onSpread(event.target.value)}>{SPREAD_OPTIONS.map((spread) => <option key={spread.id} value={spread.id}>{spread.name}（{spread.count} 张）</option>)}</select></label>
+        <label><input type="checkbox" checked={props.energyFlow} onChange={(event) => props.onEnergyFlow(event.target.checked)} /> 启用能量流整体阅读</label>
+        <label><input type="checkbox" checked={props.scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.supportsScoring} onChange={(event) => props.onScoring(event.target.checked)} /> 启用动量 / 价值评分</label>
+      </div>}
       <p className="eyebrow">五张时间流</p>
       <h1 className="view-title">此刻，你想看清什么？</h1>
       <p className="lead">
@@ -608,6 +646,7 @@ function SelectView(props: {
   deckSize: number;
   cardBackSrc: string;
   selectedIndexes: number[];
+  targetCount: number;
   onToggle: (index: number) => void;
   onAdd: (index: number) => void;
   onRemove: (index: number) => void;
@@ -615,7 +654,7 @@ function SelectView(props: {
   onClear: () => void;
   onConfirm: () => void;
 }) {
-  const pips = Array.from({ length: 5 }, (_, i) => {
+  const pips = Array.from({ length: props.targetCount }, (_, i) => {
     const idx = props.selectedIndexes[i];
     return (
       <i key={i} className={typeof idx === "number" ? "filled" : ""}>
@@ -721,10 +760,10 @@ function SelectView(props: {
   return (
     <section>
       <p className="eyebrow">手写选择</p>
-      <h1 className="view-title">选出你的五张牌</h1>
+      <h1 className="view-title">选出你的 {props.targetCount} 张牌</h1>
       <p className="select-hint">轻点选一张，或在牌带上划过连续多选</p>
       <div className="selection-status">
-        <span>已选 {props.selectedIndexes.length} / 5</span>
+        <span>已选 {props.selectedIndexes.length} / {props.targetCount}</span>
         <span className="pips">{pips}</span>
       </div>
 
@@ -766,7 +805,7 @@ function SelectView(props: {
         </button>
         <button
           className="btn primary"
-          disabled={props.selectedIndexes.length !== 5}
+          disabled={props.selectedIndexes.length !== props.targetCount}
           onClick={props.onConfirm}
         >
           确认揭牌
@@ -898,7 +937,7 @@ function ResultView(props: {
       {needsInterpret ? (
         <div className="interpret-cta">
           <p>
-            牌已揭晓。点下方按钮，调用你配置的模型，把五张牌串成一段属于你此刻的解读。
+              牌已揭晓。点下方按钮，调用你配置的模型，把这些牌串成一段属于你此刻的解读。
           </p>
           <button className="btn primary block" disabled={props.streaming} onClick={props.onInterpret}>
             {props.streaming ? (
@@ -1020,15 +1059,23 @@ function InterpretationView(props: {
       </section>
 
       <section>
-        <h2>五张牌的脉络</h2>
+        <h2>牌阵的脉络</h2>
         <p>{it.storyline}</p>
       </section>
 
-      <section>
+      {it.momentumInterpretation && it.valueInterpretation && <section>
         <h2>动量与价值</h2>
         <p>{it.momentumInterpretation}</p>
         <p>{it.valueInterpretation}</p>
-      </section>
+      </section>}
+
+      {it.energyFlow && <section>
+        <h2>能量流与整体阅读</h2>
+        <p>{it.energyFlow}</p>
+        <h3>{it.overallTheme}</h3>
+        {it.patterns && <ul>{it.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul>}
+        <p>{it.holisticReading}</p>
+      </section>}
 
       <section>
         <h2>可以怎么做</h2>

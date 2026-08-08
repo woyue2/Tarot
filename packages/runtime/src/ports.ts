@@ -5,6 +5,9 @@ export interface StoredReading {
   folderId?: string | undefined;
   question: string;
   mode: "manual" | "random";
+  spreadId?: string | undefined;
+  scoring?: boolean | undefined;
+  energyFlow?: boolean | undefined;
   status: string;
   shuffleSeed: string;
   deck: unknown[];

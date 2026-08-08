@@ -10,6 +10,11 @@ type Stage = "home" | "select" | "result" | "settings";
 // Keep this slightly longer than --shuffle-duration so the final card can settle.
 const SHUFFLE_ANIMATION_MS = 2500;
 const SHUFFLE_VISUAL_CARD_COUNT = 16;
+const SPREAD_OPTIONS = [
+  { id: "five_card_timeline_v1", name: "五张时间流", count: 5, supportsScoring: true },
+  { id: "single", name: "单张牌", count: 1, supportsScoring: false },
+  { id: "triple", name: "圣三角", count: 3, supportsScoring: false },
+] as const;
 
 function ShuffleOverlay() {
   return createPortal(
@@ -116,7 +121,7 @@ const stageTitles: Record<Stage, string> = {
 export function App() {
   const [stage, setStage] = useState<Stage>("home");
   const [question, setQuestion] = useState("");
-  const [draft, setDraft] = useState<{ id: string; deckSize: number }>();
+  const [draft, setDraft] = useState<{ id: string; deckSize: number; spreadId: string; scoring: boolean; energyFlow: boolean }>();
   const [selection, setSelection] = useState<(number | null)[]>([]);
   const [reading, setReading] = useState<ReadingView>();
   const [history, setHistory] = useState<ReadingView[]>([]);
@@ -135,6 +140,10 @@ export function App() {
   const [r2Configured, setR2Configured] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
+  const [advanced, setAdvanced] = useState(false);
+  const [spreadId, setSpreadId] = useState("five_card_timeline_v1");
+  const [scoring, setScoring] = useState(false);
+  const [energyFlow, setEnergyFlow] = useState(true);
 
   useEffect(() => {
     void window.tarot.bootstrap().then((data) => {
@@ -182,7 +191,7 @@ export function App() {
     setError("");
     setBusy(true);
     try {
-      const created = await window.tarot.createReading({ question, mode, ...(activeFolderId ? { folderId: activeFolderId } : {}) });
+      const created = await window.tarot.createReading({ question, mode, ...(advanced ? { spreadId, scoring, energyFlow } : {}), ...(activeFolderId ? { folderId: activeFolderId } : {}) });
       if (mode === "random") {
         const confirmed = await window.tarot.confirmReading({ id: created.id });
         setReading(confirmed);
@@ -213,7 +222,7 @@ export function App() {
       const firstNull = current.findIndex((item) => item === null);
       if (firstNull >= 0) {
         next = current.map((item, i) => i === firstNull ? index : item);
-      } else if (current.length >= 5) {
+      } else if (current.length >= (draft ? SPREAD_OPTIONS.find((spread) => spread.id === draft.spreadId)?.count ?? 5 : 5)) {
         return;
       } else {
         next = [...current, index];
@@ -250,7 +259,7 @@ export function App() {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       await new Promise((resolve) => setTimeout(resolve, reduceMotion ? 20 : SHUFFLE_ANIMATION_MS));
       const result = await window.tarot.reshuffleReading({ id: draft.id });
-      setDraft(result);
+      setDraft((current) => current ? { ...result, spreadId: current.spreadId, scoring: current.scoring, energyFlow: current.energyFlow } : undefined);
       setSelection([]);
       setHistory(await window.tarot.history());
     } catch (reason) {
@@ -279,7 +288,7 @@ export function App() {
 
   function resumeDraft(item: ReadingView) {
     // 恢复未完成草稿：牌序来自库中原样保存的种子与牌堆，选择状态原样回填
-    setDraft({ id: item.id, deckSize: 78 });
+    setDraft({ id: item.id, deckSize: 78, spreadId: item.spreadId, scoring: item.scoring, energyFlow: item.energyFlow });
     setSelection((item.selectedIndexes ?? []).slice());
     setQuestion(item.question);
     setActiveFolderId(item.folderId);
@@ -494,9 +503,10 @@ export function App() {
   }
   const activeFolder = folders.find((folder) => folder.id === activeFolderId);
   const selectedCount = selection.filter((item) => item !== null).length;
+  const targetCount = draft ? SPREAD_OPTIONS.find((spread) => spread.id === draft.spreadId)?.count ?? 5 : 5;
   const progressLabel = useMemo(
-    () => selectedCount === 5 ? "五张已选好，可以确认" : `已选择 ${selectedCount} / 5`,
-    [selectedCount],
+    () => selectedCount === targetCount ? `${targetCount} 张已选好，可以确认` : `已选择 ${selectedCount} / ${targetCount}`,
+    [selectedCount, targetCount],
   );
   const currentPreset = presetProviders.find((p) => p.type === settings.providerType);
   const displayModel = currentPreset?.label
@@ -542,20 +552,28 @@ export function App() {
             {activeFolder && <div className="active-folder-chip"><FolderGlyph className="chip-folder" /><b>{activeFolder.name}</b><small>新问题</small></div>}
             <h1>让五张牌，照见此刻的路径</h1>
             <p className="lead">在安静的空间里，和你的直觉对话。想清楚一个问题，剩下的交给牌。</p>
-            <div className="question-panel astryx-surface">
+             <div className="question-panel astryx-surface">
               <TextArea label="你想探索什么？" value={question} onChange={setQuestion} placeholder="例如：未来三个月，我该如何调整工作方向？" rows={4} isRequired />
               <div className="question-footer"><span>{question.length} / 300</span><span>三个月内的问题</span></div>
-            </div>
+             </div>
+             <button type="button" className="btn ghost" onClick={() => setAdvanced((value) => !value)}>{advanced ? "收起高级解读" : "高级解读设置"}</button>
+             {advanced && <div className="question-panel astryx-surface">
+               <label>牌阵<select value={spreadId} onChange={(event) => { const next = event.target.value; setSpreadId(next); if (!(SPREAD_OPTIONS.find((spread) => spread.id === next)?.supportsScoring)) setScoring(false); }}>
+                 {SPREAD_OPTIONS.map((spread) => <option key={spread.id} value={spread.id}>{spread.name}（{spread.count} 张）</option>)}
+               </select></label>
+               <label className="checkbox-label"><input type="checkbox" checked={energyFlow} onChange={(event) => setEnergyFlow(event.target.checked)} /><span>启用能量流整体阅读</span></label>
+               <label className="checkbox-label"><input type="checkbox" checked={scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.supportsScoring} onChange={(event) => setScoring(event.target.checked)} /><span>启用动量 / 价值评分</span></label>
+             </div>}
             <div className="mode-actions">
               <button type="button" className="mode-card mode-card-primary" disabled={!question.trim() || busy} onClick={() => void begin("manual")}>
                 <span className="mode-icon"><HandPickIcon /></span>
-                <b>自己选五张</b>
+                <b>{advanced ? `自己选 ${SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5} 张` : "自己选五张"}</b>
                 <span>凭直觉从牌列中逐一点选</span>
                 {pendingMode === "manual" && <span className="mode-loading">准备中…</span>}
               </button>
               <button type="button" className="mode-card" disabled={!question.trim() || busy} onClick={() => void begin("random")}>
                 <span className="mode-icon"><DiceIcon /></span>
-                <b>随机抽五张</b>
+                <b>{advanced ? `随机抽 ${SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5} 张` : "随机抽五张"}</b>
                 <span>系统随机翻开五张牌</span>
                 {pendingMode === "random" && <span className="mode-loading">准备中…</span>}
               </button>
@@ -564,9 +582,9 @@ export function App() {
 
           {stage === "select" && draft && <motion.section className="selection-view" key="select" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <p className="eyebrow">CHOOSE WITHOUT OVERTHINKING</p>
-            <h1>凭直觉选出五张牌</h1>
+            <h1>凭直觉选出 {targetCount} 张牌</h1>
             <p className="lead compact">左右滑动牌列，依次点选。再次点击可撤回；确认以后才会揭晓牌面与正逆位。</p>
-            <div className="selection-status"><span>{progressLabel}</span><div>{Array.from({ length: 5 }, (_, index) => <i key={index} className={typeof selection[index] === "number" ? "filled" : ""}>{typeof selection[index] === "number" ? index + 1 : ""}</i>)}</div></div>
+            <div className="selection-status"><span>{progressLabel}</span><div>{Array.from({ length: targetCount }, (_, index) => <i key={index} className={typeof selection[index] === "number" ? "filled" : ""}>{typeof selection[index] === "number" ? index + 1 : ""}</i>)}</div></div>
             <div className={`deck-scroller${shuffling ? " is-shuffling" : ""}`} role="listbox" aria-label="78 张背面朝上的塔罗牌" aria-multiselectable="true">
               {Array.from({ length: draft.deckSize }, (_, index) => {
                 const order = selection.findIndex((item) => item === index);
@@ -585,12 +603,12 @@ export function App() {
             <div className="sticky-actions">
               <Button label="重新洗牌" variant="ghost" size="lg" isDisabled={shuffling || busy} isLoading={shuffling} onClick={() => void reshuffle()} />
               <Button label="清空选择" variant="ghost" size="lg" isDisabled={selectedCount === 0 || shuffling || busy} onClick={clearSelection} />
-              <Button label={selectedCount === 5 ? "确认并揭牌" : `还需选择 ${5 - selectedCount} 张`} variant="primary" size="lg" isDisabled={selectedCount !== 5 || shuffling || busy} isLoading={busy} onClick={() => void confirmSelection()} />
+              <Button label={selectedCount === targetCount ? "确认并揭牌" : `还需选择 ${targetCount - selectedCount} 张`} variant="primary" size="lg" isDisabled={selectedCount !== targetCount || shuffling || busy} isLoading={busy} onClick={() => void confirmSelection()} />
             </div>
           </motion.section>}
 
           {stage === "result" && reading && <motion.section className="result-view" key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <p className="eyebrow">YOUR FIVE-CARD TIMELINE</p>
+            <p className="eyebrow">{reading.spreadId === "single" ? "SINGLE CARD" : reading.spreadId === "triple" ? "THREE-CARD TRIANGLE" : "FIVE-CARD TIMELINE"}</p>
             <div className="result-actions">
               <button
                 className="notes-trigger"
@@ -1125,8 +1143,9 @@ function ReadingContent({ reading }: { reading: ReadingView }) {
   const result = reading.interpretation!;
   return <div className="reading-content">
     <section className="reading-hero"><span>整体脉络</span><p>{result.questionReflection}</p><p>{result.storyline}</p></section>
-    <section><h2>五张牌如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p>{item.meaning}</p><p className="connection">{item.connectionToQuestion}</p></div></article>)}</div></section>
-    <section className="two-column"><article><span>动量提示</span><p>{result.momentumInterpretation}</p></article><article><span>价值提示</span><p>{result.valueInterpretation}</p></article></section>
+    <section><h2>牌面如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p>{item.meaning}</p><p className="connection">{item.connectionToQuestion}</p></div></article>)}</div></section>
+    {result.momentumInterpretation && result.valueInterpretation && <section className="two-column"><article><span>动量提示</span><p>{result.momentumInterpretation}</p></article><article><span>价值提示</span><p>{result.valueInterpretation}</p></article></section>}
+    {result.energyFlow && <section><h2>能量流与整体阅读</h2><p>{result.energyFlow}</p><h3>{result.overallTheme}</h3>{result.patterns && <ul>{result.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul>}<p>{result.holisticReading}</p></section>}
     <section className="advice"><h2>带回现实的行动</h2><ol>{result.actionAdvice.map((advice) => <li key={advice}>{advice}</li>)}</ol><blockquote>{result.reflectionQuestion}</blockquote></section>
     <p className="disclaimer">{result.disclaimer}</p>
   </div>;

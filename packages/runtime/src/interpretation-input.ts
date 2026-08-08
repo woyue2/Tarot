@@ -1,13 +1,13 @@
 import {
   FORMULA_VERSION,
+  aggregatePatterns,
   calculateMomentumValue,
+  getSpreadById,
   interpretationInputSchema,
   type DeckEntry,
   type TarotCard,
   type TarotInterpretationInput,
 } from "@tarot/core";
-
-export const FIVE_CARD_POSITIONS = ["较远背景", "早期状态", "中间状态", "近期状态", "当前状态"] as const;
 
 interface ContentMetadata {
   contentVersion: string;
@@ -26,11 +26,20 @@ export function buildInterpretationInput(options: {
   readingId: string;
   question: string;
   mode: "manual" | "random";
+  spreadId?: string;
+  scoring?: boolean;
+  energyFlow?: boolean;
   selected: readonly DeckEntry[];
   cards: readonly TarotCard[];
   metadata: ContentMetadata;
 }): TarotInterpretationInput {
-  if (options.selected.length !== 5) throw new RangeError("Exactly five confirmed cards are required");
+  const spreadId = options.spreadId ?? "five_card_timeline_v1";
+  const scoring = options.scoring ?? true;
+  const energyFlow = options.energyFlow ?? false;
+  const spread = getSpreadById(spreadId);
+  if (!spread) throw new Error(`Unknown spread: ${spreadId}`);
+  if (options.selected.length !== spread.positions.length) throw new RangeError(`${spread.name} requires exactly ${spread.positions.length} cards`);
+  if (scoring && !spread.supportsScoring) throw new Error(`${spread.name} does not support scoring`);
   const catalog = new Map(options.cards.map((card) => [card.id, card]));
   const selectedCards = options.selected.map((entry, index) => {
     const card = catalog.get(entry.cardId);
@@ -41,28 +50,32 @@ export function buildInterpretationInput(options: {
       name: card.name,
       orientation: entry.orientation,
       position: index + 1,
-      positionName: FIVE_CARD_POSITIONS[index]!,
+      positionName: spread.positions[index]!.name,
       visualDescription: visualDescription(card),
       symbols: card.visual.symbols.map((symbol) => `${symbol.name}：${symbol.meaning}`),
       direction: card.visual.direction,
       score: { ...score, scoreTableVersion: options.metadata.scoreTableVersion },
     };
   });
-  const calculation = calculateMomentumValue(selectedCards.map((card) => card.score.final));
+  const selectedTarotCards = selectedCards.map((selectedCard) => catalog.get(selectedCard.id)!);
+  const calculation = scoring ? calculateMomentumValue(selectedCards.map((card) => card.score.final)) : undefined;
   return interpretationInputSchema.parse({
     readingId: options.readingId,
     contentVersion: options.metadata.contentVersion,
     question: options.question,
-    spread: { id: "five_card_timeline_v1", name: "五张时间流", positions: FIVE_CARD_POSITIONS },
+    spread: { id: spread.id, name: spread.name, positions: [...spread.positions], supportsScoring: spread.supportsScoring },
+    scoring,
+    energyFlow,
     draw: { mode: options.mode, confirmed: true },
     cards: selectedCards,
-    calculation: {
+    calculation: calculation && {
       formulaVersion: FORMULA_VERSION,
       momentum: calculation.momentum,
       momentumLabel: calculation.momentumLabel,
       value: calculation.value,
       valueLabel: calculation.valueLabel,
     },
+    patterns: energyFlow ? aggregatePatterns(selectedTarotCards) : undefined,
     methodology: { version: options.metadata.methodologyVersion, style: options.metadata.methodologyStyle },
     promptVersion: "tarot-reading-v1",
     outputLanguage: "zh-CN",

@@ -25,6 +25,9 @@ interface ReadingView {
   folderId?: string;
   question: string;
   mode: "manual" | "random";
+  spreadId: string;
+  scoring: boolean;
+  energyFlow: boolean;
   status: string;
   selectedIndexes: number[];
   revealed?: RevealedCard[];
@@ -34,8 +37,12 @@ interface ReadingView {
     questionReflection: string;
     cards: Array<{ cardId: string; position: number; meaning: string; connectionToQuestion: string }>;
     storyline: string;
-    momentumInterpretation: string;
-    valueInterpretation: string;
+    momentumInterpretation?: string;
+    valueInterpretation?: string;
+    energyFlow?: string;
+    overallTheme?: string;
+    patterns?: string[];
+    holisticReading?: string;
     actionAdvice: string[];
     reflectionQuestion: string;
     disclaimer: string;
@@ -62,7 +69,7 @@ interface Window {
     testR2Connection(input: { accountId?: string | undefined; endpoint?: string | undefined; accessKeyId?: string | undefined; secretAccessKey: string; bucketName?: string | undefined; region?: string | undefined }): Promise<{ ok: boolean; message: string }>;
     syncNow(): Promise<{ pulled: number; pushed: number; errors: string[] }>;
     r2Status(): Promise<{ configured: boolean; enabled: boolean }>;
-    createReading(input: { question: string; mode: "manual" | "random"; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; deckSize: number }>;
+    createReading(input: { question: string; mode: "manual" | "random"; spreadId?: string; scoring?: boolean; energyFlow?: boolean; folderId?: string }): Promise<{ id: string; folderId?: string; question: string; mode: "manual" | "random"; spreadId: string; scoring: boolean; energyFlow: boolean; deckSize: number }>;
     confirmReading(input: { id: string; selectedIndexes?: number[] }): Promise<ReadingView>;
     updateSelection(input: { id: string; selectedIndexes: number[] }): Promise<{ ok: boolean }>;
     reshuffleReading(input: { id: string }): Promise<{ id: string; deckSize: number }>;

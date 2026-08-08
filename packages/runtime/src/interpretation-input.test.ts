@@ -32,4 +32,22 @@ describe("interpretation input", () => {
     expect(input.cards[4]?.positionName).toBe("当前状态");
     expect(input.draw.confirmed).toBe(true);
   });
+
+  it("builds an energy-flow payload for a non-scored advanced spread", () => {
+    const cards = Array.from({ length: 3 }, (_, index) => card(index));
+    const input = buildInterpretationInput({
+      readingId: "reading-flow",
+      question: "我该如何理解眼前的选择？",
+      mode: "random",
+      spreadId: "triple",
+      scoring: false,
+      energyFlow: true,
+      selected: cards.map((item) => ({ cardId: item.id, orientation: "upright" as const })),
+      cards,
+      metadata: { contentVersion: "content-1", scoreTableVersion: "score-1", methodologyVersion: "method-1", methodologyStyle: "生活化" },
+    });
+    expect(input.cards).toHaveLength(3);
+    expect(input.calculation).toBeUndefined();
+    expect(input.patterns?.majorMinorRatio).toBe("大阿尔卡那 3 / 小阿尔卡那 0");
+  });
 });

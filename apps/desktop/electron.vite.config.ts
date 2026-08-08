@@ -1,9 +1,9 @@
-import { resolve } from "node:path";
+﻿import { resolve } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  main: { plugins: [externalizeDepsPlugin({ exclude: ["@tarot/core", "@tarot/runtime"] })] },
+  main: { plugins: [externalizeDepsPlugin({ exclude: ["@tarot/core", "@tarot/runtime", "@tarot/providers"] })] },
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: { rollupOptions: { output: { format: "cjs", entryFileNames: "index.cjs" } } },

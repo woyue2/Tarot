@@ -1,4 +1,4 @@
-import { interpretationSchema, type TarotInterpretation, type TarotInterpretationInput } from "@tarot/core";
+import { interpretationSchema, validateInterpretationForInput, type TarotInterpretation, type TarotInterpretationInput } from "@tarot/core";
 import type { ModelProvider } from "@tarot/runtime";
 import { PROVIDER_PRESETS, stripReasoningContent, type ProviderType } from "./provider-registry";
 
@@ -40,6 +40,28 @@ export async function fetchProviderModels(baseUrl: string, apiKey: string, provi
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "拉取模型列表失败");
   }
+}
+
+export function buildOutputSchema(input: TarotInterpretationInput) {
+  const required = ["headline", "questionReflection", "cards", "storyline", "actionAdvice", "reflectionQuestion", "disclaimer"];
+  const properties: Record<string, unknown> = {
+    headline: { type: "string" }, questionReflection: { type: "string" },
+    cards: { type: "array", minItems: input.cards.length, maxItems: input.cards.length, items: { type: "object", additionalProperties: false, required: ["cardId", "position", "meaning", "connectionToQuestion"], properties: { cardId: { type: "string" }, position: { type: "integer" }, meaning: { type: "string" }, connectionToQuestion: { type: "string" } } } },
+    storyline: { type: "string" }, actionAdvice: { type: "array", minItems: 2, maxItems: 3, items: { type: "string" } }, reflectionQuestion: { type: "string" }, disclaimer: { type: "string" },
+  };
+  if (input.scoring) {
+    required.push("momentumInterpretation", "valueInterpretation");
+    properties.momentumInterpretation = { type: "string" };
+    properties.valueInterpretation = { type: "string" };
+  }
+  if (input.energyFlow) {
+    required.push("energyFlow", "overallTheme", "patterns", "holisticReading");
+    properties.energyFlow = { type: "string" };
+    properties.overallTheme = { type: "string" };
+    properties.patterns = { type: "array", items: { type: "string" } };
+    properties.holisticReading = { type: "string" };
+  }
+  return { type: "object", additionalProperties: false, required, properties };
 }
 
 export const outputSchema = {
@@ -84,6 +106,18 @@ JSON 对象必须严格使用以下字段名和结构：
 
 注意：cards 数组必须恰好包含 5 个元素，actionAdvice 数组包含 2 到 3 个元素。不要使用其他字段名。`;
 
+export function buildJsonStructurePrompt(input: TarotInterpretationInput): string {
+  const scoringFields = input.scoring ? `,\n  "momentumInterpretation": "动量牌的解读（字符串）",\n  "valueInterpretation": "价值牌的解读（字符串）"` : "";
+  const energyFields = input.energyFlow ? `,\n  "energyFlow": "牌间能量如何推进、呼应或阻滞（字符串）",\n  "overallTheme": "整副牌的核心主题（字符串）",\n  "patterns": ["跨牌模式 1", "跨牌模式 2"],\n  "holisticReading": "结合跨牌模式的整体阅读（字符串）"` : "";
+  return `你必须只返回一个 JSON 对象，不要包含其他文字或 markdown。cards 必须恰好包含 ${input.cards.length} 个元素，actionAdvice 包含 2 到 3 个元素。\n{\n  "headline": "一句话标题",\n  "questionReflection": "对提问者状态的理解",\n  "cards": [{ "cardId": "牌 ID", "position": 位置编号, "meaning": "牌义", "connectionToQuestion": "与问题的关联" }],\n  "storyline": "所有牌串联的叙事"${scoringFields}${energyFields},\n  "actionAdvice": ["建议 1", "建议 2"],\n  "reflectionQuestion": "反思问题",\n  "disclaimer": "免责声明"\n}`;
+}
+
+export function buildSystemPrompt(input: TarotInterpretationInput): string {
+  const scoreHint = input.scoring ? "同时参考输入中已计算的固定分值与计算结果，不得自行改写分数。" : "不使用固定分值，将注意力放在画面、提问者处境和牌阵结构上。";
+  const energyHint = input.energyFlow ? "除逐牌和故事线外，必须基于输入 patterns 解读牌间能量流、重复象征、人物朝向与整体主题；统计事实由程序提供，你负责把它们解释回提问者的处境。" : "保持克制、生活化且有共情力的 last-dance 解读风格。";
+  return `你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。${scoreHint}${energyHint}\n\n${buildJsonStructurePrompt(input)}`;
+}
+
 // OpenAI Responses API 适配器
 export class OpenAICompatibleProvider implements ModelProvider {
   constructor(private readonly options: { apiKey: string; model: string; baseUrl: string }) {}
@@ -94,16 +128,16 @@ export class OpenAICompatibleProvider implements ModelProvider {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.options.apiKey}` },
       body: JSON.stringify({
         model: this.options.model,
-        instructions: "你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。严格根据牌面、固定分值和方法论输出。",
+        instructions: buildSystemPrompt(input),
         input: JSON.stringify(input),
-        text: { format: { type: "json_schema", name: "tarot_reading", strict: true, schema: outputSchema } },
+        text: { format: { type: "json_schema", name: "tarot_reading", strict: true, schema: buildOutputSchema(input) } },
       }),
     });
     const payload = await response.json() as { error?: { message?: string }; output?: Array<{ content?: Array<{ type?: string; text?: string }> }> };
     if (!response.ok) throw new Error(payload.error?.message ?? `模型请求失败（${response.status}）`);
     const text = payload.output?.flatMap((item) => item.content ?? []).find((item) => item.type === "output_text")?.text;
     if (!text) throw new Error("模型没有返回可解析的结构化结果");
-    return interpretationSchema.parse(JSON.parse(text));
+    return validateInterpretationForInput(input, interpretationSchema.parse(JSON.parse(text)));
   }
 
   // Responses API 不支持文本流式预览，直接走非流式（调用方可据此回退）
@@ -132,9 +166,7 @@ export class ChatCompletionProvider implements ModelProvider {
   async interpret(input: TarotInterpretationInput): Promise<TarotInterpretation> {
     const rawUrl = this.options.baseUrl.replace(/\/$/, "");
 
-    const systemPrompt =
-      "你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。严格根据牌面、固定分值和方法论输出。\n\n" +
-      JSON_STRUCTURE_PROMPT;
+    const systemPrompt = buildSystemPrompt(input);
 
     const body: Record<string, unknown> = {
       model: this.options.model,
@@ -153,7 +185,7 @@ export class ChatCompletionProvider implements ModelProvider {
         json_schema: {
           name: "tarot_reading",
           strict: true,
-          schema: outputSchema,
+          schema: buildOutputSchema(input),
         },
       };
     } else if (this.options.supportsJsonSchema !== false) {
@@ -211,7 +243,7 @@ export class ChatCompletionProvider implements ModelProvider {
       }
     }
 
-    return interpretationSchema.parse(parsed);
+    return validateInterpretationForInput(input, interpretationSchema.parse(parsed));
   }
 
   // 流式输出
@@ -221,9 +253,7 @@ export class ChatCompletionProvider implements ModelProvider {
   ): Promise<TarotInterpretation> {
     const rawUrl = this.options.baseUrl.replace(/\/$/, "");
 
-    const systemPrompt =
-      "你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。严格根据牌面、固定分值和方法论输出。\n\n" +
-      JSON_STRUCTURE_PROMPT;
+    const systemPrompt = buildSystemPrompt(input);
 
     const body: Record<string, unknown> = {
       model: this.options.model,
@@ -239,7 +269,7 @@ export class ChatCompletionProvider implements ModelProvider {
     if (this.options.useStrictJsonSchema !== false && this.options.supportsJsonSchema !== false) {
       body.response_format = {
         type: "json_schema",
-        json_schema: { name: "tarot_reading", strict: true, schema: outputSchema },
+        json_schema: { name: "tarot_reading", strict: true, schema: buildOutputSchema(input) },
       };
     } else if (this.options.supportsJsonSchema !== false) {
       body.response_format = { type: "json_object" };
@@ -326,7 +356,7 @@ export class ChatCompletionProvider implements ModelProvider {
       }
     }
 
-    return interpretationSchema.parse(parsed);
+    return validateInterpretationForInput(input, interpretationSchema.parse(parsed));
   }
 }
 

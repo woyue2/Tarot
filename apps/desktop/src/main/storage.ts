@@ -24,6 +24,9 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
         folder_id TEXT REFERENCES reading_folders(id) ON DELETE SET NULL,
         question TEXT NOT NULL,
         mode TEXT NOT NULL,
+        spread_id TEXT,
+        scoring INTEGER,
+        energy_flow INTEGER,
         status TEXT NOT NULL,
         shuffle_seed TEXT NOT NULL,
         deck_json TEXT NOT NULL,
@@ -49,20 +52,26 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
     if (!columns.some((column) => column.name === "notes")) {
       this.database.exec("ALTER TABLE readings ADD COLUMN notes TEXT");
     }
+    if (!columns.some((column) => column.name === "spread_id")) this.database.exec("ALTER TABLE readings ADD COLUMN spread_id TEXT");
+    if (!columns.some((column) => column.name === "scoring")) this.database.exec("ALTER TABLE readings ADD COLUMN scoring INTEGER");
+    if (!columns.some((column) => column.name === "energy_flow")) this.database.exec("ALTER TABLE readings ADD COLUMN energy_flow INTEGER");
     this.database.exec("CREATE INDEX IF NOT EXISTS readings_folder_id ON readings(folder_id, updated_at DESC)");
   }
 
   save(reading: StoredReading): void {
     this.database.prepare(`
       INSERT INTO readings (
-        id, folder_id, question, mode, status, shuffle_seed, deck_json, selected_indexes_json,
+        id, folder_id, question, mode, spread_id, scoring, energy_flow, status, shuffle_seed, deck_json, selected_indexes_json,
         revealed_json, calculation_json, interpretation_input_json, interpretation_json,
         drawn_at, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         folder_id = excluded.folder_id,
         question = excluded.question,
         mode = excluded.mode,
+        spread_id = excluded.spread_id,
+        scoring = excluded.scoring,
+        energy_flow = excluded.energy_flow,
         status = excluded.status,
         shuffle_seed = excluded.shuffle_seed,
         deck_json = excluded.deck_json,
@@ -75,7 +84,7 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
         notes = excluded.notes,
         updated_at = excluded.updated_at
     `).run(
-      reading.id, reading.folderId ?? null, reading.question, reading.mode, reading.status, reading.shuffleSeed,
+      reading.id, reading.folderId ?? null, reading.question, reading.mode, reading.spreadId ?? null, reading.scoring === undefined ? null : Number(reading.scoring), reading.energyFlow === undefined ? null : Number(reading.energyFlow), reading.status, reading.shuffleSeed,
       JSON.stringify(reading.deck), JSON.stringify(reading.selectedIndexes),
       reading.revealed ? JSON.stringify(reading.revealed) : null,
       reading.calculation ? JSON.stringify(reading.calculation) : null,
@@ -145,6 +154,9 @@ export class SqliteReadingRepository implements ReadingRepository, FolderReposit
       folderId: typeof row.folder_id === "string" ? row.folder_id : undefined,
       question: String(row.question),
       mode: row.mode === "random" ? "random" : "manual",
+      spreadId: typeof row.spread_id === "string" ? row.spread_id : undefined,
+      scoring: typeof row.scoring === "number" ? row.scoring !== 0 : undefined,
+      energyFlow: typeof row.energy_flow === "number" ? row.energy_flow !== 0 : undefined,
       status: String(row.status),
       shuffleSeed: String(row.shuffle_seed),
       deck: parse<unknown[]>("deck_json") ?? [],

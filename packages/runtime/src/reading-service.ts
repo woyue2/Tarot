@@ -6,6 +6,7 @@ import {
   type Orientation,
   type TarotCard,
   type TarotInterpretation,
+  getSpreadById,
 } from "@tarot/core";
 import { buildInterpretationInput } from "./interpretation-input";
 import type {
@@ -73,6 +74,9 @@ export interface PublicReading {
   folderId?: string | undefined;
   question: string;
   mode: "manual" | "random";
+  spreadId: string;
+  scoring: boolean;
+  energyFlow: boolean;
   status: string;
   selectedIndexes: number[];
   revealed?: RevealedCard[] | undefined;
@@ -102,11 +106,14 @@ export class ReadingService {
   // ---- 解读生命周期 ----
 
   /** 新建一次解读：洗牌并落库，返回 deckSize 供 UI 渲染牌列。 */
-  createReading(input: { question: string; mode: "manual" | "random"; folderId?: string | undefined }): {
+  createReading(input: { question: string; mode: "manual" | "random"; spreadId?: string; scoring?: boolean; energyFlow?: boolean; folderId?: string | undefined }): {
     id: string;
     folderId?: string | undefined;
     question: string;
     mode: "manual" | "random";
+    spreadId: string;
+    scoring: boolean;
+    energyFlow: boolean;
     deckSize: number;
   } {
     const question = input.question?.trim();
@@ -115,11 +122,20 @@ export class ReadingService {
     const seed = this.env.seed();
     const now = this.env.now();
     const mode: "manual" | "random" = input.mode === "random" ? "random" : "manual";
+    const spreadId = input.spreadId ?? "five_card_timeline_v1";
+    const spread = getSpreadById(spreadId);
+    if (!spread) throw new Error("没有找到所选牌阵");
+    const scoring = input.scoring ?? true;
+    const energyFlow = input.energyFlow ?? false;
+    if (scoring && !spread.supportsScoring) throw new Error("所选牌阵暂不支持动量/价值评分");
     const reading: StoredReading = {
       id: this.env.uuid(),
       ...(input.folderId ? { folderId: input.folderId } : {}),
       question,
       mode,
+      spreadId,
+      scoring,
+      energyFlow,
       status: "selecting",
       shuffleSeed: seed,
       deck: shuffleDeck(this.content.cards, createSeededRandom(seed)),
@@ -128,7 +144,7 @@ export class ReadingService {
       updatedAt: now,
     };
     this.repo.save(reading);
-    return { id: reading.id, folderId: reading.folderId, question, mode, deckSize: reading.deck.length };
+    return { id: reading.id, folderId: reading.folderId, question, mode, spreadId, scoring, energyFlow, deckSize: reading.deck.length };
   }
 
   /** 保存部分选牌（草稿恢复用），仅在 selecting 阶段允许。 */
@@ -137,7 +153,9 @@ export class ReadingService {
     if (!reading) throw new Error("没有找到这次解读");
     if (reading.status !== "selecting") throw new Error("确认后的牌阵不能修改选择");
     const indexes = Array.isArray(input.selectedIndexes) ? input.selectedIndexes : [];
-    if (indexes.length > 5) throw new Error("最多选择五张牌");
+    const spread = getSpreadById(reading.spreadId ?? "five_card_timeline_v1");
+    if (!spread) throw new Error("没有找到所选牌阵");
+    if (indexes.length > spread.positions.length) throw new Error(`最多选择 ${spread.positions.length} 张牌`);
     if (indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= DECK_SIZE)) {
       throw new Error("无效的牌索引");
     }
@@ -163,20 +181,22 @@ export class ReadingService {
     return { id: reading.id, deckSize: updated.deck.length };
   }
 
-  /** 确认牌阵：校验五张、揭晓牌面、计算动量/价值、构建模型输入契约并落库。 */
+  /** 确认牌阵：按牌阵校验张数、揭晓牌面并构建模型输入契约。 */
   confirmReading(input: { id: string; selectedIndexes?: number[] | undefined }): PublicReading {
     const reading = this.repo.find(input.id);
     if (!reading) throw new Error("没有找到这次解读");
+    const spread = getSpreadById(reading.spreadId ?? "five_card_timeline_v1");
+    if (!spread) throw new Error("没有找到所选牌阵");
     const indexes =
       reading.mode === "random"
-        ? randomSelection(createSeededRandom(`${reading.shuffleSeed}:positions`), DECK_SIZE)
+        ? randomSelection(createSeededRandom(`${reading.shuffleSeed}:positions`), DECK_SIZE, spread.positions.length)
         : (input.selectedIndexes ?? []);
     if (
-      indexes.length !== 5 ||
-      new Set(indexes).size !== 5 ||
+      indexes.length !== spread.positions.length ||
+      new Set(indexes).size !== spread.positions.length ||
       indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= DECK_SIZE)
     ) {
-      throw new Error("请选择恰好五张不同的牌");
+      throw new Error(`请选择恰好 ${spread.positions.length} 张不同的牌`);
     }
     const deck = reading.deck as DeckEntry[];
     const selected = indexes.map((index) => {
@@ -188,6 +208,9 @@ export class ReadingService {
       readingId: reading.id,
       question: reading.question,
       mode: reading.mode,
+      spreadId: spread.id,
+      scoring: reading.scoring ?? true,
+      energyFlow: reading.energyFlow ?? false,
       selected,
       cards: this.content.cards,
       metadata: {
@@ -324,6 +347,9 @@ export class ReadingService {
       folderId: reading.folderId,
       question: reading.question,
       mode: reading.mode,
+      spreadId: reading.spreadId ?? "five_card_timeline_v1",
+      scoring: reading.scoring ?? true,
+      energyFlow: reading.energyFlow ?? false,
       status: reading.status,
       selectedIndexes: reading.selectedIndexes,
       revealed: reading.revealed as RevealedCard[] | undefined,

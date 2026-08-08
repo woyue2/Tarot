@@ -195,8 +195,8 @@ function registerIpc(): void {
     buildAppMenu();
     return appPrefs;
   });
-  ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; folderId?: string }) => {
-    return readingService.createReading({ question: input.question, mode: input.mode, ...(input.folderId ? { folderId: input.folderId } : {}) });
+  ipcMain.handle("tarot:create-reading", (_event, input: { question: string; mode: "manual" | "random"; spreadId?: string; scoring?: boolean; energyFlow?: boolean; folderId?: string }) => {
+    return readingService.createReading({ question: input.question, mode: input.mode, ...(input.spreadId ? { spreadId: input.spreadId } : {}), ...(input.scoring !== undefined ? { scoring: input.scoring } : {}), ...(input.energyFlow !== undefined ? { energyFlow: input.energyFlow } : {}), ...(input.folderId ? { folderId: input.folderId } : {}) });
   });
   ipcMain.handle("tarot:confirm-reading", (_event, input: { id: string; selectedIndexes?: number[] }) => {
     return readingService.confirmReading({ id: input.id, selectedIndexes: input.selectedIndexes });
