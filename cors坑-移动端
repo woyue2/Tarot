@@ -1,0 +1,15 @@
+无法连接 R2 端点：请确认 Endpoint 正确，并检查手机网络；浏览器 PWA 还需配置 R2 CORS
+
+
+
+
+耗时 1分钟 11秒
+
+
+
+这已不是 Account ID 问题，而是网络层没有收到 R2 的 HTTP 响应。
+如果使用手机浏览器/PWA：必须在 R2 Bucket 配置 CORS，前端代码无法绕过。
+如果使用 APK：安装刚生成的新包，它会走原生 HTTP，不受 CORS 限制：[app-debug.apk](C:/Users/Admin1/Documents/0Tarot/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk)
+新包已改为 Endpoint 必填，并删除 Account ID UI。Endpoint 应填写 S3 API 地址，例如：
+https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.r2.cloudflarestorage.com
+不要包含 Bucket 名称或其他路径。

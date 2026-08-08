@@ -47,7 +47,18 @@ pnpm check       # 生成数据 + typecheck + test + build（一键验收）
 
 ------
 
+
+
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
+
 cd c:\Users\Admin1\Documents\0Tarot\apps\mobile
 pnpm --filter @tarot/mobile cap:sync
 cd android
 .\gradlew assembleDebug --no-daemon --console=plain
+
+或者
+[Environment]::SetEnvironmentVariable(
+  "JAVA_HOME",
+  "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot",
+  "User"
+)
