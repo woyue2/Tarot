@@ -53,6 +53,37 @@ describe("spread registry", () => {
     expect(getSpreadById("red_thread")?.positions).toHaveLength(6);
   });
 
+  it("keeps numbered positions aligned with the documented shapes", () => {
+    const position = (id: string, index: number) => getSpreadById(id)?.positions[index - 1]?.placement;
+
+    // 二选一：1 在中央下方，2/3 在中层，4/5 在上层。
+    expect(position("two_paths", 1)).toMatchObject({ x: 50, y: 82 });
+    expect(position("two_paths", 2)).toMatchObject({ x: 30, y: 50 });
+    expect(position("two_paths", 3)).toMatchObject({ x: 70, y: 50 });
+    expect(position("two_paths", 4)).toMatchObject({ x: 18, y: 18 });
+    expect(position("two_paths", 5)).toMatchObject({ x: 82, y: 18 });
+
+    // 五芒星周运/问题版与元素版的左右编号方向不同，不能共用默认顺序。
+    expect(position("pentacle_week", 2)).toMatchObject({ x: 20, y: 30 });
+    expect(position("pentacle_week", 5)).toMatchObject({ x: 80, y: 30 });
+    expect(position("pentacle_element", 2)).toMatchObject({ x: 80, y: 30 });
+    expect(position("pentacle_element", 5)).toMatchObject({ x: 20, y: 30 });
+
+    // 维纳斯之爱：3 在顶端，1/2 上翼，4 中轴，7/5/8 下翼，6 底端。
+    expect(position("venus", 1)).toMatchObject({ x: 25, y: 28 });
+    expect(position("venus", 2)).toMatchObject({ x: 75, y: 28 });
+    expect(position("venus", 3)).toMatchObject({ x: 50, y: 10 });
+    expect(position("venus", 7)).toMatchObject({ x: 25, y: 68 });
+    expect(position("venus", 5)).toMatchObject({ x: 50, y: 68 });
+    expect(position("venus", 8)).toMatchObject({ x: 75, y: 68 });
+    expect(position("venus", 6)).toMatchObject({ x: 50, y: 90 });
+
+    // 13 张年度牌阵：主题牌在中央，月份从位置2开始绕圈。
+    expect(position("year", 1)).toMatchObject({ x: 50, y: 50, zIndex: 2 });
+    expect(position("year", 2)).toMatchObject({ x: 50, y: 12 });
+    expect(position("year", 11)?.x).toBeCloseTo(12, 0);
+  });
+
   it("keeps source qualifiers in user-facing names", () => {
     expect(getSpreadById("gypsy_cross")?.name).toContain("5张·爱情专用");
     expect(getSpreadById("celtic_cross_11")?.name).toContain("含建议牌");

@@ -71,14 +71,27 @@ const SOURCE_TITLES: Readonly<Record<string, string>> = {
   soulmate_z: "正缘遇见牌阵（Z字形·11张）",
 };
 
-function placement(type: SpreadLayoutType, index: number, count: number): SpreadPosition["placement"] {
+function placement(type: SpreadLayoutType, index: number, count: number, spreadId?: string): SpreadPosition["placement"] {
   if (type === "single") return { x: 50, y: 50 };
   if (type === "row") return { x: ((index + 1) * 100) / (count + 1), y: 50 };
   if (type === "circle" || type === "pentagram" || type === "hexagram") {
+    if (spreadId === "year" && count === 13) {
+      if (index === 0) return { x: 50, y: 50, zIndex: 2 };
+      const monthIndex = index - 1;
+      const angle = -Math.PI / 2 + (monthIndex * Math.PI * 2) / 12;
+      return { x: 50 + Math.cos(angle) * 38, y: 50 + Math.sin(angle) * 38 };
+    }
     if (type === "hexagram" && count === 7) {
       const slots = [[50, 8], [82, 66], [18, 66], [50, 92], [18, 34], [82, 34], [50, 50]];
       const slot = slots[index] ?? [50, 50];
       return { x: slot[0]!, y: slot[1]!, ...(index === 6 ? { zIndex: 2 } : {}) };
+    }
+    if (type === "pentagram") {
+      const slots = spreadId === "pentacle_element"
+        ? [[50, 10], [80, 30], [80, 70], [20, 70], [20, 30]]
+        : [[50, 10], [20, 30], [20, 70], [80, 70], [80, 30]];
+      const slot = slots[index] ?? [50, 50];
+      return { x: slot[0]!, y: slot[1]! };
     }
     const angle = -Math.PI / 2 + (index * Math.PI * 2) / count;
     return { x: 50 + Math.cos(angle) * 38, y: 50 + Math.sin(angle) * 38 };
@@ -114,6 +127,16 @@ function placement(type: SpreadLayoutType, index: number, count: number): Spread
     return { x: slot[0]!, y: slot[1]! };
   }
   if (type === "columns") return { x: index === 0 ? 50 : index % 2 ? 25 : 75, y: index === 0 ? 50 : 12 + Math.ceil(index / 2) * 15 };
+  if (spreadId === "venus") {
+    // 文档布局：    3
+    //          1   2
+    //            4
+    //          7 5 8
+    //            6
+    const slots = [[25, 28], [75, 28], [50, 10], [50, 43], [50, 68], [50, 90], [25, 68], [75, 68]];
+    const slot = slots[index] ?? [50, 50];
+    return { x: slot[0]!, y: slot[1]!, ...(index === 0 ? { zIndex: 2 } : {}) };
+  }
   const columns = Math.ceil(Math.sqrt(count));
   return { x: ((index % columns) + 1) * 100 / (columns + 1), y: (Math.floor(index / columns) + 1) * 100 / (Math.ceil(count / columns) + 1) };
 }
@@ -129,7 +152,7 @@ function makeSpread(input: {
   const spreadPositions = input.positions.map(([id, name, description = name, groupId, isKey], index) => ({
     id, index: index + 1, name, description,
     ...(groupId ? { groupId } : {}), ...(isKey ? { isKey: true } : {}),
-    placement: placement(input.layout, index, input.positions.length),
+    placement: placement(input.layout, index, input.positions.length, input.id),
   }));
   const order = input.order ?? spreadPositions.map((position) => position.id);
   const scoring = input.scoring ?? false;

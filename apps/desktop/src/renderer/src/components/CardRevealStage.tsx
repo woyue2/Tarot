@@ -117,6 +117,37 @@ interface CardMeshProps {
   onToggle?: () => void;
 }
 
+function PositionBadge({ number, point, scale }: { number: number; point: { x: number; y: number; z: number }; scale: number }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 96;
+    canvas.height = 96;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.beginPath();
+    context.arc(48, 48, 42, 0, Math.PI * 2);
+    context.fillStyle = "rgba(24, 22, 18, 0.92)";
+    context.fill();
+    context.fillStyle = "#fff";
+    context.font = "600 48px sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(String(number), 48, 49);
+    const next = new THREE.CanvasTexture(canvas);
+    next.colorSpace = THREE.SRGBColorSpace;
+    next.needsUpdate = true;
+    return next;
+  }, [number]);
+
+  useEffect(() => () => texture?.dispose(), [texture]);
+  if (!texture) return null;
+  return (
+    <sprite position={[point.x - 0.74 * scale, point.y + 1.02 * scale, point.z + 0.18]} scale={[0.32 * scale, 0.32 * scale, 1]}>
+      <spriteMaterial map={texture} transparent depthTest={false} depthWrite={false} />
+    </sprite>
+  );
+}
+
 function CardMesh({
   index,
   count,
@@ -309,6 +340,7 @@ function Scene({
 
   const { scale, step, points } = useLayout(cards.length, viewport.width, viewport.height, positions);
   const backUrl = "/cards/card-back.webp";
+  const showPositionBadges = Boolean(points && positions && positions.some((position) => position.placement.y !== positions[0]?.placement.y));
 
   return (
     <Suspense fallback={null}>
@@ -317,21 +349,23 @@ function Scene({
       <pointLight position={[0, 0, 3.2]} intensity={0.7} color="#f5c842" />
       <spotLight position={[-5, 2, 4]} angle={0.35} penumbra={0.6} intensity={1.1} color="#fff0c8" target-position={[0, 0, 0]} />
       {cards.map((card, i) => (
-        <CardMesh
-          key={card.cardId}
-          index={i}
-          count={cards.length}
-          faceUrl={`/${card.card.image}`}
-          backUrl={backUrl}
-          started={started}
-          flipped={flipped[i] ?? false}
-          instant={instant}
-          runId={runId}
-          scale={scale}
-          step={step}
-          endPoint={points?.[i]}
-          onToggle={() => onToggle(i)}
-        />
+        <group key={card.cardId}>
+          <CardMesh
+            index={i}
+            count={cards.length}
+            faceUrl={`/${card.card.image}`}
+            backUrl={backUrl}
+            started={started}
+            flipped={flipped[i] ?? false}
+            instant={instant}
+            runId={runId}
+            scale={scale}
+            step={step}
+          endPoint={points?.[card.position - 1]}
+            onToggle={() => onToggle(i)}
+          />
+          {showPositionBadges && points?.[card.position - 1] && <PositionBadge number={card.position} point={points[card.position - 1]!} scale={scale} />}
+        </group>
       ))}
     </Suspense>
   );
@@ -345,7 +379,7 @@ function CardInfo({ card, index }: { card: RevealedCard; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 + 0.3 }}
     >
-      <span className="card-reveal-position">{card.positionName}</span>
+      <span className="card-reveal-position">{card.position}. {card.positionName}</span>
       <h3>{card.card.name}</h3>
       <small>{card.orientation === "upright" ? "正位" : "逆位"}</small>
     </motion.div>
