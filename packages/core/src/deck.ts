@@ -17,6 +17,19 @@ export function shuffleDeck(cards: readonly TarotCard[], random: RandomSource): 
   return deck;
 }
 
-export function randomSelection(): number[] {
-  return [0, 1, 2, 3, 4];
+/**
+ * 从牌堆里无放回随机抽 `count` 个不同位置。
+ *
+ * 随机性来自传入的 `random`（种子 PRNG），与 `shuffleDeck` 互相独立——
+ * 调用方应使用派生子种子（如 `${shuffleSeed}:positions`），既保持整次解读
+ * 确定可复现，又避免位置抽取与洗牌内部流产生耦合。
+ */
+export function randomSelection(random: RandomSource, deckSize = 78, count = 5): number[] {
+  if (count > deckSize) throw new Error("随机选取数量不能超过牌堆大小");
+  const indexes = new Set<number>();
+  while (indexes.size < count) {
+    const index = Math.floor(random.next() * deckSize);
+    if (index >= 0 && index < deckSize) indexes.add(index);
+  }
+  return [...indexes];
 }

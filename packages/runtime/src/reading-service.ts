@@ -167,7 +167,10 @@ export class ReadingService {
   confirmReading(input: { id: string; selectedIndexes?: number[] | undefined }): PublicReading {
     const reading = this.repo.find(input.id);
     if (!reading) throw new Error("没有找到这次解读");
-    const indexes = reading.mode === "random" ? randomSelection() : (input.selectedIndexes ?? []);
+    const indexes =
+      reading.mode === "random"
+        ? randomSelection(createSeededRandom(`${reading.shuffleSeed}:positions`), DECK_SIZE)
+        : (input.selectedIndexes ?? []);
     if (
       indexes.length !== 5 ||
       new Set(indexes).size !== 5 ||
