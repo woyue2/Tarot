@@ -30,6 +30,7 @@ import {
 } from "./runtime/credentials";
 import { R2Client, WorkerR2Client, resolveR2Endpoint } from "./runtime/r2-client";
 import { R2SyncService } from "@tarot/runtime";
+import { SPREADS } from "@tarot/core";
 import {
   createModelProvider,
   testConnection,
@@ -53,11 +54,12 @@ import {
 } from "./icons";
 
 const DECK_SIZE = 78;
-const SPREAD_OPTIONS = [
-  { id: "five_card_timeline_v1", name: "五张时间流", count: 5, supportsScoring: true },
-  { id: "single", name: "单张牌", count: 1, supportsScoring: false },
-  { id: "triple", name: "圣三角", count: 3, supportsScoring: false },
-] as const;
+const SPREAD_OPTIONS = SPREADS.map((spread) => ({
+  id: spread.id,
+  name: spread.name,
+  count: spread.positions.length,
+  supportsScoring: spread.supportsScoring,
+}));
 const cardBackSrc = `/${cardBack}`;
 
 type View = "home" | "select" | "result" | "history" | "settings";

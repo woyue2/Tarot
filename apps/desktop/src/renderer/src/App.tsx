@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { AnimatePresence, motion } from "framer-motion";
+import { SPREADS } from "@tarot/core";
 import { CardRevealStage } from "./components/CardRevealStage";
 
 type Stage = "home" | "select" | "result" | "settings";
@@ -10,12 +11,6 @@ type Stage = "home" | "select" | "result" | "settings";
 // Keep this slightly longer than --shuffle-duration so the final card can settle.
 const SHUFFLE_ANIMATION_MS = 2500;
 const SHUFFLE_VISUAL_CARD_COUNT = 16;
-const SPREAD_OPTIONS = [
-  { id: "five_card_timeline_v1", name: "五张时间流", count: 5, supportsScoring: true },
-  { id: "single", name: "单张牌", count: 1, supportsScoring: false },
-  { id: "triple", name: "圣三角", count: 3, supportsScoring: false },
-] as const;
-
 // 笔记草稿缓存：未保存的笔记按 reading id 暂存到 localStorage，
 // 关闭/切走后再回来可恢复；点「保存」才真正落库并清掉缓存。
 const NOTES_DRAFT_PREFIX = "tarot.notes-draft.";
@@ -41,6 +36,13 @@ function clearNotesDraft(id: string): void {
     /* localStorage 不可用时静默降级 */
   }
 }
+
+const SPREAD_OPTIONS = SPREADS.map((spread) => ({
+  id: spread.id,
+  name: spread.name,
+  count: spread.positions.length,
+  supportsScoring: spread.supportsScoring,
+}));
 
 function ShuffleOverlay() {
   return createPortal(
