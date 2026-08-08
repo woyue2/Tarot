@@ -35,6 +35,7 @@ export function resolveR2Endpoint(input: {
 }
 
 const encoder = new TextEncoder();
+const DIRECT_REQUEST_TIMEOUT_MS = 15000;
 
 async function hmac(key: BufferSource, message: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
@@ -204,7 +205,23 @@ export class R2Client {
       secretAccessKey: this.secretAccessKey,
       region: this.region,
     });
-    return fetch(url.toString(), { method, headers, body: body || null });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DIRECT_REQUEST_TIMEOUT_MS);
+    try {
+      return await fetch(url.toString(), {
+        method,
+        headers,
+        body: body || null,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error(`R2 请求超时（${DIRECT_REQUEST_TIMEOUT_MS / 1000}s）`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async putJson(key: string, data: unknown): Promise<void> {

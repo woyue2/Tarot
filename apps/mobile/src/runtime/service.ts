@@ -67,6 +67,17 @@ export function createR2Sync(): R2SyncService | null {
   return new R2SyncService(client, repository);
 }
 
+repository.setSyncHooks({
+  onReadingSaved(reading) {
+    if (!loadR2Settings().enabled) return;
+    createR2Sync()?.pushReading(reading).catch(() => {});
+  },
+  onFolderSaved(folder) {
+    if (!loadR2Settings().enabled) return;
+    createR2Sync()?.pushFolder(folder).catch(() => {});
+  },
+});
+
 /** 用当前已保存的设置测试 R2 连通性（直连或 Worker 代理，供「测试连接」按钮调用）。 */
 export async function testR2Connection(): Promise<{ ok: boolean; message: string }> {
   if (!isR2Configured()) {

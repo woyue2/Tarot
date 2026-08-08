@@ -18,7 +18,32 @@ type SyncRepository = ReadingRepository & {
   listFolders(): ReadingFolder[];
   findFolder(id: string): ReadingFolder | undefined;
   saveFolder(folder: ReadingFolder): void;
+  saveReadings?(readings: StoredReading[]): void;
+  saveFolders?(folders: ReadingFolder[]): void;
 };
+
+const SYNC_CONCURRENCY = 4;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function run(): Promise<void> {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      const item = items[index];
+      if (item !== undefined) results[index] = await worker(item);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(SYNC_CONCURRENCY, items.length) }, () => run()),
+  );
+  return results;
+}
 
 export class R2SyncService {
   private readonly client: R2ClientLike;
@@ -69,32 +94,40 @@ export class R2SyncService {
       this.repository.list(500),
     ]);
 
-    const localMap = new Map(localReadings.map((r) => [r.id, r]));
+    const localMap = new Map(localReadings.map((reading) => [reading.id, reading]));
     const remoteMap = new Map(
       remoteList
         .filter((item) => item.key.endsWith(".json"))
-        .map((item) => {
-          const id = item.key.replace("readings/", "").replace(".json", "");
-          return [id, item] as const;
-        }),
+        .map((item) => [item.key.replace("readings/", "").replace(".json", ""), item] as const),
     );
 
-    for (const [id, remoteItem] of remoteMap) {
-      const local = localMap.get(id);
-      const remote = await this.client.getJson<StoredReading>(remoteItem.key);
-      if (!remote) continue;
-      if (!local || remote.updatedAt > local.updatedAt) {
+    const pulledReadings = (
+      await mapWithConcurrency([...remoteMap], async ([id, remoteItem]) => {
+        const local = localMap.get(id);
         try {
-          this.repository.save(remote);
-          report.pulled++;
-          localMap.set(id, remote);
+          const remote = await this.client.getJson<StoredReading>(remoteItem.key);
+          if (remote && (!local || remote.updatedAt > local.updatedAt)) {
+            localMap.set(id, remote);
+            return remote;
+          }
         } catch (error) {
           report.errors.push(`拉取 reading ${id} 失败：${error instanceof Error ? error.message : String(error)}`);
         }
+        return undefined;
+      })
+    ).filter((reading): reading is StoredReading => reading !== undefined);
+
+    if (pulledReadings.length > 0) {
+      try {
+        if (this.repository.saveReadings) this.repository.saveReadings(pulledReadings);
+        else for (const reading of pulledReadings) this.repository.save(reading);
+        report.pulled += pulledReadings.length;
+      } catch (error) {
+        report.errors.push(`批量保存 readings 失败：${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
-    for (const [id, local] of localMap) {
+    await mapWithConcurrency([...localMap], async ([id, local]) => {
       const remote = remoteMap.get(id);
       if (!remote || local.updatedAt > remote.lastModified.toISOString()) {
         try {
@@ -104,7 +137,7 @@ export class R2SyncService {
           report.errors.push(`推送 reading ${id} 失败：${error instanceof Error ? error.message : String(error)}`);
         }
       }
-    }
+    });
   }
 
   private async syncFolders(report: SyncReport): Promise<void> {
@@ -113,32 +146,40 @@ export class R2SyncService {
       this.repository.listFolders(),
     ]);
 
-    const localMap = new Map(localFolders.map((f) => [f.id, f]));
+    const localMap = new Map(localFolders.map((folder) => [folder.id, folder]));
     const remoteMap = new Map(
       remoteList
         .filter((item) => item.key.endsWith(".json"))
-        .map((item) => {
-          const id = item.key.replace("folders/", "").replace(".json", "");
-          return [id, item] as const;
-        }),
+        .map((item) => [item.key.replace("folders/", "").replace(".json", ""), item] as const),
     );
 
-    for (const [id, remoteItem] of remoteMap) {
-      const local = localMap.get(id);
-      const remote = await this.client.getJson<ReadingFolder>(remoteItem.key);
-      if (!remote) continue;
-      if (!local || remote.updatedAt > local.updatedAt) {
+    const pulledFolders = (
+      await mapWithConcurrency([...remoteMap], async ([id, remoteItem]) => {
+        const local = localMap.get(id);
         try {
-          this.repository.saveFolder(remote);
-          report.pulled++;
-          localMap.set(id, remote);
+          const remote = await this.client.getJson<ReadingFolder>(remoteItem.key);
+          if (remote && (!local || remote.updatedAt > local.updatedAt)) {
+            localMap.set(id, remote);
+            return remote;
+          }
         } catch (error) {
           report.errors.push(`拉取 folder ${id} 失败：${error instanceof Error ? error.message : String(error)}`);
         }
+        return undefined;
+      })
+    ).filter((folder): folder is ReadingFolder => folder !== undefined);
+
+    if (pulledFolders.length > 0) {
+      try {
+        if (this.repository.saveFolders) this.repository.saveFolders(pulledFolders);
+        else for (const folder of pulledFolders) this.repository.saveFolder(folder);
+        report.pulled += pulledFolders.length;
+      } catch (error) {
+        report.errors.push(`批量保存 folders 失败：${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
-    for (const [id, local] of localMap) {
+    await mapWithConcurrency([...localMap], async ([id, local]) => {
       const remote = remoteMap.get(id);
       if (!remote || local.updatedAt > remote.lastModified.toISOString()) {
         try {
@@ -148,6 +189,6 @@ export class R2SyncService {
           report.errors.push(`推送 folder ${id} 失败：${error instanceof Error ? error.message : String(error)}`);
         }
       }
-    }
+    });
   }
 }

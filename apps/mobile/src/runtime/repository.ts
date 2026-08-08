@@ -13,6 +13,17 @@ const FOLDERS_KEY = "tarot.mobile.folders.v1";
  * 走 Capacitor 后应替换为 SQLite / IndexedDB 实现同一组端口。
  */
 export class WebReadingRepository implements ReadingRepository, FolderRepository {
+  private onReadingSaved: ((reading: StoredReading) => void) | undefined;
+  private onFolderSaved: ((folder: ReadingFolder) => void) | undefined;
+
+  setSyncHooks(hooks: {
+    onReadingSaved?: (reading: StoredReading) => void;
+    onFolderSaved?: (folder: ReadingFolder) => void;
+  }): void {
+    this.onReadingSaved = hooks.onReadingSaved;
+    this.onFolderSaved = hooks.onFolderSaved;
+  }
+
   private readReadings(): Record<string, StoredReading> {
     try {
       return JSON.parse(localStorage.getItem(READINGS_KEY) ?? "{}") as Record<string, StoredReading>;
@@ -42,6 +53,14 @@ export class WebReadingRepository implements ReadingRepository, FolderRepository
   save(reading: StoredReading): void {
     const map = this.readReadings();
     map[reading.id] = reading;
+    this.writeReadings(map);
+    this.onReadingSaved?.(reading);
+  }
+
+  saveReadings(readings: StoredReading[]): void {
+    if (readings.length === 0) return;
+    const map = this.readReadings();
+    for (const reading of readings) map[reading.id] = reading;
     this.writeReadings(map);
   }
 
@@ -78,6 +97,14 @@ export class WebReadingRepository implements ReadingRepository, FolderRepository
     const map = this.readFolders();
     map[folder.id] = folder;
     this.writeFolders(map);
+    this.onFolderSaved?.(folder);
+  }
+
+  saveFolders(folders: ReadingFolder[]): void {
+    if (folders.length === 0) return;
+    const map = this.readFolders();
+    for (const folder of folders) map[folder.id] = folder;
+    this.writeFolders(map);
   }
 
   renameFolder(id: string, name: string): ReadingFolder | undefined {
@@ -87,6 +114,7 @@ export class WebReadingRepository implements ReadingRepository, FolderRepository
     const updated: ReadingFolder = { ...folder, name, updatedAt: new Date().toISOString() };
     map[id] = updated;
     this.writeFolders(map);
+    this.onFolderSaved?.(updated);
     return updated;
   }
 
