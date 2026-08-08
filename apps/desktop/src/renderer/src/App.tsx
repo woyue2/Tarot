@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@astryxdesign/core/Button";
-import { TextArea } from "@astryxdesign/core/TextArea";
 import { AnimatePresence, motion } from "framer-motion";
-import { SPREADS } from "@tarot/core";
+import { SELECTABLE_SPREADS, getSpreadById } from "@tarot/core";
 import { CardRevealStage } from "./components/CardRevealStage";
 
 type Stage = "home" | "select" | "result" | "settings";
@@ -37,12 +36,19 @@ function clearNotesDraft(id: string): void {
   }
 }
 
-const SPREAD_OPTIONS = SPREADS.map((spread) => ({
+const SPREAD_OPTIONS = SELECTABLE_SPREADS.map((spread) => ({
   id: spread.id,
   name: spread.name,
+  description: spread.description,
+  category: spread.category,
   count: spread.positions.length,
   supportsScoring: spread.supportsScoring,
 }));
+const SPREAD_GROUPS = [
+  { prefix: "1.", label: "一、入门级牌阵" },
+  { prefix: "2.", label: "二、进阶级牌阵" },
+  { prefix: "3.", label: "三、高级牌阵" },
+] as const;
 
 function ShuffleOverlay() {
   return createPortal(
@@ -169,7 +175,7 @@ export function App() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const [advanced, setAdvanced] = useState(false);
-  const [spreadId, setSpreadId] = useState("five_card_timeline_v1");
+  const [spreadId, setSpreadId] = useState("single");
   const [scoring, setScoring] = useState(false);
   const [energyFlow, setEnergyFlow] = useState(true);
 
@@ -580,17 +586,29 @@ export function App() {
             <div className="hero-orbit" aria-hidden="true"><StargateMark /></div>
             <p className="eyebrow">A QUIET SPACE FOR REFLECTION</p>
             {activeFolder && <div className="active-folder-chip"><FolderGlyph className="chip-folder" /><b>{activeFolder.name}</b><small>新问题</small></div>}
-            <h1>让五张牌，照见此刻的路径</h1>
+            <h1>{advanced ? SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.name : "让五张牌，照见此刻的路径"}</h1>
             <p className="lead">在安静的空间里，和你的直觉对话。想清楚一个问题，剩下的交给牌。</p>
              <div className="question-panel astryx-surface">
-              <TextArea label="你想探索什么？" value={question} onChange={setQuestion} placeholder="例如：未来三个月，我该如何调整工作方向？" rows={4} isRequired />
+              <label className="question-label">
+                <span>你想探索什么？</span>
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  placeholder="例如：未来三个月，我该如何调整工作方向？"
+                  rows={4}
+                  required
+                />
+              </label>
               <div className="question-footer"><span>{question.length} / 300</span><span>三个月内的问题</span></div>
              </div>
              <button type="button" className="btn ghost" onClick={() => setAdvanced((value) => !value)}>{advanced ? "收起高级解读" : "高级解读设置"}</button>
              {advanced && <div className="question-panel astryx-surface">
                <label>牌阵<select value={spreadId} onChange={(event) => { const next = event.target.value; setSpreadId(next); if (!(SPREAD_OPTIONS.find((spread) => spread.id === next)?.supportsScoring)) setScoring(false); }}>
-                 {SPREAD_OPTIONS.map((spread) => <option key={spread.id} value={spread.id}>{spread.name}（{spread.count} 张）</option>)}
+                 {SPREAD_GROUPS.map((group) => <optgroup key={group.prefix} label={group.label}>
+                   {SPREAD_OPTIONS.filter((spread) => spread.name.startsWith(group.prefix)).map((spread) => <option key={spread.id} value={spread.id}>{spread.name} · {spread.count} 张</option>)}
+                 </optgroup>)}
                </select></label>
+               <small>{SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.description}</small>
                <label className="checkbox-label"><input type="checkbox" checked={energyFlow} onChange={(event) => setEnergyFlow(event.target.checked)} /><span>启用能量流整体阅读</span></label>
                <label className="checkbox-label"><input type="checkbox" checked={scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.supportsScoring} onChange={(event) => setScoring(event.target.checked)} /><span>启用动量 / 价值评分</span></label>
              </div>}
@@ -604,7 +622,7 @@ export function App() {
               <button type="button" className="mode-card" disabled={!question.trim() || busy} onClick={() => void begin("random")}>
                 <span className="mode-icon"><DiceIcon /></span>
                 <b>{advanced ? `随机抽 ${SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5} 张` : "随机抽五张"}</b>
-                <span>系统随机翻开五张牌</span>
+                <span>系统随机翻开{advanced ? `${SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.count ?? 5} 张` : "五张"}牌</span>
                 {pendingMode === "random" && <span className="mode-loading">准备中…</span>}
               </button>
             </div>
@@ -638,7 +656,7 @@ export function App() {
           </motion.section>}
 
           {stage === "result" && reading && <motion.section className="result-view" key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <p className="eyebrow">{reading.spreadId === "single" ? "SINGLE CARD" : reading.spreadId === "triple" ? "THREE-CARD TRIANGLE" : "FIVE-CARD TIMELINE"}</p>
+            <p className="eyebrow">{getSpreadById(reading.spreadId)?.name ?? "塔罗解读"}</p>
             <div className="result-actions">
               <button
                 className="notes-trigger"

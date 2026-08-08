@@ -128,6 +128,11 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .notes-editor textarea:focus { outline: none; border-color: var(--accent); }
 .notes-editor-actions { display: flex; gap: 10px; margin-top: 12px; }
 .question-panel { width: min(720px, 100%); margin: 0 auto; padding: 22px; text-align: left; border: 1px solid var(--border); border-radius: 14px; background: var(--background); box-shadow: 0 10px 35px rgba(28, 36, 48, .055); }
+.question-label { display: block; }
+.question-label > span { display: block; margin-bottom: 10px; color: var(--foreground); font-size: 13px; font-weight: 600; }
+.question-label > span::after { content: " *"; color: var(--danger); }
+.question-label textarea { width: 100%; min-height: 96px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface-subtle); padding: 12px; color: var(--foreground); font-size: 14px; line-height: 1.65; resize: vertical; outline: none; }
+.question-label textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 143, 220, .12); }
 .question-footer { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted-foreground); font-size: 10px; }
 .mode-actions { width: min(720px, 100%); margin: 14px auto 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .mode-card { min-height: 96px; padding: 18px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 14px; color: var(--foreground-secondary); background: var(--background); box-shadow: 0 6px 22px rgba(30, 36, 45, .04); cursor: pointer; text-align: center; transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease; }
@@ -196,6 +201,25 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .reading-content { max-width: 780px; margin: 34px auto 0; color: var(--foreground-secondary); line-height: 1.8; text-align: left; }
 .reading-content section { margin-bottom: 22px; }
 .reading-content h2 { color: var(--foreground); font: 400 24px "STSong", serif; }
+/* 能量流段的子标题（整体主题）与列表（规律/可以怎么做）原来没有规则，
+   回退成浏览器默认 h3/ul，与 h2 及正文风格不统一。补上与桌面风格一致的衬线/行高。 */
+.reading-content h3 {
+  margin: 16px 0 6px;
+  color: var(--foreground);
+  font: 400 18px "STSong", serif;
+}
+
+.reading-content ul,
+.reading-content ol {
+  margin: 0 0 8px;
+  padding-left: 22px;
+}
+
+.reading-content ul li,
+.reading-content ol li {
+  margin-bottom: 6px;
+  line-height: 1.8;
+}
 .reading-hero, .two-column article, .advice { padding: 24px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-subtle); }
 .card-readings { display: grid; gap: 9px; }
 .card-readings article { padding: 17px; display: flex; gap: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--background); }
