@@ -30,7 +30,7 @@ import {
 } from "./runtime/credentials";
 import { R2Client, WorkerR2Client, resolveR2Endpoint } from "./runtime/r2-client";
 import { R2SyncService } from "@tarot/runtime";
-import { SPREADS } from "@tarot/core";
+import { SELECTABLE_SPREADS, getSpreadById } from "@tarot/core";
 import {
   createModelProvider,
   testConnection,
@@ -54,12 +54,19 @@ import {
 } from "./icons";
 
 const DECK_SIZE = 78;
-const SPREAD_OPTIONS = SPREADS.map((spread) => ({
+const SPREAD_OPTIONS = SELECTABLE_SPREADS.map((spread) => ({
   id: spread.id,
   name: spread.name,
+  description: spread.description,
+  category: spread.category,
   count: spread.positions.length,
   supportsScoring: spread.supportsScoring,
 }));
+const SPREAD_GROUPS = [
+  { prefix: "1.", label: "一、入门级牌阵（1-5张牌）" },
+  { prefix: "2.", label: "二、进阶级牌阵（6-8张牌）" },
+  { prefix: "3.", label: "三、高级牌阵（10张以上）" },
+] as const;
 const cardBackSrc = `/${cardBack}`;
 
 type View = "home" | "select" | "result" | "history" | "settings";
@@ -104,7 +111,7 @@ export function App() {
   const [view, setView] = useState<View>("home");
   const [questionText, setQuestionText] = useState("");
   const [advanced, setAdvanced] = useState(false);
-  const [spreadId, setSpreadId] = useState("five_card_timeline_v1");
+  const [spreadId, setSpreadId] = useState("single");
   const [scoring, setScoring] = useState(false);
   const [energyFlow, setEnergyFlow] = useState(true);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
@@ -605,6 +612,7 @@ function HomeView(props: {
   onScoring: (value: boolean) => void;
   onEnergyFlow: (value: boolean) => void;
 }) {
+  const selectedSpread = SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId);
   return (
     <section className="home">
       <div className="hero-orbit">
@@ -612,11 +620,12 @@ function HomeView(props: {
       </div>
       <button className="btn ghost block" onClick={props.onAdvanced}>{props.advanced ? "收起高级解读" : "高级解读设置"}</button>
       {props.advanced && <div className="astryx-surface question-panel">
-        <label>牌阵<select value={props.spreadId} onChange={(event) => props.onSpread(event.target.value)}>{SPREAD_OPTIONS.map((spread) => <option key={spread.id} value={spread.id}>{spread.name}（{spread.count} 张）</option>)}</select></label>
+        <label>牌阵<select value={props.spreadId} onChange={(event) => props.onSpread(event.target.value)}>{SPREAD_GROUPS.map((group) => <optgroup key={group.prefix} label={group.label}>{SPREAD_OPTIONS.filter((spread) => spread.name.startsWith(group.prefix)).map((spread) => <option key={spread.id} value={spread.id}>{spread.name} · {spread.count} 张</option>)}</optgroup>)}</select></label>
+        <small>{SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.description}</small>
         <label><input type="checkbox" checked={props.energyFlow} onChange={(event) => props.onEnergyFlow(event.target.checked)} /> 启用能量流整体阅读</label>
         <label><input type="checkbox" checked={props.scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.supportsScoring} onChange={(event) => props.onScoring(event.target.checked)} /> 启用动量 / 价值评分</label>
       </div>}
-      <p className="eyebrow">五张时间流</p>
+      <p className="eyebrow">{props.advanced ? selectedSpread?.name : "五张时间流"}</p>
       <h1 className="view-title">此刻，你想看清什么？</h1>
       <p className="lead">
         写下你正探索的问题。星径会为你洗出一组牌，沿着「远处 → 现在」的顺序，陪你读出其中的脉络。
@@ -650,7 +659,7 @@ function HomeView(props: {
             <HandPickIcon />
           </span>
           <b>手写选择</b>
-          <span className="sub">亲手从牌阵中选出五张，更有参与感</span>
+          <span className="sub">亲手从牌阵中选出{props.advanced ? `${selectedSpread?.count ?? 5} 张` : "五张"}，更有参与感</span>
         </button>
         <button className="mode-card" onClick={() => props.onStart("random")}>
           <span className="mode-icon">
@@ -898,6 +907,7 @@ function ResultView(props: {
       <div className="result-head">
         <div>
           <p className="eyebrow">{reading.question}</p>
+          <small>{getSpreadById(reading.spreadId)?.name ?? "塔罗解读"}</small>
           {drawnAtText && <p className="drawn-at">抽卡于 {drawnAtText}</p>}
         </div>
         <button

@@ -3,7 +3,17 @@ import { z } from "zod";
 const scoreSchema = z.object({ semantic: z.number(), dynamic: z.number(), rank: z.number(), final: z.number(), basis: z.string().min(1), scoreTableVersion: z.string().min(1) });
 const calculationSchema = z.object({ formulaVersion: z.string().min(1), momentum: z.number(), momentumLabel: z.string().min(1), value: z.number(), valueLabel: z.string().min(1) });
 const patternSummarySchema = z.object({ majorMinorRatio: z.string(), suitDistribution: z.string(), repeatedNumbers: z.array(z.string()), repeatedSymbols: z.array(z.string()), directionFlow: z.string() });
-const spreadSchema = z.object({ id: z.string().min(1), name: z.string().min(1), positions: z.array(z.object({ index: z.number().int().min(1), name: z.string().min(1), hint: z.string().optional() })).min(1), supportsScoring: z.boolean() });
+const spreadReadingSchema = z.object({
+  overviewInstruction: z.string().min(1),
+  stages: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), positionIds: z.array(z.string().min(1)).min(1), instruction: z.string().min(1) })).min(1),
+  relations: z.array(z.object({ type: z.enum(["compare", "sequence", "cause", "influence", "contrast", "synthesize"]), positionIds: z.array(z.string().min(1)).min(2), instruction: z.string().min(1) })),
+  focus: z.array(z.string().min(1)), synthesis: z.string().min(1), guardrails: z.array(z.string().min(1)),
+});
+const spreadSchema = z.object({
+  id: z.string().min(1), section: z.string(), name: z.string().min(1), description: z.string().min(1),
+  positions: z.array(z.object({ id: z.string().min(1), index: z.number().int().min(1), name: z.string().min(1), description: z.string().min(1), groupId: z.string().optional(), isKey: z.boolean().optional() })).min(1),
+  reading: spreadReadingSchema, supportsScoring: z.boolean(),
+});
 
 export const interpretationInputSchema = z.object({
   readingId: z.string().min(1), contentVersion: z.string().min(1), question: z.string().min(1), spread: spreadSchema,

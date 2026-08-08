@@ -112,10 +112,45 @@ export function buildJsonStructurePrompt(input: TarotInterpretationInput): strin
   return `你必须只返回一个 JSON 对象，不要包含其他文字或 markdown。cards 必须恰好包含 ${input.cards.length} 个元素，actionAdvice 包含 2 到 3 个元素。\n{\n  "headline": "一句话标题",\n  "questionReflection": "对提问者状态的理解",\n  "cards": [{ "cardId": "牌 ID", "position": 位置编号, "meaning": "牌义", "connectionToQuestion": "与问题的关联" }],\n  "storyline": "所有牌串联的叙事"${scoringFields}${energyFields},\n  "actionAdvice": ["建议 1", "建议 2"],\n  "reflectionQuestion": "反思问题",\n  "disclaimer": "免责声明"\n}`;
 }
 
+export function buildSpreadGuidancePrompt(input: TarotInterpretationInput): string {
+  const positionById = new Map(input.spread.positions.map((position) => [position.id, `${position.index}.${position.name}`]));
+  const positionList = input.spread.positions
+    .map((position) => `${position.index}. ${position.name}：${position.description}${position.isKey ? "（关键位置）" : ""}`)
+    .join("\n");
+  const stages = input.spread.reading.stages
+    .map((stage, index) => `${index + 1}. ${stage.name} [${stage.positionIds.map((id) => positionById.get(id) ?? id).join(" → ")}]：${stage.instruction}`)
+    .join("\n");
+  const relations = input.spread.reading.relations.length > 0
+    ? input.spread.reading.relations.map((relation, index) => `${index + 1}. ${relation.type} [${relation.positionIds.map((id) => positionById.get(id) ?? id).join("、")}]：${relation.instruction}`).join("\n")
+    : "无额外关系；仍需把所有牌串成完整故事。";
+  return `牌阵专属解读规则（必须执行）：
+牌阵：${input.spread.name}
+用途：${input.spread.description}
+
+位置：
+${positionList}
+
+整体观察：${input.spread.reading.overviewInstruction}
+
+解读阶段：
+${stages}
+
+牌间关系：
+${relations}
+
+必须关注：
+${input.spread.reading.focus.map((item) => `- ${item}`).join("\n") || "- 无额外项"}
+
+综合要求：${input.spread.reading.synthesis}
+
+边界：
+${input.spread.reading.guardrails.map((item) => `- ${item}`).join("\n")}`;
+}
+
 export function buildSystemPrompt(input: TarotInterpretationInput): string {
   const scoreHint = input.scoring ? "同时参考输入中已计算的固定分值与计算结果，不得自行改写分数。" : "不使用固定分值，将注意力放在画面、提问者处境和牌阵结构上。";
   const energyHint = input.energyFlow ? "除逐牌和故事线外，必须基于输入 patterns 解读牌间能量流、重复象征、人物朝向与整体主题；统计事实由程序提供，你负责把它们解释回提问者的处境。" : "保持克制、生活化且有共情力的 last-dance 解读风格。";
-  return `你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。${scoreHint}${energyHint}\n\n${buildJsonStructurePrompt(input)}`;
+  return `你是一个克制、生活化、有共情力的塔罗解读助手。牌已由本地程序抽取并保存，你只能解释输入，不得换牌、补牌或声称确定预测未来。${scoreHint}${energyHint}\n\n${buildSpreadGuidancePrompt(input)}\n\n${buildJsonStructurePrompt(input)}`;
 }
 
 // OpenAI Responses API 适配器

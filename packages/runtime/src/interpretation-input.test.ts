@@ -49,5 +49,8 @@ describe("interpretation input", () => {
     expect(input.cards).toHaveLength(3);
     expect(input.calculation).toBeUndefined();
     expect(input.patterns?.majorMinorRatio).toBe("大阿尔卡那 3 / 小阿尔卡那 0");
+    expect(input.spread.name).toBe("1.2（圣三角牌阵（3张·时间流））");
+    expect(input.spread.reading.stages[0]?.positionIds).toEqual(["past", "present", "future"]);
+    expect(input.spread.positions[1]?.isKey).toBe(true);
   });
 });
