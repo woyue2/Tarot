@@ -75,8 +75,28 @@ function placement(type: SpreadLayoutType, index: number, count: number): Spread
   if (type === "single") return { x: 50, y: 50 };
   if (type === "row") return { x: ((index + 1) * 100) / (count + 1), y: 50 };
   if (type === "circle" || type === "pentagram" || type === "hexagram") {
+    if (type === "hexagram" && count === 7) {
+      const slots = [[50, 8], [82, 66], [18, 66], [50, 92], [18, 34], [82, 34], [50, 50]];
+      const slot = slots[index] ?? [50, 50];
+      return { x: slot[0]!, y: slot[1]!, ...(index === 6 ? { zIndex: 2 } : {}) };
+    }
     const angle = -Math.PI / 2 + (index * Math.PI * 2) / count;
     return { x: 50 + Math.cos(angle) * 38, y: 50 + Math.sin(angle) * 38 };
+  }
+  if (type === "cross") {
+    if (count === 5) {
+      const slots = [[50, 10], [50, 90], [16, 50], [84, 50], [50, 50]];
+      const slot = slots[index] ?? [50, 50];
+      return { x: slot[0]!, y: slot[1]!, ...(index === 4 ? { zIndex: 2 } : {}) };
+    }
+    const celticSlots = [
+      { x: 38, y: 50, zIndex: 1 },
+      { x: 38, y: 50, rotation: 90, zIndex: 2, orientation: "horizontal" as const },
+      { x: 38, y: 12 }, { x: 38, y: 88 }, { x: 12, y: 50 }, { x: 64, y: 50 },
+      { x: 88, y: 88 }, { x: 88, y: 63 }, { x: 88, y: 37 }, { x: 88, y: 12 },
+      { x: 64, y: 88 },
+    ];
+    return celticSlots[index] ?? { x: 50, y: 50 };
   }
   if (type === "z") {
     const zSlots = [[18, 15], [50, 15], [82, 15], [76, 28], [64, 39], [50, 50], [36, 61], [24, 72], [18, 85], [50, 85], [82, 85]];

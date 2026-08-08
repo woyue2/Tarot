@@ -573,6 +573,84 @@ h1.view-title {
   margin: 0 0 16px;
 }
 
+/* 牌阵全景只承载形状和编号，完整位置名称放在下方图例，窄屏下仍可辨认。 */
+.spread-overview {
+  position: relative;
+  width: 100%;
+  height: clamp(330px, 104vw, 520px);
+  margin: 0 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 42%),
+    var(--surface-subtle);
+  box-shadow: var(--shadow-panel);
+}
+
+.spread-overview.spread-v,
+.spread-overview.spread-diamond,
+.spread-overview.spread-cross { height: clamp(310px, 94vw, 450px); }
+
+.spread-overview.spread-z { height: clamp(390px, 120vw, 570px); }
+
+.spread-overview-card {
+  position: absolute;
+  width: clamp(46px, 15vw, 76px);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: clamp(6px, 2vw, 11px);
+  overflow: visible;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spread-overview-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+  box-shadow: 0 5px 16px rgba(20, 18, 12, 0.2);
+}
+.spread-overview-card img.reversed { transform: rotate(180deg); }
+.spread-overview-card b {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(18, 16, 12, 0.86);
+  box-shadow: 0 2px 7px rgba(20, 18, 12, 0.24);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.spread-position-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.spread-position-legend li { display: flex; align-items: flex-start; min-width: 0; gap: 7px; color: var(--foreground-secondary); font-size: 12px; }
+.spread-position-legend li b { flex: 0 0 20px; display: grid; place-items: center; height: 20px; border-radius: 50%; color: var(--accent); background: color-mix(in srgb, var(--accent) 11%, transparent); font-size: 10px; }
+.spread-position-legend li span { display: grid; min-width: 0; gap: 2px; line-height: 1.3; }
+.spread-position-legend li strong { color: var(--foreground-secondary); font-size: 12px; font-weight: 500; }
+.spread-position-legend li small { color: var(--muted-foreground); font-size: 10px; line-height: 1.35; }
+
+@media (max-width: 360px) {
+  .spread-overview-card { width: 14.2vw; }
+  .spread-position-legend { grid-template-columns: 1fr; }
+}
+
 .revealed-card {
   text-align: center;
   min-width: 0;

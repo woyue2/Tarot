@@ -699,6 +699,7 @@ export function App() {
             {reading.revealed && reading.revealed.length > 0 && (
               <CardRevealStage
                 cards={reading.revealed}
+                spreadId={reading.spreadId}
                 autoReveal
                 key={reading.id}
                 onComplete={() => { /* 动画完成后的可选回调 */ }}

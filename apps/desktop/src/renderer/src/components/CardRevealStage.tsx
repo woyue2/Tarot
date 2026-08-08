@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
+import { getSpreadById, type SpreadPosition } from "@tarot/core";
 
 interface RevealedCard {
   cardId: string;
@@ -13,6 +14,7 @@ interface RevealedCard {
 
 interface CardRevealStageProps {
   cards: RevealedCard[];
+  spreadId?: string;
   autoReveal?: boolean;
   onComplete?: () => void;
   className?: string;
@@ -32,8 +34,24 @@ function prefersReducedMotion() {
 /** 根据牌数与真实视口计算合适的排布参数。
  *  关键：canvas 是横向宽屏，必须用水平视口宽度约束牌排总宽，
  *  否则牌只会占水平方向的一小条、显得过小。 */
-function useLayout(n: number, viewportW: number, viewportH: number) {
+function useLayout(n: number, viewportW: number, viewportH: number, positions?: readonly SpreadPosition[]) {
   return useMemo(() => {
+    if (positions?.length === n) {
+      const isRow = positions.every((position) => position.placement.y === positions[0]?.placement.y);
+      if (!isRow) {
+        const scale = Math.max(0.32, Math.min(n > 10 ? 0.48 : n > 7 ? 0.58 : 0.72, viewportW / 8, viewportH / 5.5));
+        return {
+          scale,
+          step: 0,
+          points: positions.map((position) => ({
+            x: ((position.placement.x - 50) / 100) * viewportW * 0.82,
+            y: ((50 - position.placement.y) / 100) * viewportH * 0.82,
+            z: (position.placement.zIndex ?? 0) * 0.035,
+            rotation: ((position.placement.rotation ?? 0) * Math.PI) / 180,
+          })),
+        };
+      }
+    }
     const gap = 0.06;
     const rawTotal = n * CARD_W + (n - 1) * gap;
     // 牌排占水平视口 90%、牌高不超垂直视口 82%，更紧凑、比例更舒展
@@ -41,8 +59,8 @@ function useLayout(n: number, viewportW: number, viewportH: number) {
     const scaleByH = (viewportH * 0.82) / CARD_H;
     const scale = Math.max(0.1, Math.min(scaleByW, scaleByH, 2.16));
     const step = (CARD_W + gap) * scale;
-    return { scale, step };
-  }, [n, viewportW, viewportH]);
+    return { scale, step, points: undefined };
+  }, [n, viewportW, viewportH, positions]);
 }
 
 interface Rand {
@@ -95,6 +113,7 @@ interface CardMeshProps {
   runId: number;
   scale: number;
   step: number;
+  endPoint?: { x: number; y: number; z: number; rotation: number } | undefined;
   onToggle?: () => void;
 }
 
@@ -109,6 +128,7 @@ function CardMesh({
   runId,
   scale,
   step,
+  endPoint,
   onToggle,
 }: CardMeshProps) {
   const ref = useRef<THREE.Mesh>(null);
@@ -142,8 +162,8 @@ function CardMesh({
   }, [runId, index, count, scale]);
 
   const endPos = useMemo(
-    () => new THREE.Vector3((index - (count - 1) / 2) * step, 0, 0),
-    [index, count, step],
+    () => new THREE.Vector3(endPoint?.x ?? (index - (count - 1) / 2) * step, endPoint?.y ?? 0, endPoint?.z ?? 0),
+    [endPoint, index, count, step],
   );
 
   useFrame(({ clock }) => {
@@ -152,7 +172,7 @@ function CardMesh({
 
     if (instant) {
       m.position.copy(endPos);
-      m.rotation.set(0, flipped ? Math.PI : 0, 0);
+      m.rotation.set(0, flipped ? Math.PI : 0, endPoint?.rotation ?? 0);
       m.scale.set(scale, scale, scale);
       if (flipped && faceUpAtRef.current === null) {
         faceUpAtRef.current = clock.getElapsedTime();
@@ -179,7 +199,7 @@ function CardMesh({
 
     const wob = 1 - t;
     m.rotation.x = r.current.spin * wob * Math.sin(t * 6.0);
-    m.rotation.z = r.current.roll * wob * Math.sin(t * 5.0 + 1.0);
+    m.rotation.z = THREE.MathUtils.lerp(r.current.roll, endPoint?.rotation ?? 0, e) + r.current.roll * wob * Math.sin(t * 5.0 + 1.0);
 
     if (t >= 1) {
       const targetYaw = flipped ? Math.PI : 0;
@@ -275,6 +295,7 @@ function Scene({
   instant,
   runId,
   onToggle,
+  positions,
 }: {
   cards: RevealedCard[];
   started: boolean;
@@ -282,10 +303,11 @@ function Scene({
   instant: boolean;
   runId: number;
   onToggle: (index: number) => void;
+  positions?: readonly SpreadPosition[] | undefined;
 }) {
   const { viewport } = useThree();
 
-  const { scale, step } = useLayout(cards.length, viewport.width, viewport.height);
+  const { scale, step, points } = useLayout(cards.length, viewport.width, viewport.height, positions);
   const backUrl = "/cards/card-back.webp";
 
   return (
@@ -307,6 +329,7 @@ function Scene({
           runId={runId}
           scale={scale}
           step={step}
+          endPoint={points?.[i]}
           onToggle={() => onToggle(i)}
         />
       ))}
@@ -329,13 +352,14 @@ function CardInfo({ card, index }: { card: RevealedCard; index: number }) {
   );
 }
 
-export function CardRevealStage({ cards, autoReveal = true, onComplete, className }: CardRevealStageProps) {
+export function CardRevealStage({ cards, spreadId, autoReveal = true, onComplete, className }: CardRevealStageProps) {
   const [started, setStarted] = useState(false);
   const [flipped, setFlipped] = useState<boolean[]>([]);
   const [instant, setInstant] = useState(false);
   const [runId, setRunId] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
   const timers = useRef<number[]>([]);
+  const spread = spreadId ? getSpreadById(spreadId) : undefined;
 
   const clearTimers = () => {
     timers.current.forEach(clearTimeout);
@@ -410,7 +434,7 @@ export function CardRevealStage({ cards, autoReveal = true, onComplete, classNam
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           dpr={Math.min(window.devicePixelRatio, 2)}
         >
-          <Scene cards={cards} started={started} flipped={flipped} instant={instant} runId={runId} onToggle={toggle} />
+          <Scene cards={cards} positions={spread?.positions} started={started} flipped={flipped} instant={instant} runId={runId} onToggle={toggle} />
         </Canvas>
       </div>
       <div className="card-reveal-toolbar">

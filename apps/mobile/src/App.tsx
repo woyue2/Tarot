@@ -875,6 +875,7 @@ function ResultView(props: {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState(() => loadNotesDraft(reading.id, reading.notes ?? ""));
   const [savingNotes, setSavingNotes] = useState(false);
+  const spread = getSpreadById(reading.spreadId);
 
   const revealedByPos = useMemo(() => {
     const map = new Map<number, RevealedCard>();
@@ -951,8 +952,48 @@ function ResultView(props: {
       )}
       <h1 className="view-title">你的牌阵</h1>
 
-      {revealed && (
-        <div className="revealed-row">
+      {revealed && spread && spread.layout.type !== "row" && spread.layout.type !== "single" ? (
+        <>
+          <div className={`spread-overview spread-${spread.layout.type}`} role="group" aria-label={`${spread.shortName}牌阵全景`}>
+            {revealed.map((card) => {
+              const position = spread.positions[card.position - 1];
+              if (!position) return null;
+              return (
+                <button
+                  className="spread-overview-card"
+                  style={{
+                    left: `${position.placement.x}%`,
+                    top: `${position.placement.y}%`,
+                    zIndex: position.placement.zIndex ?? 1,
+                    transform: `translate(-50%, -50%) rotate(${position.placement.rotation ?? 0}deg)`,
+                  }}
+                  key={card.position}
+                  aria-label={`${position.index}. ${position.name}，${card.card.name}，点击放大`}
+                  onClick={() => setZoomedCard(card)}
+                >
+                  <img src={imageOf(card.card.image)} className={card.orientation === "reversed" ? "reversed" : ""} alt="" />
+                  <b>{position.index}</b>
+                </button>
+              );
+            })}
+          </div>
+          <ol className="spread-position-legend">
+            {spread.positions.map((position) => {
+              const card = revealedByPos.get(position.index);
+              return (
+                <li key={position.id}>
+                  <b>{position.index}</b>
+                  <span>
+                    <strong>{position.name}</strong>
+                    {card && <small>{card.card.name} · {card.orientation === "reversed" ? "逆位" : "正位"}</small>}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </>
+      ) : revealed ? (
+        <div className={`revealed-row revealed-count-${revealed.length}`}>
           {revealed.map((card) => (
             <button
               className="revealed-card"
@@ -975,7 +1016,7 @@ function ResultView(props: {
             </button>
           ))}
         </div>
-      )}
+      ) : null}
 
       {zoomedCard && (
         <CardZoomModal card={zoomedCard} onClose={() => setZoomedCard(null)} />
