@@ -2,18 +2,23 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import { type TarotCard } from "@tarot/core";
-import { ReadingService, type ContentBundle, type RuntimeEnv } from "@tarot/runtime";
+import { ReadingService, R2SyncService, type ContentBundle, type RuntimeEnv } from "@tarot/runtime";
 import cardsData from "../../../../resources/cards.json";
 import manifest from "../../../../resources/content-manifest.json";
 import methodology from "../../../../resources/methodology.json";
 import { AppPreferencesStore } from "./app-preferences";
 import { ElectronCredentialStore } from "./credentials";
-import { createModelProvider, fetchProviderModels, type ProviderType } from "./model";
+import {
+  createModelProvider,
+  fetchProviderModels,
+  classifyModelError,
+  PROVIDER_PRESETS,
+  type ProviderType,
+} from "@tarot/providers";
 import { ModelPreferencesStore, type ModelPreferences } from "./preferences";
 import { SqliteReadingRepository } from "./storage";
-import { PROVIDER_PRESETS, classifyModelError } from "./provider-registry";
 import { R2Client, resolveR2Endpoint } from "./r2-client";
-import { R2SyncService, type SyncReport } from "./r2-sync";
+import type { SyncReport } from "@tarot/runtime";
 
 const cards = cardsData.cards as TarotCard[];
 let repository: SqliteReadingRepository;
@@ -135,19 +140,10 @@ function registerIpc(): void {
   );
 
   ipcMain.handle("tarot:create-folder", (_event, rawName: string) => {
-    const name = rawName?.trim();
-    if (!name || name.length > 60) throw new Error("Folder 名称需为 1–60 个字符");
-    const now = new Date().toISOString();
-    const folder = { id: randomUUID(), name, createdAt: now, updatedAt: now };
-    repository.saveFolder(folder);
-    return folder;
+    return readingService.createFolder(rawName);
   });
   ipcMain.handle("tarot:rename-folder", (_event, input: { id: string; name: string }) => {
-    const name = input.name?.trim();
-    if (!name || name.length > 60) throw new Error("Folder 名称需为 1–60 个字符");
-    const folder = repository.renameFolder(input.id, name);
-    if (!folder) throw new Error("没有找到这个 Folder");
-    return folder;
+    return readingService.renameFolder(input.id, input.name);
   });
   ipcMain.handle("tarot:move-reading", (_event, input: { id: string; folderId: string | null }) => {
     return readingService.moveReading(input.id, input.folderId);
@@ -156,12 +152,10 @@ function registerIpc(): void {
     return readingService.updateNotes(input.id, input.notes);
   });
   ipcMain.handle("tarot:delete-folder", (_event, id: string) => {
-    if (!repository.deleteFolder(id)) throw new Error("删除分组失败");
-    return { ok: true };
+    return readingService.deleteFolder(id);
   });
   ipcMain.handle("tarot:delete-reading", (_event, id: string) => {
-    readingService.deleteReading(id);
-    return { ok: true };
+    return readingService.deleteReading(id);
   });
   ipcMain.handle("tarot:save-settings", (_event, input: { apiKey?: string; clearApiKey?: boolean; providerType?: string; model?: string; baseUrl?: string; r2?: { enabled?: boolean; accountId?: string; endpoint?: string; accessKeyId?: string; secretAccessKey?: string; bucketName?: string; region?: string } }) => {
     if (input.apiKey?.trim()) credentials.set("apiKey", input.apiKey.trim());

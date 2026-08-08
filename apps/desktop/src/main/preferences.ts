@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { applyProviderPreset, type ProviderType } from "./provider-registry";
+import { applyProviderPreset, type ProviderType } from "@tarot/providers";
 
 export { type ProviderType };
 

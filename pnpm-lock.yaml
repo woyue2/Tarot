@@ -35,6 +35,9 @@ importers:
       '@tarot/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tarot/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@tarot/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -93,6 +96,9 @@ importers:
       '@tarot/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tarot/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@tarot/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -140,6 +146,25 @@ importers:
       vitest:
         specifier: 4.0.18
         version: 4.0.18(@types/node@25.0.10)(lightningcss@1.33.0)
+
+  packages/providers:
+    dependencies:
+      '@tarot/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tarot/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      zod:
+        specifier: 4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: 25.0.10
+        version: 25.0.10
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
 
   packages/runtime:
     dependencies:

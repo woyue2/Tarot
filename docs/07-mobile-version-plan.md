@@ -89,7 +89,7 @@
 | 跨设备云同步 | **已落地**：手机端经 Cloudflare Worker 代理读写 R2（`apps/mobile/cloudflare-worker/`），密钥不暴露前端；与桌面端共用同一桶双向同步 | 同步令牌仍明文存 localStorage，待 Capacitor 安全存储替换 |
 | 真机校准 | 无安全区域、惯性滚动、系统手势条避让的实机验证 | CSS 媒体查询是模拟，不等于真机手感 |
 | 摄像头魔法手势 | 未实现，仅 roadmap §9 描述约束 | 属于 Phase M3 可选项 |
-| 3D 翻牌工程化 | `prototype-3d-flip.html` 为独立 CDN 原型，未接入 Electron/移动工程 | 手机 GPU 性能未验证 |
+| 3D 翻牌工程化 | `scratch/prototype-3d-flip.html` 为独立 CDN 原型，未接入 Electron/移动工程 | 手机 GPU 性能未验证 |
 
 ## 4. UI 考量（已考虑 + 需补齐）
 

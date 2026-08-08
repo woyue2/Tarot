@@ -1,4 +1,3 @@
-// 从 maka-agent 的 provider-registry.ts + model-factory.ts 抄来的精简版
 // Provider 注册表：预设连接配置、错误分类、reasoning 处理
 
 export type ProviderType =
@@ -30,9 +29,9 @@ export interface ProviderPreset {
   recommendedModels: string[];
   apiProtocol: ApiProtocol;
   supportsJsonSchema: boolean;
-  /** 从 maka-agent 抄的：是否需要在请求中注入 reason 处理 */
+  /** 是否需要在请求中注入 reason 处理 */
   reasoningSplit?: boolean;
-  /** 从 maka-agent 抄的：是否在响应中分离 reasoning_details */
+  /** 是否在响应中分离 reasoning_details */
   supportsReasoningDetails?: boolean;
   signupUrl?: string;
 }
@@ -207,6 +206,22 @@ export const PROVIDER_PRESETS: Record<Exclude<ProviderType, "custom">, ProviderP
   },
 };
 
+/** 包含 "custom" 在内的完整预设列表，供 UI 选择器使用。 */
+export const ALL_PROVIDER_PRESETS: ProviderPreset[] = [
+  ...Object.values(PROVIDER_PRESETS),
+  {
+    type: "custom",
+    label: "自定义 API",
+    description: "填入任意 OpenAI 兼容端点的 Base URL 与模型名",
+    category: "custom",
+    baseUrl: "",
+    defaultModel: "",
+    recommendedModels: [],
+    apiProtocol: "openai-chat",
+    supportsJsonSchema: true,
+  },
+];
+
 export function applyProviderPreset(
   type: ProviderType,
 ): { providerType: ProviderType; baseUrl: string; model: string } {
@@ -220,8 +235,6 @@ export function applyProviderPreset(
     model: preset.defaultModel,
   };
 }
-
-// ====== 从 maka-agent 抄的：错误分类（provider-error-classification.ts） ======
 
 export interface ClassifiedError {
   kind: "auth" | "rate_limit" | "server_error" | "timeout" | "json_parse" | "unknown";
@@ -254,15 +267,12 @@ export function classifyModelError(error: unknown): ClassifiedError {
   return { kind: "unknown", userMessage: message, retryable: true };
 }
 
-// ====== 从 maka-agent 抄的：reasoning 内容清洗（model-factory.ts 精简版） ======
-
 /**
  * 清理助手消息中的 reasoning 内容。
  * 某些模型（DeepSeek、MiniMax）会在 content 中嵌入 ` 思考` 标签，
  * 或者返回 `reasoning_content` 字段，需要剥离后才能正确解析 JSON。
  */
 export function stripReasoningContent(text: string): string {
-  // 从 maka-agent 的 openai-chat-reasoning-transport.ts 抄来的清洗逻辑
   let cleaned = text;
   // 1. 移除 think 标签及其内容
   const thinkEndTag = /<\/?think>/gi;

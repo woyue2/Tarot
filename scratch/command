@@ -43,3 +43,10 @@ pnpm check       # 生成数据 + typecheck + test + build（一键验收）
 
 1. **重新构建手机端前，先停掉 4173 预览**。Windows 下预览进程会锁 `dist/`，此时再 `vite build`（emptyOutDir）会 EPERM 中断（日志卡在 128 modules transformed）。顺序：停预览 → build → 再起预览。
 2. **桌面端 Electron 在本沙箱无运行时**，只能 `build` / `typecheck`；真正弹出窗口要在你本机装了 Electron 环境后跑 `pnpm --filter @tarot/desktop dev`。
+
+------
+
+cd c:\Users\Admin1\Documents\0Tarot\apps\mobile
+pnpm --filter @tarot/mobile cap:sync
+cd android
+.\gradlew assembleDebug --no-daemon --console=plain

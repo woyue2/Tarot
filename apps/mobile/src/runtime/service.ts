@@ -1,9 +1,8 @@
-import { ReadingService } from "@tarot/runtime";
+import { ReadingService, R2SyncService } from "@tarot/runtime";
 import { contentBundle } from "./content";
 import { browserEnv } from "./environment";
 import { WebReadingRepository } from "./repository";
 import { R2Client, WorkerR2Client, resolveR2Endpoint, type R2ClientLike } from "./r2-client";
-import { MobileR2SyncService } from "./r2-sync";
 import {
   getSecretAccessKey,
   getSyncToken,
@@ -61,11 +60,11 @@ function buildR2Client(): R2ClientLike | null {
  * 按需构建 R2 同步服务。未配置则返回 null。
  * 每次调用都新建，开销极小；配置变化时能自动拿到最新设置。
  */
-export function createR2Sync(): MobileR2SyncService | null {
+export function createR2Sync(): R2SyncService | null {
   if (!isR2Configured()) return null;
   const client = buildR2Client();
   if (!client) return null;
-  return new MobileR2SyncService(client, repository);
+  return new R2SyncService(client, repository);
 }
 
 /** 用当前已保存的设置测试 R2 连通性（直连或 Worker 代理，供「测试连接」按钮调用）。 */

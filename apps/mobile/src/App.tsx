@@ -29,12 +29,13 @@ import {
   type R2Mode,
 } from "./runtime/credentials";
 import { R2Client, WorkerR2Client, resolveR2Endpoint } from "./runtime/r2-client";
-import { MobileR2SyncService } from "./runtime/r2-sync";
+import { R2SyncService } from "@tarot/runtime";
 import {
-  createProvider,
+  createModelProvider,
   testConnection,
-  MOBILE_PRESETS,
-} from "./runtime/model-provider";
+  ALL_PROVIDER_PRESETS,
+  type ProviderType,
+} from "@tarot/providers";
 import { cardBack } from "./runtime/content";
 import type {
   PublicReading,
@@ -255,7 +256,12 @@ export function App() {
       return;
     }
     const settings = loadSettings();
-    const provider = createProvider(settings, apiKey);
+    const provider = createModelProvider({
+      apiKey,
+      providerType: settings.providerType as ProviderType,
+      model: settings.model,
+      baseUrl: settings.baseUrl,
+    });
     setStreaming(true);
     setStreamText("");
     try {
@@ -1144,7 +1150,7 @@ function SettingsView(props: {
   }, []);
 
   function applyPreset(type: string) {
-    const preset = MOBILE_PRESETS.find((p) => p.type === type);
+    const preset = ALL_PROVIDER_PRESETS.find((p) => p.type === type);
     if (!preset) return;
     setSettings({
       ...settings,
@@ -1165,7 +1171,7 @@ function SettingsView(props: {
   async function runTest() {
     setTesting(true);
     setTest(null);
-    const result = await testConnection(settings, apiKey.trim());
+    const result = await testConnection({ apiKey: apiKey.trim(), model: settings.model, baseUrl: settings.baseUrl });
     setTest(result);
     setTesting(false);
   }
@@ -1248,7 +1254,7 @@ function SettingsView(props: {
       if (!silent) setR2Result({ pulled: 0, pushed: 0, errors: [msg] });
       return;
     }
-    const sync = new MobileR2SyncService(client, repository);
+    const sync = new R2SyncService(client, repository);
     setR2Syncing(true);
     setR2Result(null);
     try {
@@ -1277,14 +1283,14 @@ function SettingsView(props: {
         <label className="field">
           <span>服务商预设</span>
           <select value={settings.providerType} onChange={(e) => applyPreset(e.target.value)}>
-            {MOBILE_PRESETS.map((p) => (
+            {ALL_PROVIDER_PRESETS.map((p) => (
               <option key={p.type} value={p.type}>
                 {p.label}
               </option>
             ))}
           </select>
-          {MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.description && (
-            <small>{MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.description}</small>
+          {ALL_PROVIDER_PRESETS.find((p) => p.type === settings.providerType)?.description && (
+            <small>{ALL_PROVIDER_PRESETS.find((p) => p.type === settings.providerType)?.description}</small>
           )}
         </label>
 
@@ -1307,7 +1313,7 @@ function SettingsView(props: {
             onChange={(e) => setSettings({ ...settings, model: e.target.value })}
           />
           <datalist id="model-suggestions">
-            {(MOBILE_PRESETS.find((p) => p.type === settings.providerType)?.models ?? []).map((m) => (
+            {(ALL_PROVIDER_PRESETS.find((p) => p.type === settings.providerType)?.recommendedModels ?? []).map((m) => (
               <option key={m} value={m} />
             ))}
           </datalist>

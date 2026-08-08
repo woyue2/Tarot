@@ -1,5 +1,4 @@
-import type { ReadingFolder, ReadingRepository, StoredReading } from "@tarot/runtime";
-import { R2Client, type R2ClientConfig } from "./r2-client";
+import type { ReadingFolder, ReadingRepository, StoredReading } from "./ports";
 
 export interface SyncReport {
   pulled: number;
@@ -7,20 +6,26 @@ export interface SyncReport {
   errors: string[];
 }
 
-export interface R2SyncConfig extends R2ClientConfig {
-  enabled: boolean;
+export interface R2ClientLike {
+  putJson(key: string, data: unknown): Promise<void>;
+  getJson<T>(key: string): Promise<T | undefined>;
+  list(prefix: string): Promise<Array<{ key: string; lastModified: Date }>>;
+  delete(key: string): Promise<void>;
+  testConnection(): Promise<{ ok: boolean; message: string }>;
 }
 
+type SyncRepository = ReadingRepository & {
+  listFolders(): ReadingFolder[];
+  findFolder(id: string): ReadingFolder | undefined;
+  saveFolder(folder: ReadingFolder): void;
+};
+
 export class R2SyncService {
-  private readonly client: R2Client;
-  private readonly repository: ReadingRepository & {
-    listFolders(): ReadingFolder[];
-    findFolder(id: string): ReadingFolder | undefined;
-    saveFolder(folder: ReadingFolder): void;
-  };
+  private readonly client: R2ClientLike;
+  private readonly repository: SyncRepository;
   private busy = false;
 
-  constructor(client: R2Client, repository: R2SyncService["repository"]) {
+  constructor(client: R2ClientLike, repository: SyncRepository) {
     this.client = client;
     this.repository = repository;
   }

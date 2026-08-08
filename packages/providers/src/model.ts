@@ -4,7 +4,6 @@ import { PROVIDER_PRESETS, stripReasoningContent, type ProviderType } from "./pr
 
 export type { ProviderType };
 
-// ====== 从 maka-agent 的 model-fetcher.ts 抄的：模型发现 ======
 export interface DiscoveredModel {
   id: string;
   displayName?: string;
@@ -43,7 +42,7 @@ export async function fetchProviderModels(baseUrl: string, apiKey: string, provi
   }
 }
 
-const outputSchema = {
+export const outputSchema = {
   type: "object",
   additionalProperties: false,
   required: ["headline", "questionReflection", "cards", "storyline", "momentumInterpretation", "valueInterpretation", "actionAdvice", "reflectionQuestion", "disclaimer"],
@@ -61,7 +60,7 @@ const outputSchema = {
 };
 
 // 当不支持 json_schema strict 模式时，用这个 prompt 明确告诉模型要返回什么结构
-const JSON_STRUCTURE_PROMPT = `你必须只返回一个 JSON 对象，不要包含任何其他文字、解释、markdown 代码块标记或思考过程。
+export const JSON_STRUCTURE_PROMPT = `你必须只返回一个 JSON 对象，不要包含任何其他文字、解释、markdown 代码块标记或思考过程。
 
 JSON 对象必须严格使用以下字段名和结构：
 {
@@ -85,7 +84,7 @@ JSON 对象必须严格使用以下字段名和结构：
 
 注意：cards 数组必须恰好包含 5 个元素，actionAdvice 数组包含 2 到 3 个元素。不要使用其他字段名。`;
 
-// ====== OpenAI Responses API 适配器（保留原有逻辑） ======
+// OpenAI Responses API 适配器
 export class OpenAICompatibleProvider implements ModelProvider {
   constructor(private readonly options: { apiKey: string; model: string; baseUrl: string }) {}
 
@@ -116,7 +115,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
   }
 }
 
-// ====== Chat Completions API 适配器（给国内 / 本地模型用） ======
+// Chat Completions API 适配器（给国内 / 本地模型用）
 export class ChatCompletionProvider implements ModelProvider {
   constructor(
     private readonly options: {
@@ -190,9 +189,6 @@ export class ChatCompletionProvider implements ModelProvider {
     let text = payload.choices?.[0]?.message?.content;
     if (!text) throw new Error("模型没有返回可解析的结构化结果");
 
-    // 调试日志：查看模型原始返回
-    console.log("[model] 原始 content 前300字符:", text.slice(0, 300));
-
     // 清洗 reasoning 标签内容（think 标签、reasoning_content 等）
     text = stripReasoningContent(text);
 
@@ -209,7 +205,6 @@ export class ChatCompletionProvider implements ModelProvider {
       const fixed = text + "}".repeat(text.split("{").length - text.split("}").length);
       try {
         parsed = JSON.parse(fixed);
-        console.log("[model] JSON 补全括号后解析成功");
       } catch {
         const preview = text.slice(0, 500);
         throw new Error(`模型返回的内容无法解析为 JSON。前 500 字符：\n${preview}`);
@@ -219,7 +214,7 @@ export class ChatCompletionProvider implements ModelProvider {
     return interpretationSchema.parse(parsed);
   }
 
-  // ====== 从 maka-agent 的 openai-chat-reasoning-transport.ts 抄的：流式输出 ======
+  // 流式输出
   async interpretStream(
     input: TarotInterpretationInput,
     onProgress: (delta: string, reasoning: string) => void,
@@ -238,7 +233,7 @@ export class ChatCompletionProvider implements ModelProvider {
       ],
       temperature: 0.3,
       max_tokens: 8192,
-      stream: true, // 开启流式输出
+      stream: true,
     };
 
     if (this.options.useStrictJsonSchema !== false && this.options.supportsJsonSchema !== false) {
@@ -268,7 +263,6 @@ export class ChatCompletionProvider implements ModelProvider {
 
     if (!response.body) throw new Error("模型没有返回流式响应");
 
-    // 从 maka-agent 的 openAiChatSseNormalizer 抄的 SSE 解析逻辑
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffered = "";
@@ -336,7 +330,6 @@ export class ChatCompletionProvider implements ModelProvider {
   }
 }
 
-// ====== 从 maka-agent 的 model-factory.ts 抄的：工厂函数 ======
 export interface ModelProviderOptions {
   providerType: ProviderType;
   apiKey: string;
@@ -349,7 +342,7 @@ export function createModelProvider(options: ModelProviderOptions): ModelProvide
 
   switch (providerType) {
     case "openai":
-      // OpenAI 官方走 Responses API（原有逻辑）
+      // OpenAI 官方走 Responses API
       return new OpenAICompatibleProvider({ apiKey, model, baseUrl });
 
     case "minimax":
@@ -387,5 +380,28 @@ export function createModelProvider(options: ModelProviderOptions): ModelProvide
 
     default:
       throw new Error(`未知的 Provider 类型: ${providerType}`);
+  }
+}
+
+export async function testConnection(options: { apiKey: string; model: string; baseUrl: string }): Promise<{ ok: boolean; message: string }> {
+  const { apiKey, model, baseUrl } = options;
+  if (!apiKey) return { ok: false, message: "尚未配置 API Token" };
+  const rawUrl = baseUrl.replace(/\/$/, "");
+  try {
+    const url = `${rawUrl}/chat/completions`;
+    const body = JSON.stringify({ model, messages: [{ role: "user", content: "reply with ok" }], max_tokens: 10, temperature: 0 });
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body,
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+      return { ok: false, message: payload.error?.message ?? `HTTP ${response.status}` };
+    }
+    return { ok: true, message: "连接成功 ✅" };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "连接失败" };
   }
 }
