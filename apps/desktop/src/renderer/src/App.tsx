@@ -708,7 +708,7 @@ export function App() {
             {reading.calculation && <div className="metrics"><div><span>动量</span><b>{reading.calculation.momentum > 0 ? "+" : ""}{reading.calculation.momentum}</b><small>{reading.calculation.momentumLabel}</small></div><div><span>价值</span><b>{reading.calculation.value > 0 ? "+" : ""}{reading.calculation.value}</b><small>{reading.calculation.valueLabel}</small></div></div>}
             {!reading.interpretation ? <>
               <div className="interpret-cta"><p>可以现在调用模型，也可以关闭应用后稍后继续。牌、顺序和正逆位不会改变。</p><Button label="开始 AI 解读" variant="primary" size="lg" isLoading={busy} isDisabled={busy} onClick={() => void interpret()} /></div>
-              {reading.status === "interpreting" && interpretProgress && <div className="interpret-progress">{interpretProgress}</div>}
+              {reading.status === "interpreting" && interpretProgress && <InterpretProgress content={interpretProgress} />}
             </> : <ReadingContent reading={reading} />}
             <div className="end-actions"><Button label="开始新的探索" variant="secondary" size="lg" onClick={reset} /></div>
           </motion.section>}
@@ -1204,10 +1204,35 @@ function HighlightedText({ text }: { text: string }) {
   })}</>;
 }
 
+/** Extract completed JSON string fields without requiring the streaming JSON to be valid yet. */
+function getStreamingField(content: string, field: string) {
+  const match = content.match(new RegExp(`"${field}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`));
+  if (!match) return "";
+  try {
+    return JSON.parse(`"${match[1] ?? ""}"`) as string;
+  } catch {
+    return (match[1] ?? "").replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+  }
+}
+
+function InterpretProgress({ content }: { content: string }) {
+  const headline = getStreamingField(content, "headline");
+  const questionReflection = getStreamingField(content, "questionReflection");
+  const storyline = getStreamingField(content, "storyline");
+  const hasReadablePreview = Boolean(headline || questionReflection || storyline);
+
+  return <section className="interpret-progress" aria-live="polite" aria-label="AI 解读进行中">
+    <div className="interpret-progress-head"><span className="progress-dot" />解读中</div>
+    {headline && <h2>{headline}</h2>}
+    {(questionReflection || storyline) && <div className="streaming-overview"><span>整体脉络</span>{questionReflection && <p><HighlightedText text={questionReflection} /></p>}{storyline && <p><HighlightedText text={storyline} /></p>}</div>}
+    {!hasReadablePreview && <p className="interpret-progress-waiting">正在整理牌面之间的关联…</p>}
+  </section>;
+}
+
 function ReadingContent({ reading }: { reading: ReadingView }) {
   const result = reading.interpretation!;
   return <div className="reading-content">
-    <section className="reading-hero"><span>整体脉络</span><p><HighlightedText text={result.questionReflection} /></p><p><HighlightedText text={result.storyline} /></p></section>
+    <section className="reading-hero"><p className="section-kicker">整体脉络</p><div className="reading-hero-copy"><p><HighlightedText text={result.questionReflection} /></p><p><HighlightedText text={result.storyline} /></p></div></section>
     <section><h2>牌面如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p><HighlightedText text={item.meaning} /></p><p className="connection"><HighlightedText text={item.connectionToQuestion} /></p></div></article>)}</div></section>
     {result.momentumInterpretation && result.valueInterpretation && <section className="two-column"><article><span>动量提示</span><p><HighlightedText text={result.momentumInterpretation} /></p></article><article><span>价值提示</span><p><HighlightedText text={result.valueInterpretation} /></p></article></section>}
     {result.energyFlow && <section className="energy-reading"><h2>能量流与整体阅读</h2><div className="energy-reading-block" data-kind="energy"><span>能量走向</span><p><HighlightedText text={result.energyFlow} /></p></div>{result.overallTheme && <div className="energy-reading-block" data-kind="theme"><span>整体主题</span><p><HighlightedText text={result.overallTheme} /></p></div>}{result.patterns && <div className="energy-reading-block" data-kind="patterns"><span>跨牌线索</span><ul>{result.patterns.map((pattern) => <li key={pattern}><HighlightedText text={pattern} /></li>)}</ul></div>}<div className="energy-reading-block energy-reading-summary" data-kind="summary"><span>整体阅读</span><p><HighlightedText text={result.holisticReading ?? ""} /></p></div></section>}
