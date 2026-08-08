@@ -1,4 +1,5 @@
 ## ✅ 手机端预览（已运行）
+pnpm -r typecheck
 
 - 本地浏览器：**http://localhost:4173/**
 - 手机（同 WiFi）：**http://192.168.125.58:4173/**（局域网 IP 会变，以 `ipconfig | grep IPv4` 为准）

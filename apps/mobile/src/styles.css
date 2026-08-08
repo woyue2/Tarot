@@ -532,6 +532,37 @@ h1.view-title {
   width: 100%;
 }
 
+.advanced-toggle {
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-subtle);
+  color: var(--foreground-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.advanced-toggle::before { content: "⚙"; margin-right: 7px; color: var(--accent-deep); }
+.advanced-toggle[aria-expanded="true"] { border-color: var(--accent); color: var(--foreground); background: var(--accent-wash); }
+.advanced-panel { margin: 0 0 14px; padding: 15px; border-color: rgba(79, 143, 220, .35); border-radius: 16px; }
+.advanced-panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.advanced-panel-heading > span { color: var(--foreground); font-size: 14px; font-weight: 650; }
+.advanced-panel-heading small, .advanced-spread-description { color: var(--muted-foreground); font-size: 11px; line-height: 1.5; }
+.advanced-spread-field { display: grid; gap: 6px; }
+.advanced-spread-field > span { color: var(--foreground-secondary); font-size: 12px; font-weight: 600; }
+.advanced-spread-field select { width: 100%; min-height: 42px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 10px; color: var(--foreground); background: var(--background); font-size: 13px; }
+.advanced-spread-description { margin: 7px 0 13px; }
+.advanced-options { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.advanced-options .checkbox-label { min-height: 58px; margin: 0; padding: 10px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border); border-radius: 11px; background: var(--background); }
+.advanced-options .checkbox-label:has(input:checked) { border-color: rgba(79, 143, 220, .5); background: var(--accent-wash); }
+.advanced-options .checkbox-label:has(input:disabled) { opacity: .58; }
+.advanced-options input { width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--accent); }
+.advanced-options .checkbox-label > span { display: grid; gap: 2px; }
+.advanced-options b { color: var(--foreground); font-size: 13px; }
+.advanced-options small { color: var(--muted-foreground); font-size: 11px; line-height: 1.45; }
+
 /* ===== 结果 ===== */
 .revealed-row {
   display: grid;
@@ -586,6 +617,11 @@ h1.view-title {
 .revealed-card h3 {
   margin: 2px 0 0;
   font-size: 14px;
+  line-height: 1.3;
+  /* 牌库 78 张中文名最长 4 字（命运之轮/权杖国王等共 21 张）；窄屏下 4 字牌名
+     会折成 2 行、短名 1 行。预留两行高度，保证各列「正位/逆位」对齐。
+     无超长名，无需省略号截断，故不引入 line-clamp。 */
+  min-height: 2.6em;
 }
 
 .revealed-card small {
@@ -782,6 +818,14 @@ h1.view-title {
   font-size: 14px;
   color: var(--foreground-secondary);
 }
+
+.reading-content .energy-reading { background: var(--surface-subtle); }
+.energy-reading > h2 { margin-bottom: 14px; }
+.energy-reading-block { padding: 12px 0; border-top: 1px solid var(--border); }
+.energy-reading-block:first-of-type { padding-top: 0; border-top: 0; }
+.energy-reading-block > span { display: block; margin-bottom: 5px; color: var(--accent-deep); font-size: 11px; font-weight: 650; letter-spacing: .08em; }
+.energy-reading-block p, .energy-reading-block ul { margin-bottom: 0; }
+.energy-reading-summary { margin: 2px -4px -4px; padding: 12px 10px; border: 0; border-radius: 10px; background: var(--background); }
 
 .reading-content .card-readings article {
   display: grid;

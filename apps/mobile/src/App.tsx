@@ -618,12 +618,15 @@ function HomeView(props: {
       <div className="hero-orbit">
         <StargateMark />
       </div>
-      <button className="btn ghost block" onClick={props.onAdvanced}>{props.advanced ? "收起高级解读" : "高级解读设置"}</button>
-      {props.advanced && <div className="astryx-surface question-panel">
-        <label>牌阵<select value={props.spreadId} onChange={(event) => props.onSpread(event.target.value)}>{SPREAD_GROUPS.map((group) => <optgroup key={group.prefix} label={group.label}>{SPREAD_OPTIONS.filter((spread) => spread.name.startsWith(group.prefix)).map((spread) => <option key={spread.id} value={spread.id}>{spread.name} · {spread.count} 张</option>)}</optgroup>)}</select></label>
-        <small>{SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.description}</small>
-        <label><input type="checkbox" checked={props.energyFlow} onChange={(event) => props.onEnergyFlow(event.target.checked)} /> 启用能量流整体阅读</label>
-        <label><input type="checkbox" checked={props.scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.supportsScoring} onChange={(event) => props.onScoring(event.target.checked)} /> 启用动量 / 价值评分</label>
+      <button className="advanced-toggle" aria-expanded={props.advanced} onClick={props.onAdvanced}>{props.advanced ? "收起高级解读" : "高级解读设置"}</button>
+      {props.advanced && <div className="astryx-surface advanced-panel">
+        <div className="advanced-panel-heading"><span>解读设置</span><small>选择牌阵与辅助阅读方式</small></div>
+        <label className="advanced-spread-field"><span>牌阵</span><select value={props.spreadId} onChange={(event) => props.onSpread(event.target.value)}>{SPREAD_GROUPS.map((group) => <optgroup key={group.prefix} label={group.label}>{SPREAD_OPTIONS.filter((spread) => spread.name.startsWith(group.prefix)).map((spread) => <option key={spread.id} value={spread.id}>{spread.name} · {spread.count} 张</option>)}</optgroup>)}</select></label>
+        <p className="advanced-spread-description">{SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.description}</p>
+        <div className="advanced-options">
+          <label className="checkbox-label"><input type="checkbox" checked={props.energyFlow} onChange={(event) => props.onEnergyFlow(event.target.checked)} /><span><b>能量流与整体阅读</b><small>观察跨牌的呼应、推进与整体主题</small></span></label>
+          <label className="checkbox-label"><input type="checkbox" checked={props.scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.supportsScoring} onChange={(event) => props.onScoring(event.target.checked)} /><span><b>动量 / 价值评分</b><small>{SPREAD_OPTIONS.find((spread) => spread.id === props.spreadId)?.supportsScoring ? "为五张时间流提供趋势参考" : "此牌阵暂不支持评分"}</small></span></label>
+        </div>
       </div>}
       <p className="eyebrow">{props.advanced ? selectedSpread?.name : "五张时间流"}</p>
       <h1 className="view-title">此刻，你想看清什么？</h1>
@@ -1115,12 +1118,12 @@ function InterpretationView(props: {
         <p>{it.valueInterpretation}</p>
       </section>}
 
-      {it.energyFlow && <section>
+      {it.energyFlow && <section className="energy-reading">
         <h2>能量流与整体阅读</h2>
-        <p>{it.energyFlow}</p>
-        <h3>{it.overallTheme}</h3>
-        {it.patterns && <ul>{it.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul>}
-        <p>{it.holisticReading}</p>
+        <div className="energy-reading-block"><span>能量走向</span><p>{it.energyFlow}</p></div>
+        {it.overallTheme && <div className="energy-reading-block"><span>整体主题</span><p>{it.overallTheme}</p></div>}
+        {it.patterns && <div className="energy-reading-block"><span>跨牌线索</span><ul>{it.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul></div>}
+        <div className="energy-reading-block energy-reading-summary"><span>整体阅读</span><p>{it.holisticReading}</p></div>
       </section>}
 
       <section>

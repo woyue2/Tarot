@@ -45,9 +45,9 @@ const SPREAD_OPTIONS = SELECTABLE_SPREADS.map((spread) => ({
   supportsScoring: spread.supportsScoring,
 }));
 const SPREAD_GROUPS = [
-  { prefix: "1.", label: "一、入门级牌阵" },
-  { prefix: "2.", label: "二、进阶级牌阵" },
-  { prefix: "3.", label: "三、高级牌阵" },
+  { prefix: "1.", label: "一、入门级牌阵（1-5张牌）" },
+  { prefix: "2.", label: "二、进阶级牌阵（6-8张牌）" },
+  { prefix: "3.", label: "三、高级牌阵（10张以上）" },
 ] as const;
 
 function ShuffleOverlay() {
@@ -601,16 +601,19 @@ export function App() {
               </label>
               <div className="question-footer"><span>{question.length} / 300</span><span>三个月内的问题</span></div>
              </div>
-             <button type="button" className="btn ghost" onClick={() => setAdvanced((value) => !value)}>{advanced ? "收起高级解读" : "高级解读设置"}</button>
-             {advanced && <div className="question-panel astryx-surface">
-               <label>牌阵<select value={spreadId} onChange={(event) => { const next = event.target.value; setSpreadId(next); if (!(SPREAD_OPTIONS.find((spread) => spread.id === next)?.supportsScoring)) setScoring(false); }}>
+             <button type="button" className="advanced-toggle" aria-expanded={advanced} onClick={() => setAdvanced((value) => !value)}>{advanced ? "收起高级解读" : "高级解读设置"}</button>
+             {advanced && <div className="advanced-panel astryx-surface">
+               <div className="advanced-panel-heading"><span>解读设置</span><small>选择牌阵与辅助阅读方式</small></div>
+               <label className="advanced-spread-field"><span>牌阵</span><select value={spreadId} onChange={(event) => { const next = event.target.value; setSpreadId(next); if (!(SPREAD_OPTIONS.find((spread) => spread.id === next)?.supportsScoring)) setScoring(false); }}>
                  {SPREAD_GROUPS.map((group) => <optgroup key={group.prefix} label={group.label}>
                    {SPREAD_OPTIONS.filter((spread) => spread.name.startsWith(group.prefix)).map((spread) => <option key={spread.id} value={spread.id}>{spread.name} · {spread.count} 张</option>)}
                  </optgroup>)}
                </select></label>
-               <small>{SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.description}</small>
-               <label className="checkbox-label"><input type="checkbox" checked={energyFlow} onChange={(event) => setEnergyFlow(event.target.checked)} /><span>启用能量流整体阅读</span></label>
-               <label className="checkbox-label"><input type="checkbox" checked={scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.supportsScoring} onChange={(event) => setScoring(event.target.checked)} /><span>启用动量 / 价值评分</span></label>
+               <p className="advanced-spread-description">{SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.description}</p>
+               <div className="advanced-options">
+                 <label className="checkbox-label"><input type="checkbox" checked={energyFlow} onChange={(event) => setEnergyFlow(event.target.checked)} /><span><b>能量流与整体阅读</b><small>观察跨牌的呼应、推进与整体主题</small></span></label>
+                 <label className="checkbox-label"><input type="checkbox" checked={scoring} disabled={!SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.supportsScoring} onChange={(event) => setScoring(event.target.checked)} /><span><b>动量 / 价值评分</b><small>{SPREAD_OPTIONS.find((spread) => spread.id === spreadId)?.supportsScoring ? "为五张时间流提供趋势参考" : "此牌阵暂不支持评分"}</small></span></label>
+               </div>
              </div>}
             <div className="mode-actions">
               <button type="button" className="mode-card mode-card-primary" disabled={!question.trim() || busy} onClick={() => void begin("manual")}>
@@ -1198,7 +1201,7 @@ function ReadingContent({ reading }: { reading: ReadingView }) {
     <section className="reading-hero"><span>整体脉络</span><p>{result.questionReflection}</p><p>{result.storyline}</p></section>
     <section><h2>牌面如何连接</h2><div className="card-readings">{result.cards.map((item, index) => <article key={item.cardId}><i>{index + 1}</i><div><h3>{reading.revealed?.[index]?.card.name}</h3><p>{item.meaning}</p><p className="connection">{item.connectionToQuestion}</p></div></article>)}</div></section>
     {result.momentumInterpretation && result.valueInterpretation && <section className="two-column"><article><span>动量提示</span><p>{result.momentumInterpretation}</p></article><article><span>价值提示</span><p>{result.valueInterpretation}</p></article></section>}
-    {result.energyFlow && <section><h2>能量流与整体阅读</h2><p>{result.energyFlow}</p><h3>{result.overallTheme}</h3>{result.patterns && <ul>{result.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul>}<p>{result.holisticReading}</p></section>}
+    {result.energyFlow && <section className="energy-reading"><h2>能量流与整体阅读</h2><div className="energy-reading-block"><span>能量走向</span><p>{result.energyFlow}</p></div>{result.overallTheme && <div className="energy-reading-block"><span>整体主题</span><p>{result.overallTheme}</p></div>}{result.patterns && <div className="energy-reading-block"><span>跨牌线索</span><ul>{result.patterns.map((pattern) => <li key={pattern}>{pattern}</li>)}</ul></div>}<div className="energy-reading-block energy-reading-summary"><span>整体阅读</span><p>{result.holisticReading}</p></div></section>}
     <section className="advice"><h2>带回现实的行动</h2><ol>{result.actionAdvice.map((advice) => <li key={advice}>{advice}</li>)}</ol><blockquote>{result.reflectionQuestion}</blockquote></section>
     <p className="disclaimer">{result.disclaimer}</p>
   </div>;
