@@ -37,9 +37,17 @@ function prefersReducedMotion() {
 function useLayout(n: number, viewportW: number, viewportH: number, positions?: readonly SpreadPosition[]) {
   return useMemo(() => {
     if (positions?.length === n) {
-      const isRow = positions.every((position) => position.placement.y === positions[0]?.placement.y);
+      const isRow = positions.every(
+        (position) =>
+          position.placement.y === positions[0]?.placement.y &&
+          (position.placement.rotation ?? 0) === 0,
+      );
       if (!isRow) {
-        const scale = Math.max(0.32, Math.min(n > 10 ? 0.48 : n > 7 ? 0.58 : 0.72, viewportW / 8, viewportH / 5.5));
+        // Shape-based spreads should stay recognizable instead of collapsing into
+        // tiny thumbnails as the card count grows. The canvas still limits the
+        // scale so dense spreads remain usable.
+        const maxShapeScale = n > 10 ? 0.62 : n > 7 ? 0.78 : 0.98;
+        const scale = Math.max(0.34, Math.min(maxShapeScale, viewportW / 6.6, viewportH / 4.6));
         return {
           scale,
           step: 0,
@@ -114,7 +122,7 @@ interface CardMeshProps {
   scale: number;
   step: number;
   endPoint?: { x: number; y: number; z: number; rotation: number } | undefined;
-  onToggle?: () => void;
+  onOpen?: () => void;
 }
 
 function PositionBadge({ number, point, scale }: { number: number; point: { x: number; y: number; z: number }; scale: number }) {
@@ -160,7 +168,7 @@ function CardMesh({
   scale,
   step,
   endPoint,
-  onToggle,
+  onOpen,
 }: CardMeshProps) {
   const ref = useRef<THREE.Mesh>(null);
   const textures = useLoader(THREE.TextureLoader, [faceUrl, backUrl]);
@@ -267,7 +275,7 @@ function CardMesh({
   });
 
   return (
-    <mesh ref={ref} onClick={(e) => { e.stopPropagation(); onToggle?.(); }}>
+    <mesh ref={ref} onClick={(e) => { e.stopPropagation(); onOpen?.(); }}>
       <boxGeometry args={BOX_ARGS} />
       <meshBasicMaterial
         attach="material-4"
@@ -325,7 +333,7 @@ function Scene({
   flipped,
   instant,
   runId,
-  onToggle,
+  onOpen,
   positions,
 }: {
   cards: RevealedCard[];
@@ -333,14 +341,14 @@ function Scene({
   flipped: boolean[];
   instant: boolean;
   runId: number;
-  onToggle: (index: number) => void;
+  onOpen: (index: number) => void;
   positions?: readonly SpreadPosition[] | undefined;
 }) {
   const { viewport } = useThree();
 
   const { scale, step, points } = useLayout(cards.length, viewport.width, viewport.height, positions);
   const backUrl = "/cards/card-back.webp";
-  const showPositionBadges = Boolean(points && positions && positions.some((position) => position.placement.y !== positions[0]?.placement.y));
+  const showPositionBadges = Boolean(points && positions);
 
   return (
     <Suspense fallback={null}>
@@ -362,7 +370,7 @@ function Scene({
             scale={scale}
             step={step}
           endPoint={points?.[card.position - 1]}
-            onToggle={() => onToggle(i)}
+            onOpen={() => onOpen(i)}
           />
           {showPositionBadges && points?.[card.position - 1] && <PositionBadge number={card.position} point={points[card.position - 1]!} scale={scale} />}
         </group>
@@ -392,8 +400,18 @@ export function CardRevealStage({ cards, spreadId, autoReveal = true, onComplete
   const [instant, setInstant] = useState(false);
   const [runId, setRunId] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
+  const [zoomedIndex, setZoomedIndex] = useState<number | null>(null);
   const timers = useRef<number[]>([]);
   const spread = spreadId ? getSpreadById(spreadId) : undefined;
+
+  useEffect(() => {
+    if (zoomedIndex === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setZoomedIndex(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [zoomedIndex]);
 
   const clearTimers = () => {
     timers.current.forEach(clearTimeout);
@@ -442,12 +460,9 @@ export function CardRevealStage({ cards, spreadId, autoReveal = true, onComplete
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards.length, autoReveal]);
 
-  const toggle = (index: number) => {
-    setFlipped((prev) => {
-      const next = [...prev];
-      next[index] = !next[index];
-      return next;
-    });
+  const openZoom = (index: number) => {
+    if (!showInfo) return;
+    setZoomedIndex(index);
   };
 
   const skip = () => {
@@ -468,7 +483,7 @@ export function CardRevealStage({ cards, spreadId, autoReveal = true, onComplete
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           dpr={Math.min(window.devicePixelRatio, 2)}
         >
-          <Scene cards={cards} positions={spread?.positions} started={started} flipped={flipped} instant={instant} runId={runId} onToggle={toggle} />
+          <Scene cards={cards} positions={spread?.positions} started={started} flipped={flipped} instant={instant} runId={runId} onOpen={openZoom} />
         </Canvas>
       </div>
       <div className="card-reveal-toolbar">
@@ -486,6 +501,40 @@ export function CardRevealStage({ cards, spreadId, autoReveal = true, onComplete
             {cards.map((card, i) => (
               <CardInfo key={card.cardId} card={card} index={i} />
             ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {zoomedIndex !== null && cards[zoomedIndex] && (
+          <motion.div
+            className="card-zoom-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${cards[zoomedIndex].card.name} 放大视图`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomedIndex(null)}
+          >
+            <motion.div
+              className="card-zoom-dialog"
+              initial={{ scale: 0.94, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 6 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button className="card-zoom-close" type="button" onClick={() => setZoomedIndex(null)} aria-label="关闭放大视图">×</button>
+              <img
+                className={`card-zoom-image${cards[zoomedIndex].orientation === "reversed" ? " reversed" : ""}`}
+                src={`/${cards[zoomedIndex].card.image}`}
+                alt={cards[zoomedIndex].card.name}
+              />
+              <div className="card-zoom-meta">
+                <span>{cards[zoomedIndex].position}. {cards[zoomedIndex].positionName}</span>
+                <h2>{cards[zoomedIndex].card.name}</h2>
+                <small>{cards[zoomedIndex].orientation === "upright" ? "正位" : "逆位"}</small>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

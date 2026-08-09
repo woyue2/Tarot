@@ -111,6 +111,7 @@ html[data-platform="win32"] .content-titlebar { padding-right: 150px; }
 .connection-chip[data-ready="true"] i { background: var(--success); }
 .content-scroll { min-height: 0; flex: 1; overflow-y: auto; padding: 52px 32px 80px; }
 .home, .selection-view, .result-view, .settings-page { width: min(980px, 100%); margin: 0 auto; text-align: center; }
+.selection-view, .result-view { width: min(1120px, 100%); }
 .hero-orbit { width: 54px; height: 54px; margin: 0 auto 20px; display: grid; place-items: center; border: 1px solid rgba(106, 165, 232, .35); border-radius: 50%; color: var(--accent); background: var(--accent-wash); box-shadow: 0 10px 30px rgba(79, 143, 220, .12); }
 .hero-orbit svg { width: 33px; height: 33px; }
 .eyebrow { margin: 0 0 16px; color: var(--accent-deep); font-size: 10px; font-weight: 650; letter-spacing: .22em; }
@@ -332,6 +333,133 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .error-toast { position: fixed; z-index: 20; left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width)) / 2); bottom: 24px; width: min(540px, calc(100vw - 280px)); padding: 12px 13px 12px 16px; display: flex; justify-content: space-between; gap: 14px; transform: translateX(-50%); border: 1px solid #efc8ca; border-radius: 10px; color: #8d343b; background: rgba(255, 246, 246, .95); box-shadow: 0 12px 38px rgba(65, 28, 30, .12); backdrop-filter: blur(14px); font-size: 12px; }
 .error-toast button { border: 0; color: inherit; background: transparent; cursor: pointer; font-size: 18px; }
 
+/* Desktop reading scale: the result page is for sustained reading, so body
+   copy must not be treated like metadata. Keep the mobile layout untouched. */
+@media (min-width: 761px) {
+  .reading-content {
+    max-width: 900px;
+    font-size: 16px;
+    line-height: 2;
+  }
+
+  .reading-content section {
+    margin-bottom: 24px;
+  }
+
+  .reading-content h2 {
+    margin: 0 0 18px;
+    font-size: 22px;
+    line-height: 1.45;
+  }
+
+  .section-kicker {
+    margin-bottom: 16px;
+    font-size: 30px;
+  }
+
+  .reading-hero-copy {
+    max-width: none;
+    font-size: 18px;
+    line-height: 2;
+  }
+
+  .reading-content p,
+  .reading-content li,
+  .reading-content blockquote {
+    font-size: 16px;
+    line-height: 2;
+  }
+
+  .card-readings article {
+    padding: 20px;
+    gap: 18px;
+  }
+
+  .card-readings i {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    font-size: 14px;
+  }
+
+  .card-readings h3 {
+    font-size: 20px;
+  }
+
+  .card-readings p {
+    margin: 8px 0;
+  }
+
+  .metrics {
+    max-width: 900px;
+    padding: 22px;
+  }
+
+  .metrics span,
+  .two-column span {
+    font-size: 13px;
+    letter-spacing: .08em;
+  }
+
+  .metrics b {
+    font-size: 34px;
+  }
+
+  .metrics small {
+    font-size: 14px;
+  }
+
+  .two-column {
+    gap: 16px;
+  }
+
+  .two-column article,
+  .reading-hero,
+  .energy-reading,
+  .advice {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--background);
+    box-shadow: 0 8px 26px rgba(30, 36, 45, .04);
+  }
+
+  .card-reading-section {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--background);
+    box-shadow: 0 8px 26px rgba(30, 36, 45, .04);
+  }
+
+  .card-readings article {
+    background: var(--surface-subtle);
+  }
+
+  .two-column article p,
+  .energy-reading-block p,
+  .advice li,
+  .reading-hero-copy,
+  .card-readings p {
+    color: var(--foreground-secondary);
+    font-size: 16px;
+    line-height: 2;
+  }
+
+  .energy-reading-block > span {
+    color: var(--accent-deep) !important;
+    background: var(--accent-wash) !important;
+    font-size: 12px;
+  }
+
+  .reading-content mark,
+  .highlight {
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--accent) 14%, var(--background));
+    padding: 1px 4px;
+  }
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: rgba(39, 40, 43, .16); background-clip: padding-box; }
@@ -463,11 +591,11 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .fab-settings svg { width: 22px; height: 22px; }
 
 /* CardRevealStage */
-.card-reveal-stage { position: relative; width: 100%; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: visible; }
+.card-reveal-stage { position: relative; width: 100%; min-height: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: visible; }
 .card-reveal-magic-circle { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: rgba(201, 162, 39, 0.06); animation: card-reveal-mc-spin 100s linear infinite; }
 .card-reveal-magic-circle svg { width: min(70vw, 70vh); height: auto; filter: blur(0.4px); }
 @keyframes card-reveal-mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.card-reveal-canvas-wrap { position: relative; z-index: 1; width: 100%; height: 360px; }
+.card-reveal-canvas-wrap { position: relative; z-index: 1; width: 100%; height: 430px; }
 .card-reveal-canvas-wrap canvas { display: block; width: 100%; height: 100%; outline: none; }
 .card-reveal-toolbar { position: absolute; top: 16px; right: 16px; z-index: 5; display: flex; gap: 8px; }
 .card-reveal-toolbar button { padding: 6px 12px; border: 1px solid rgba(201, 162, 39, 0.55); border-radius: 999px; background: rgba(255, 255, 255, 0.82); color: #7a5a10; font-size: 12px; cursor: pointer; transition: background .2s; backdrop-filter: blur(4px); }
@@ -477,8 +605,23 @@ h1 { margin: 0; color: var(--foreground); font: 400 clamp(34px, 4.5vw, 54px)/1.2
 .card-reveal-info h3 { margin: 4px 0 2px; font-size: 13px; font-weight: 500; color: #5a4a1a; }
 .card-reveal-info small { display: block; font-size: 11px; color: #888; }
 .card-reveal-position { font-size: 10px; letter-spacing: 0.06em; color: #c9a227; text-transform: uppercase; }
+
+/* Stable post-animation card inspection. Clicking a revealed card opens this
+   view; it never changes the card's orientation or position. */
+.card-zoom-overlay { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 28px; background: rgba(9, 11, 16, .78); backdrop-filter: blur(12px) saturate(1.15); }
+.card-zoom-dialog { position: relative; display: grid; grid-template-columns: minmax(230px, 340px) minmax(180px, 260px); align-items: center; gap: 28px; max-width: min(680px, calc(100vw - 56px)); padding: 24px; border: 1px solid rgba(201, 162, 39, .34); border-radius: 18px; background: var(--background); box-shadow: 0 24px 80px rgba(0, 0, 0, .35); }
+.card-zoom-close { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--foreground-secondary); background: var(--surface-subtle); font-size: 22px; line-height: 1; cursor: pointer; }
+.card-zoom-image { width: 100%; aspect-ratio: 3 / 5; object-fit: cover; border-radius: 12px; box-shadow: 0 14px 34px rgba(24, 18, 12, .22); }
+.card-zoom-image.reversed { transform: rotate(180deg); }
+.card-zoom-meta { text-align: left; }
+.card-zoom-meta span { color: var(--accent-deep); font-size: 11px; letter-spacing: .08em; }
+.card-zoom-meta h2 { margin: 10px 0 8px; color: var(--foreground); font: 400 26px/1.3 "STSong", "SimSun", serif; }
+.card-zoom-meta small { color: var(--muted-foreground); font-size: 13px; }
 @media (max-width: 640px) {
   .card-reveal-canvas-wrap { height: 280px; }
   .card-reveal-info-grid { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
   .card-reveal-info h3 { font-size: 12px; }
+  .card-zoom-dialog { grid-template-columns: minmax(0, 1fr); max-width: 360px; gap: 16px; padding: 18px; }
+  .card-zoom-image { max-height: 58vh; }
+  .card-zoom-meta { text-align: center; }
 }
