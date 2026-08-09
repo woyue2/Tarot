@@ -1,0 +1,20 @@
+{
+	"appId": "com.astryx.tarot",
+	"appName": "星径 · 塔罗",
+	"webDir": "dist",
+	"android": {
+		"backgroundColor": "#0e0f15",
+		"allowMixedContent": false
+	},
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"CapacitorHttp": {
+			"enabled": true
+		},
+		"SplashScreen": {
+			"launchShowDuration": 0
+		}
+	}
+}

@@ -11,3 +11,4 @@ release/
 .vite/
 coverage/
 .workbuddy/
+.apk_repack/
